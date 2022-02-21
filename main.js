@@ -161,3 +161,30 @@ const inventory = [
     sold: 8,
   },
 ];
+
+// 1a Gebruik een array-methode om een array te maken met alle tv-type namen. Log de uitkomst in de console.
+const typeArray = inventory.map(item => item.type);
+console.log(typeArray);
+
+//1b Gebruik een array-methode om alle tv's te verzamelen (de hele objecten) die volledig uitverkocht zijn.
+// Log de uitkomst in de console.
+const soldOut = inventory.filter((item) => {
+  if(item.sold >= item.originalStock){
+    return item;
+  }
+})
+console.log(soldOut);
+
+//1c Gebruik een array-methode om alle tv's te verzamelen (de hele objecten) die over AmbiLight
+//   beschikken. Log de uitkomst in de console.
+const ambi = inventory.filter((item) => {
+  if (item.options.ambiLight === true) {
+    return item;
+  }
+})
+console.log(ambi);
+
+//1d Schrijf een functie die alle tv's van laagste naar hoogste prijs sorteert. Log de uitkomst in de console.
+
+const sortPrice = inventory.sort((a, b) => (a.price) - (b.price));
+console.log(sortPrice);
