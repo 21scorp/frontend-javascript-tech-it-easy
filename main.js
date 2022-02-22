@@ -185,6 +185,43 @@ const ambi = inventory.filter((item) => {
 console.log(ambi);
 
 //1d Schrijf een functie die alle tv's van laagste naar hoogste prijs sorteert. Log de uitkomst in de console.
-
 const sortPrice = inventory.sort((a, b) => (a.price) - (b.price));
 console.log(sortPrice);
+
+//2a Hoeveel tv's zijn er al verkocht? Schrijf een script dat dit berekent. Log de uitkomst in de console.
+let result = 0;
+  for (let i = 0; i < inventory.length; i++) {
+    result += inventory[i].sold;
+}
+console.log(result);
+
+//2b zorg ervoor dat dit aantal _in het groen_ wordt weergegeven op de pagina.
+const soldTvs = document.getElementById('soldTv');
+console.log(soldTvs);
+soldTvs.textContent = result;
+soldTvs.style.color = 'green';
+
+//2c Hoeveel tv's heeft Tech It Easy ingekocht? Schrijf een script dat dit berekent. Log de uitkomst in de
+//   console.
+let result2 = 0;
+  for (let i = 0; i < inventory.length; i++) {
+  result2 += inventory[i].originalStock;
+}
+console.log(result2);
+
+//2d Zorg ervoor dat dit aantal _in het blauw_ wordt weergegeven op de pagina.
+const allStock = document.getElementById('tvStock');
+console.log(allStock);
+allStock.textContent = result2;
+allStock.style.color = 'blue';
+
+//2e Geef _in het rood_ weer hoeveel tv's er nog verkocht moeten worden.
+let result3 = 0;
+for (let i = 0; i < inventory.length; i++) {
+  result3 += inventory[i].originalStock - inventory[i].sold;
+}
+console.log(result3);
+const tvsleft = document.getElementById('tvLeft');
+console.log(tvsleft);
+tvsleft.textContent = result3;
+tvsleft.style.color = 'red';
