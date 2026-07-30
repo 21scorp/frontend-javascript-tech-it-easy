@@ -530,9 +530,22 @@
   }
 
   /* — ember owl — */
+  const OWL_SPOTS = [0.88, 0.03, 0.45];
+
+  /** Is an owl perched near screen point x,y? */
+  function owlHit(x, y) {
+    const n = Math.min(W.state.S.buildings.owl || 0, 3);
+    for (let i = 0; i < n; i++) {
+      const ox = OWL_SPOTS[i] * width;
+      const oy = hillY(1, OWL_SPOTS[i]) - 47;
+      if (Math.hypot(ox - x, oy - y) < 30) return true;
+    }
+    return false;
+  }
+
   function drawOwls(count, t) {
     const n = Math.min(count, 3);
-    const spots = [0.88, 0.03, 0.45];
+    const spots = OWL_SPOTS;
     for (let i = 0; i < n; i++) {
       const xn = spots[i];
       const x = xn * width;
@@ -884,6 +897,15 @@
       const x = 0.3 * width + Math.sin(age * 0.5) * 26;
       return { x, y: hillY(2, 0.3) + 15 + Math.sin(age * 1.3) * 2, k, age, dir: 1 };
     }
+    if (v.type.id === "smokefox") {
+      // walks in, sits a while to watch the wisp, walks on
+      let xn;
+      let sitting = false;
+      if (k < 0.35) xn = 0.02 + (k / 0.35) * 0.4;
+      else if (k < 0.68) { xn = 0.42; sitting = true; }
+      else xn = 0.42 + ((k - 0.68) / 0.32) * 0.55;
+      return { x: xn * width, y: hillY(2, xn) + 2, k, age, dir: 1, sitting };
+    }
     // cloudsheep
     const xn = 0.05 + k * 0.9;
     return { x: xn * width, y: height * 0.34 + Math.sin(age * 0.8) * 10, k, age, dir: 1 };
@@ -956,6 +978,66 @@
       ctx.lineTo(p.x + 7, p.y - 6);
       ctx.closePath();
       ctx.fill();
+    } else if (v.type.id === "smokefox") {
+      const smoke = "rgba(150,160,200,";
+      const wob = Math.sin(p.age * 6) * 1.2;
+      ctx.fillStyle = smoke + "0.55)";
+      if (p.sitting) {
+        // seated: upright chest, head tilted up toward the wisp
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y - 10, 8, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(p.x + 2, p.y - 24, 6, 5.5, -0.35, 0, Math.PI * 2);
+        ctx.fill();
+        // ears
+        ctx.beginPath();
+        ctx.moveTo(p.x - 2, p.y - 28); ctx.lineTo(p.x, p.y - 35); ctx.lineTo(p.x + 3, p.y - 28);
+        ctx.moveTo(p.x + 5, p.y - 28); ctx.lineTo(p.x + 8, p.y - 34); ctx.lineTo(p.x + 9, p.y - 27);
+        ctx.fill();
+        // gaze: a tiny amber eye looking up
+        ctx.fillStyle = "#ffb24d";
+        ctx.beginPath();
+        ctx.arc(p.x + 5, p.y - 25, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+        // tail curled around, wagging softly
+        ctx.strokeStyle = smoke + "0.5)";
+        ctx.lineWidth = 4;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(p.x - 6, p.y - 2);
+        ctx.quadraticCurveTo(p.x - 16, p.y - 4 + wob, p.x - 14, p.y - 12 + wob);
+        ctx.stroke();
+      } else {
+        // trotting: low body, nose forward
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y - 8, 12, 6.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(p.x + 12, p.y - 11, 5.5, 4.5, 0.25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(p.x + 10, p.y - 14); ctx.lineTo(p.x + 12, p.y - 19); ctx.lineTo(p.x + 15, p.y - 13);
+        ctx.fill();
+        ctx.strokeStyle = smoke + "0.5)";
+        ctx.lineWidth = 4;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(p.x - 10, p.y - 9);
+        ctx.quadraticCurveTo(p.x - 20, p.y - 14 + wob, p.x - 24, p.y - 8 + wob);
+        ctx.stroke();
+        // little legs
+        ctx.lineWidth = 2.5;
+        const step = Math.sin(p.age * 9) * 2;
+        ctx.beginPath();
+        ctx.moveTo(p.x - 5, p.y - 3); ctx.lineTo(p.x - 5 + step, p.y + 2);
+        ctx.moveTo(p.x + 6, p.y - 3); ctx.lineTo(p.x + 6 - step, p.y + 2);
+        ctx.stroke();
+      }
+      // it sheds a little smoke
+      if (Math.random() < 0.06) {
+        W.particles.spawn({ x: p.x - 8, y: p.y - 10, vx: -10, vy: -6, life: 1.6, size: 2.2, hue: 230, sat: 25, lum: 75, alpha: 0.35 });
+      }
     } else if (v.type.id === "cloudsheep") {
       // fluffy body
       for (let i = 0; i < 4; i++) {
@@ -1164,7 +1246,7 @@
       window.addEventListener("resize", resize);
     },
     rebuild() { buildWorld(W.state.S.seed); },
-    draw, starHit, cometHit, dewHit, visitorHit,
+    draw, starHit, cometHit, dewHit, visitorHit, owlHit,
     startShower(seconds) { showerUntil = Date.now() + seconds * 1000; },
     setWeather(type) { weather = { type, k: weather.k }; weatherTarget = type === "clear" ? 0 : 1; },
     setSeason(name) { seasonOverride = name; },

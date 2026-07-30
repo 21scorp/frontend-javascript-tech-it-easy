@@ -224,6 +224,7 @@
     const today = todayStr();
     ensureWishes();
     if (S.streak.last === today) return;
+    W.state.rotateBackup(); // yesterday's save becomes the safety net
     const firstEver = !S.streak.last;
     S.streak.count = S.streak.last === yesterdayStr() ? S.streak.count + 1 : 1;
     S.streak.last = today;
@@ -528,6 +529,26 @@
     W.state.save();
   }
 
+  /* ─────────────── the owl murmurs ─────────────── */
+
+  let owlMurmurAt = 0;
+
+  function owlTouched() {
+    const S = W.state.S;
+    const now = Date.now();
+    if (now - owlMurmurAt < 8000) return; // it needs a moment between tales
+    owlMurmurAt = now;
+    const heard = Math.min(S.tales || 0, C.TALES.length);
+    W.audio.play("chirp");
+    if (heard > 0) {
+      const tale = C.TALES[heard - 1];
+      W.ui.toast("🦉 the owl murmurs…", tale.length > 90 ? tale.slice(0, 87) + "…" : tale);
+      if (tale.length > 90) W.ui.bubble("(read the whole tale in my journal)", 2400);
+    } else {
+      W.ui.toast("🦉 …", "The owl looks at you. Not yet, it seems to say.");
+    }
+  }
+
   /* ─────────────── living moments ─────────────── */
 
   function petalArrived() {
@@ -764,7 +785,7 @@
     computeOffline, applyOffline,
     checkAchievements, greet,
     tryAscend, starTouched, cometWish, catchDew, spawnDew,
-    maybeDailyGift, greetVisitor, claimWish, ensureWishes, petalArrived,
+    maybeDailyGift, greetVisitor, claimWish, ensureWishes, petalArrived, owlTouched,
     spawnVisitor(id) { const t = C.VISITORS.find((v) => v.id === id); if (t) visitor = { type: t, born: Date.now(), greeted: false }; },
     get ceremony() { return ceremony; },
     get attention() { return attention; },

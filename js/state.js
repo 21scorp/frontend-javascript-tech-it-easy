@@ -64,8 +64,9 @@
   }
 
   function load() {
+    let raw = null;
     try {
-      const raw = localStorage.getItem(C.SAVE_KEY);
+      raw = localStorage.getItem(C.SAVE_KEY);
       if (!raw) return false;
       const data = JSON.parse(raw);
       if (!data || typeof data !== "object") return false;
@@ -92,8 +93,18 @@
       delete S.buff;
       return true;
     } catch (e) {
+      // never silently discard someone's wisp — stash the broken save
+      try { if (raw) localStorage.setItem(C.SAVE_KEY + ".corrupt", raw); } catch (e2) {}
       return false;
     }
+  }
+
+  /** Once a day, keep yesterday's save around as a safety net. */
+  function rotateBackup() {
+    try {
+      const raw = localStorage.getItem(C.SAVE_KEY);
+      if (raw) localStorage.setItem(C.SAVE_KEY + ".backup", raw);
+    } catch (e) {}
   }
 
   function wipe() {
@@ -288,6 +299,6 @@
     xpForLevel, stageFor, nextStage,
     stardustGain, ascend,
     bondXpForLevel, bondTitle, gainBond,
-    buffMult, addBuff,
+    buffMult, addBuff, rotateBackup,
   };
 })();

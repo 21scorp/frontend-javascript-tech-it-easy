@@ -240,6 +240,8 @@
       W.game.catchDew(e.clientX, e.clientY);
     } else if (W.scene.visitorHit(e.clientX, e.clientY, lastT)) {
       W.game.greetVisitor();
+    } else if (W.scene.owlHit(e.clientX, e.clientY)) {
+      W.game.owlTouched();
     } else if (downOnWisp) {
       W.game.tap(e.clientX, e.clientY);
     } else {

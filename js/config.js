@@ -309,6 +309,9 @@
     { id: "cloudsheep", dur: 50, name: "a lost cloud-sheep",
       greet: "The cloud-sheep baas softly and rains a little light.",
       lines: ["baa? baa!!", "can we keep it? …okay. okay. just tonight."] },
+    { id: "smokefox", dur: 45, name: "a fox made of smoke",
+      greet: "The smoke-fox bows its head, then remembers it has somewhere to be.",
+      lines: ["it sat and watched me for a whole minute…", "foxes made of smoke still wag their tails. noted."] },
   ];
   const VISITOR_GAP = [420, 900]; // seconds between visits
 
