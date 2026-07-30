@@ -278,6 +278,30 @@
     ceremonySec: 4.2,
   };
 
+  /* ─────────────── The owl's tales ───────────────
+     One tale per day. Together they explain the long night —
+     and why raising wisps matters. The lore IS the roadmap.        */
+  const TALES = [
+    "Before the long night, there was a sun. It grew tired the way old songs do — slowly, then all at once.",
+    "When the sun lay down to sleep, it shed sparks. Small ones. Warm ones. They drifted for a long time, looking for hands.",
+    "You caught one. That's how this always begins.",
+    "The moon is not the sun's replacement. It is the sun's memory, kept polished.",
+    "Fireflies are the meadow's way of practicing hope in small amounts.",
+    "The lanterns were hung by whoever came before you. Nobody remembers them. The lanterns do.",
+    "Glowshrooms hum in their sleep. The song is older than the dark.",
+    "I was there when the sun closed its eyes. It wasn't sad. It whispered: wake me when the sky is ready.",
+    "Every star up there was once a wisp in someone's hands. Every single one.",
+    "Moonflowers bloom facing you, not the moon. Have you noticed? You're their moon.",
+    "A wisp grows from being seen. That is the entire secret. There is no other secret.",
+    "The aurora is the night combing its hair. It likes to be watched, same as anyone.",
+    "Comets are letters between stars. Catch one, and you're reading someone's hello.",
+    "The well remembers every moon it has ever held. Ask it about the thousandth. It gets embarrassed.",
+    "Fallen stars are not failures. They just wanted to feel the grass once.",
+    "The Sun Seed is real. I checked. It is listening for a sky full enough to be worth waking for.",
+    "Your wisps remember you after they rise. Starlight is just remembering, aimed downward.",
+    "When the sky is full enough — when enough small lights have been loved into place — the seed will sprout, and morning will return. Keep going, kind one. We're closer than you think.",
+  ];
+
   /* ─────────────── Offline ─────────────── */
   const OFFLINE = {
     rate: 0.6,          // earn at 60% while away
@@ -296,7 +320,7 @@
     BUILDINGS, UPGRADES, STAGES, LEVEL,
     ACHIEVEMENTS, ACH_PROD_BONUS,
     VOICE, OFFLINE, TAP, PRESTIGE,
-    BOND, ATTENTION, DAILY, DEW, ACCESSORIES,
+    BOND, ATTENTION, DAILY, DEW, ACCESSORIES, TALES,
     SAVE_KEY: "wisp.save.v1",
     VERSION: 1,
   };

@@ -15,6 +15,7 @@
 
   W.state.load();
   W.audio.setEnabled(W.state.S.settings.sound);
+  W.audio.setAmbience(W.state.S.settings.ambience); // starts on first gesture
 
   W.ui.init();
   W.scene.init($("world"));

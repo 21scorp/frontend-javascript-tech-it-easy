@@ -348,6 +348,24 @@
         <div class="shop-desc" style="margin-top:8px">Little gifts, earned by loyalty — never bought. Tap one to dress ${S.wispName || "your wisp"}.</div>
       </div>`;
 
+    // ─ the owl's journal ─
+    const talesUnlocked = Math.min(S.tales || 0, C.TALES.length);
+    let journalHtml = "";
+    if (talesUnlocked > 0) {
+      const entries = C.TALES.slice(0, talesUnlocked).map((tale, i) =>
+        `<div class="tale"><span class="tale-num">${i + 1}</span>${tale}</div>`
+      ).join("");
+      const remaining = C.TALES.length - talesUnlocked;
+      journalHtml =
+        `<div class="wisp-card">
+          <h3>🦉 The Owl's Tales · ${talesUnlocked}/${C.TALES.length}</h3>
+          <div class="tales">${entries}</div>
+          <div class="shop-desc" style="margin-top:8px">${remaining > 0
+            ? "The owl tells one tale for every day you return. " + remaining + " more wait in its feathers."
+            : "You have heard every tale the owl knows. It watches you differently now."}</div>
+        </div>`;
+    }
+
     // ─ family of stars ─
     let starsHtml = "";
     if (S.stars.length > 0) {
@@ -378,6 +396,7 @@
       ${wardrobeHtml}
       ${ascHtml}
       ${starsHtml}
+      ${journalHtml}
       <div class="wisp-card">
         <h3>Memories · ${Object.keys(S.achievements).length}/${C.ACHIEVEMENTS.length}</h3>
         <div class="ach-grid">${achHtml}</div>
@@ -466,6 +485,7 @@
     const S = W.state.S;
     const rowsHtml =
       `<div class="setting-row"><span>Sound</span><button class="switch ${S.settings.sound ? "on" : ""}" id="sw-sound"></button></div>
+       <div class="setting-row"><span>Night ambience</span><button class="switch ${S.settings.ambience ? "on" : ""}" id="sw-ambience"></button></div>
        <div class="setting-row"><span>Particles</span><button class="switch ${S.settings.particles ? "on" : ""}" id="sw-particles"></button></div>
        <div class="setting-row"><span>Playing since</span><b style="font-size:0.85rem">${new Date(S.born).toLocaleDateString()}</b></div>
        <div class="setting-row"><span>Save code</span>
@@ -489,6 +509,11 @@
     $("sw-particles").addEventListener("click", (e) => {
       S.settings.particles = !S.settings.particles;
       e.target.classList.toggle("on", S.settings.particles);
+    });
+    $("sw-ambience").addEventListener("click", (e) => {
+      S.settings.ambience = !S.settings.ambience;
+      W.audio.setAmbience(S.settings.ambience);
+      e.target.classList.toggle("on", S.settings.ambience);
     });
     $("btn-export").addEventListener("click", exportSave);
     $("btn-import").addEventListener("click", importSave);

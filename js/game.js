@@ -136,6 +136,9 @@
     const firstEver = !S.streak.last;
     S.streak.count = S.streak.last === yesterdayStr() ? S.streak.count + 1 : 1;
     S.streak.last = today;
+    // the owl shares one more tale with every new day
+    const newTale = S.tales < C.TALES.length;
+    if (newTale) S.tales++;
     if (firstEver) { W.state.save(); return; } // day 1 happens quietly, inside the naming
 
     const name = S.wispName || "Your wisp";
@@ -155,6 +158,11 @@
     );
     W.audio.play("levelUp");
     if (deepened) setTimeout(announceBond, 1200);
+    if (newTale) {
+      setTimeout(() => {
+        W.ui.toast("🦉 The owl remembers…", "A new tale waits in " + name + "'s journal.");
+      }, 2400);
+    }
     W.state.save();
   }
 

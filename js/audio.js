@@ -12,6 +12,8 @@
   let enabled = true;
   let tapStep = 0;
   let tapStepResetTimer = null;
+  let ambience = null;      // {windGain, cricketTimer, nodes[]}
+  let ambienceWanted = false;
 
   function ensure() {
     if (!ctx) {
@@ -88,11 +90,68 @@
     },
   };
 
+  /* ─────────────── night ambience ───────────────
+     A whisper of wind and the occasional cricket. All synthesized. */
+
+  function startAmbience() {
+    if (ambience || !enabled || !ensure()) return;
+    // wind: looped noise through a slow-breathing lowpass
+    const len = ctx.sampleRate * 2;
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = 240;
+    const windGain = ctx.createGain();
+    windGain.gain.value = 0.018;
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 0.07;
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 0.01;
+    lfo.connect(lfoGain).connect(windGain.gain);
+    src.connect(lp).connect(windGain).connect(master);
+    src.start();
+    lfo.start();
+
+    // crickets: soft, sparse chirps
+    const cricketTimer = setInterval(() => {
+      if (!enabled || document.visibilityState !== "visible") return;
+      const n = 2 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < n; i++) {
+        tone(4200 + Math.random() * 400, { dur: 0.045, vol: 0.012, type: "sine", delay: i * 0.09 });
+      }
+    }, 4000 + Math.random() * 5000);
+
+    ambience = { cricketTimer, nodes: [src, lfo] };
+  }
+
+  function stopAmbience() {
+    if (!ambience) return;
+    clearInterval(ambience.cricketTimer);
+    for (const n of ambience.nodes) { try { n.stop(); } catch (e) {} }
+    ambience = null;
+  }
+
   W.audio = {
     play(name) { if (sfx[name]) sfx[name](); },
-    setEnabled(on) { enabled = on; },
+    setEnabled(on) {
+      enabled = on;
+      if (!on) stopAmbience();
+      else if (ambienceWanted) startAmbience();
+    },
     get enabled() { return enabled; },
+    setAmbience(on) {
+      ambienceWanted = on;
+      if (on) startAmbience(); else stopAmbience();
+    },
     /** Must be called from a user gesture once to unlock audio on mobile. */
-    unlock() { ensure(); },
+    unlock() {
+      ensure();
+      if (ambienceWanted && !ambience) startAmbience();
+    },
   };
 })();
