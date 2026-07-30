@@ -193,6 +193,10 @@
     { id: "visitor10", glyph: "⛵", name: "Open door",       desc: "Greet 10 visitors.", check: (s) => (s.visitors || 0) >= 10 },
     { id: "constname", glyph: "✍️", name: "Sky writer",      desc: "Name your constellation.", check: (s) => !!s.constellation },
     { id: "alltales",  glyph: "📖", name: "The whole story", desc: "Hear every tale the owl knows.", check: (s) => (s.tales || 0) >= TALES.length },
+    { id: "dew10",     glyph: "💧", name: "Dew chaser",      desc: "Catch 10 golden dewdrops.", check: (s) => s.counters && s.counters.dews >= 10 },
+    { id: "dew25",     glyph: "🏅", name: "Dawnproof",       desc: "Catch 25 golden dewdrops.", check: (s) => s.counters && s.counters.dews >= 25 },
+    { id: "comet25",   glyph: "🌠", name: "Wish collector",  desc: "Catch 25 comet wishes.", check: (s) => s.counters && s.counters.comets >= 25 },
+    { id: "comet50",   glyph: "🏆", name: "Sky fisher",      desc: "Catch 50 comet wishes.", check: (s) => s.counters && s.counters.comets >= 50 },
   ];
   const ACH_PROD_BONUS = 0.01;
 
@@ -268,6 +272,10 @@
       check: (s) => (s.stars || []).length >= 1 },
     { id: "glasses", name: "Moon Glasses", glyph: "🤓", unlockText: "Touch your wisp 10,000 times",
       check: (s) => s.taps >= 10000 },
+    { id: "pendant", name: "Dewdrop Pendant", glyph: "💧", unlockText: "Catch 25 golden dewdrops",
+      check: (s) => s.counters && s.counters.dews >= 25 },
+    { id: "ribbon", name: "Comet Ribbon", glyph: "🎗️", unlockText: "Catch 50 comet wishes",
+      check: (s) => s.counters && s.counters.comets >= 50 },
     // supporter gifts — unlocked with a gift code (cosmetics only, ever)
     { id: "tophat", name: "Star Top Hat", glyph: "🎩", unlockText: "A supporter gift", supporter: true,
       check: (s) => !!(s.flags && s.flags.supporter) },

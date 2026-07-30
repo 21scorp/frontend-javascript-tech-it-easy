@@ -229,6 +229,7 @@
     const firstEver = !S.streak.last;
     S.streak.count = S.streak.last === yesterdayStr() ? S.streak.count + 1 : 1;
     S.streak.last = today;
+    S.counters.bestStreak = Math.max(S.counters.bestStreak, S.streak.count);
     // the owl shares one more tale with every new day
     const newTale = S.tales < C.TALES.length;
     if (newTale) S.tales++;
@@ -498,6 +499,7 @@
 
   function catchDew(x, y) {
     dew = null;
+    W.state.S.counters.dews++;
     progressWish("dew");
     W.particles.burst(x, y, 34, { speed: 260 });
     W.audio.play("crit");
@@ -597,6 +599,7 @@
   function cometWish(x, y) {
     const reward = Math.max(W.state.lightPerSec() * 60 * 8, W.state.tapValue() * 60);
     earn(reward);
+    W.state.S.counters.comets++;
     progressWish("comet");
     W.particles.burst(x, y, 30, { speed: 260 });
     W.ui.floater(x, y, "+" + U.fmt(reward), true);

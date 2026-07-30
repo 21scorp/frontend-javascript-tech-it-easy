@@ -49,6 +49,8 @@
       wishes: null,
       // the name you gave your constellation (3+ stars)
       constellation: null,
+      // lifetime event counters (persist across ascension)
+      counters: { dews: 0, comets: 0, bestStreak: 0 },
     };
   }
 
@@ -104,6 +106,7 @@
       for (const st of S.stars) st.name = clean(st.name) || "Star";
       S.bond = Object.assign({ xp: 0, level: 1 }, data.bond);
       S.streak = Object.assign({ last: null, count: 0 }, data.streak);
+      S.counters = Object.assign({ dews: 0, comets: 0, bestStreak: 0 }, data.counters);
       S.buffs = (data.buffs || []).filter((b) => b && b.until > Date.now());
       // migrate the old single-buff field
       if (data.buff && data.buff.until > Date.now()) {

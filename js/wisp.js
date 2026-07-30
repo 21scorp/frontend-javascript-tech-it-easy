@@ -433,6 +433,42 @@
       ctx.moveTo(-eyeDX + r * 0.21, eyeY);
       ctx.lineTo(eyeDX - r * 0.21, eyeY);
       ctx.stroke();
+    } else if (id === "pendant") {
+      // a golden dewdrop on a thread of light
+      const py = r * 0.78 + Math.sin(t * 1.8) * r * 0.02;
+      ctx.strokeStyle = "rgba(255,224,140,0.6)";
+      ctx.lineWidth = r * 0.025;
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.86, Math.PI * 0.34, Math.PI * 0.66);
+      ctx.stroke();
+      const g = ctx.createRadialGradient(-r * 0.02, py - r * 0.03, 1, 0, py, r * 0.12);
+      g.addColorStop(0, "#fffdf0");
+      g.addColorStop(0.6, "#ffe9a0");
+      g.addColorStop(1, "#ffc24d");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(0, py - r * 0.14);
+      ctx.bezierCurveTo(r * 0.09, py - r * 0.04, r * 0.08, py + r * 0.07, 0, py + r * 0.09);
+      ctx.bezierCurveTo(-r * 0.08, py + r * 0.07, -r * 0.09, py - r * 0.04, 0, py - r * 0.14);
+      ctx.fill();
+    } else if (id === "ribbon") {
+      // a comet-tail ribbon streaming behind
+      const wave = Math.sin(t * 2.2) * 0.1;
+      ctx.strokeStyle = "rgba(180,210,255,0.75)";
+      ctx.lineWidth = r * 0.09;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.7, -r * 0.55);
+      ctx.quadraticCurveTo(-r * 1.35, -r * (0.7 + wave), -r * 1.7, -r * (0.35 + wave * 2));
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255,235,180,0.6)";
+      ctx.lineWidth = r * 0.05;
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.72, -r * 0.48);
+      ctx.quadraticCurveTo(-r * 1.3, -r * (0.55 + wave), -r * 1.62, -r * (0.2 + wave * 2));
+      ctx.stroke();
+      ctx.fillStyle = "#ffe9a8";
+      drawTinyStar(ctx, -r * 0.7, -r * 0.55, r * 0.11, t);
     } else if (id === "tophat") {
       ctx.save();
       ctx.translate(r * 0.05, -r * 0.92);

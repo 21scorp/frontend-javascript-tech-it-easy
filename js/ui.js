@@ -639,6 +639,9 @@
          <div class="stat-line"><span>Light, all lives</span><b>${U.fmt(S.allTimeLight + S.totalLight)} ✦</b></div>
          <div class="stat-line"><span>Stardust</span><b>${S.stardust} ✨</b></div>
          <div class="stat-line"><span>Visitors greeted</span><b>${S.visitors || 0}</b></div>
+         <div class="stat-line"><span>Dewdrops caught</span><b>${S.counters.dews}</b></div>
+         <div class="stat-line"><span>Wishes caught</span><b>${S.counters.comets}</b></div>
+         <div class="stat-line"><span>Best streak</span><b>${Math.max(S.counters.bestStreak, S.streak.count)} days</b></div>
          <div class="stat-line"><span>Tales heard</span><b>${Math.min(S.tales || 0, C.TALES.length)}/${C.TALES.length}</b></div>
        </div>`;
 
