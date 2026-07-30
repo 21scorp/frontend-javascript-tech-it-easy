@@ -150,10 +150,12 @@
     return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   }
 
-  function yesterdayStr() {
-    const d = new Date(Date.now() - 86400000);
+  function daysAgoStr(n) {
+    const d = new Date(Date.now() - n * 86400000);
     return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   }
+
+  function yesterdayStr() { return daysAgoStr(1); }
 
   /* ─────────────── tonight's wishes ─────────────── */
 
@@ -227,7 +229,20 @@
     if (S.streak.last === today) return;
     W.state.rotateBackup(); // yesterday's save becomes the safety net
     const firstEver = !S.streak.last;
-    S.streak.count = S.streak.last === yesterdayStr() ? S.streak.count + 1 : 1;
+    let shielded = false;
+    if (S.streak.last === yesterdayStr()) {
+      S.streak.count += 1;
+    } else if (
+      S.streak.last === daysAgoStr(2) && S.streak.count >= 3 &&
+      (!S.streak.shieldUsed || Date.now() - S.streak.shieldUsed > 7 * 86400000)
+    ) {
+      // you missed exactly one night — the moon covered for you (once a week)
+      S.streak.count += 1;
+      S.streak.shieldUsed = Date.now();
+      shielded = true;
+    } else {
+      S.streak.count = 1;
+    }
     S.streak.last = today;
     S.counters.bestStreak = Math.max(S.counters.bestStreak, S.streak.count);
     // the owl shares one more tale with every new day
@@ -248,6 +263,7 @@
       `<p>${U.pick(C.VOICE.daily)}</p>
        <span class="big-num">+${U.fmt(gift)} ✦</span>
        <p><b>×${C.DAILY.buffMult} light</b> for ${C.DAILY.buffMinutes} minutes · <b>+${bondXp}</b> bond</p>
+       ${shielded ? `<p class="muted" style="margin-top:8px">🌙 You missed a night — the moon quietly covered for you. (Once a week, it will.)</p>` : ""}
        ${S.streak.count > 1 ? `<p class="muted" style="margin-top:8px">🔥 ${S.streak.count} days in a row — don't break the little one's heart.</p>` : ""}`,
       [{ label: "Good morning, " + name, cls: "btn-primary", fn: moonLetter ? showMoonLetter : null }]
     );
