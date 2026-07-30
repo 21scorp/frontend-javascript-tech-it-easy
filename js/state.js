@@ -45,6 +45,8 @@
       visitors: 0,
       // game version last seen (for "the meadow grew" notes)
       lastBuild: null,
+      // tonight's wishes: {date, list:[{id, target, n, claimed}], allDone}
+      wishes: null,
     };
   }
 

@@ -275,6 +275,23 @@
   /* Gift codes redeemable in settings (v1: honor system). */
   const GIFT_CODES = { FIRSTLIGHT: "supporter" };
 
+  /* ─────────────── Tonight's wishes ───────────────
+     Three small wishes the meadow makes each night. Fulfil them for
+     light + bond; fulfil all three and the sky tips you a stardust. */
+  const WISHES = [
+    { id: "tap",     count: 150, text: "Touch {name} {count} times",        track: "tap" },
+    { id: "pet",     count: 25,  text: "Pet {name} for a while ({count} moments)", track: "pet" },
+    { id: "build",   count: 10,  text: "Grow the meadow by {count} buildings", track: "build" },
+    { id: "boost",   count: 1,   text: "Weave in a new boost",               track: "boost" },
+    { id: "comet",   count: 2,   text: "Catch {count} comet wishes",         track: "comet" },
+    { id: "dew",     count: 1,   text: "Catch a golden dewdrop",             track: "dew" },
+    { id: "combo",   count: 25,  text: "Reach a touch-combo of {count}",     track: "combo", max: true },
+    { id: "visitor", count: 1,   text: "Greet a visitor",                    track: "visitor" },
+  ];
+  const WISH_REWARD_MINUTES = 20;   // production-minutes per wish (min 1000)
+  const WISH_BOND = 8;
+  const WISH_ALL_STARDUST = 1;
+
   /* ─────────────── Visitors ───────────────
      Rare wanderers cross the meadow. Greeting them is a small joy.  */
   const VISITORS = [
@@ -392,13 +409,14 @@
   };
 
   W.config = {
-    BUILD: "0.3.0",
+    BUILD: "0.4.0",
     BUILDINGS, UPGRADES, STAGES, LEVEL,
     ACHIEVEMENTS, ACH_PROD_BONUS,
     VOICE, OFFLINE, TAP, PRESTIGE,
     BOND, ATTENTION, DAILY, DEW, ACCESSORIES, TALES,
     OFFLINE_FLAVOR, MOON_LETTERS, MOON_LETTER_STARDUST,
     VISITORS, VISITOR_GAP, PLURALS, DREAMS, GIFT_CODES,
+    WISHES, WISH_REWARD_MINUTES, WISH_BOND, WISH_ALL_STARDUST,
     SAVE_KEY: "wisp.save.v1",
     VERSION: 1,
   };

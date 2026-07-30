@@ -89,6 +89,9 @@
     if (crit) v *= C.TAP.critMult;
     earn(v);
 
+    progressWish("tap");
+    progressWish("combo", combo);
+
     W.wisp.poke();
     W.audio.play(crit ? "crit" : "tap");
     const comboTag = combo >= 10 ? "  ‹" + combo + "›" : "";
@@ -144,10 +147,75 @@
     return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   }
 
+  /* ─────────────── tonight's wishes ─────────────── */
+
+  function ensureWishes() {
+    const S = W.state.S;
+    const today = todayStr();
+    if (S.wishes && S.wishes.date === today) return;
+    const pool = [...C.WISHES];
+    const list = [];
+    for (let i = 0; i < 3 && pool.length; i++) {
+      const idx = Math.floor(Math.random() * pool.length);
+      const tpl = pool.splice(idx, 1)[0];
+      list.push({ id: tpl.id, target: tpl.count, n: 0, claimed: false, told: false });
+    }
+    S.wishes = { date: today, list, allDone: false };
+  }
+
+  function wishTemplate(id) {
+    return C.WISHES.find((w) => w.id === id);
+  }
+
+  function progressWish(track, amount) {
+    const S = W.state.S;
+    if (!S.wishes) return;
+    for (const w of S.wishes.list) {
+      if (w.claimed || w.id !== track) continue;
+      const tpl = wishTemplate(w.id);
+      w.n = tpl.max ? Math.max(w.n, amount || 1) : w.n + (amount || 1);
+      if (w.n > w.target) w.n = w.target;
+      if (w.n >= w.target && !w.told) {
+        w.told = true;
+        W.ui.toast("🌙 A wish came true", "Claim it in the Wisp tab");
+        W.audio.play("achievement");
+      }
+    }
+  }
+
+  function claimWish(i) {
+    const S = W.state.S;
+    if (!S.wishes || !S.wishes.list[i]) return;
+    const w = S.wishes.list[i];
+    if (w.claimed || w.n < w.target) return;
+    w.claimed = true;
+    const reward = Math.max(1000, W.state.lightPerSec() * 60 * C.WISH_REWARD_MINUTES);
+    earn(reward);
+    const deepened = W.state.gainBond(C.WISH_BOND);
+    const p = W.scene.wispPos();
+    W.particles.rise(p.x, p.y, 16);
+    W.audio.play("upgrade");
+    W.ui.floater(p.x, p.y - 60, "+" + U.fmt(reward), true);
+    if (deepened) announceBond();
+
+    if (S.wishes.list.every((x) => x.claimed) && !S.wishes.allDone) {
+      S.wishes.allDone = true;
+      S.stardust += C.WISH_ALL_STARDUST;
+      W.particles.burst(p.x, p.y, 40, { speed: 240 });
+      W.particles.ring(p.x, p.y, 55, 48);
+      W.audio.play("evolve");
+      W.ui.toast("🌌 Every wish came true tonight", "+1 ✨ stardust from a grateful sky");
+      W.ui.bubble(U.pick(["the meadow is humming!!", "we did all of them. ALL of them.", "tonight was a good night."]), 3400);
+    }
+    W.state.save();
+    W.ui.renderWispTab();
+  }
+
   /** Called on boot (after modals) and on day rollover while playing. */
   function maybeDailyGift() {
     const S = W.state.S;
     const today = todayStr();
+    ensureWishes();
     if (S.streak.last === today) return;
     const firstEver = !S.streak.last;
     S.streak.count = S.streak.last === yesterdayStr() ? S.streak.count + 1 : 1;
@@ -192,6 +260,7 @@
     if (attention) { answerAttention(); return; }
     const v = Math.max(W.state.tapValue() * 0.5, W.state.lightPerSec() * 0.25);
     earn(v);
+    progressWish("pet");
     const deepened = W.state.gainBond(C.BOND.petXp);
     const p = W.scene.wispPos();
     W.ui.floater(p.x + U.rand(-30, 30), p.y - 60, "+" + U.fmt(v));
@@ -218,6 +287,7 @@
     const first = W.state.totalBuildings() === 0;
     const firstOfKind = (S.buildings[id] || 0) === 0;
     S.buildings[id] = (S.buildings[id] || 0) + n;
+    progressWish("build", n);
 
     W.audio.play("buy");
     W.ui.updateShop();
@@ -238,6 +308,7 @@
 
     S.light -= u.cost;
     S.upgrades[id] = true;
+    progressWish("boost");
     W.audio.play("upgrade");
     W.ui.renderBoostsTab();
     W.ui.updateShop();
@@ -385,6 +456,7 @@
 
   function catchDew(x, y) {
     dew = null;
+    progressWish("dew");
     W.particles.burst(x, y, 34, { speed: 260 });
     W.audio.play("crit");
     if (Math.random() < C.DEW.luckyChance) {
@@ -407,6 +479,7 @@
     visitor.greeted = true;
     const S = W.state.S;
     S.visitors = (S.visitors || 0) + 1;
+    progressWish("visitor");
     const reward = Math.max(W.state.lightPerSec() * 60 * 3, W.state.tapValue() * 30);
     earn(reward);
     W.state.gainBond(5);
@@ -421,6 +494,7 @@
   function cometWish(x, y) {
     const reward = Math.max(W.state.lightPerSec() * 60 * 8, W.state.tapValue() * 60);
     earn(reward);
+    progressWish("comet");
     W.particles.burst(x, y, 30, { speed: 260 });
     W.ui.floater(x, y, "+" + U.fmt(reward), true);
     W.audio.play("crit");
@@ -633,7 +707,7 @@
     computeOffline, applyOffline,
     checkAchievements, greet,
     tryAscend, starTouched, cometWish, catchDew, spawnDew,
-    maybeDailyGift, greetVisitor,
+    maybeDailyGift, greetVisitor, claimWish, ensureWishes,
     spawnVisitor(id) { const t = C.VISITORS.find((v) => v.id === id); if (t) visitor = { type: t, born: Date.now(), greeted: false }; },
     get ceremony() { return ceremony; },
     get attention() { return attention; },

@@ -293,15 +293,21 @@
       refs.costEl.classList.toggle("cant", !can);
       refs.row.classList.toggle("unaffordable", !can);
     }
-    // notification dot on the Boosts tab
-    const tab = document.querySelector('.tab[data-tab="boosts"]');
-    const hasDot = !!tab.querySelector(".tab-dot");
-    if (anyAffordable && !hasDot) {
-      const dot = document.createElement("span");
-      dot.className = "tab-dot";
-      tab.appendChild(dot);
-    } else if (!anyAffordable && hasDot) {
-      tab.querySelector(".tab-dot").remove();
+    setTabDot("boosts", anyAffordable);
+    const S2 = W.state.S;
+    setTabDot("wisp", !!(S2.wishes && S2.wishes.list.some((w) => w.n >= w.target && !w.claimed)));
+  }
+
+  function setTabDot(tabName, on) {
+    const tab = document.querySelector('.tab[data-tab="' + tabName + '"]');
+    if (!tab) return;
+    const dot = tab.querySelector(".tab-dot");
+    if (on && !dot) {
+      const el = document.createElement("span");
+      el.className = "tab-dot";
+      tab.appendChild(el);
+    } else if (!on && dot) {
+      dot.remove();
     }
   }
 
@@ -318,6 +324,34 @@
       const has = !!S.achievements[a.id];
       return `<div class="ach ${has ? "unlocked" : ""}" title="${has ? a.name + " — " + a.desc : "???"}">${a.glyph}</div>`;
     }).join("");
+
+    // ─ tonight's wishes ─
+    let wishesHtml = "";
+    if (S.wishes && S.wishes.list.length) {
+      const rows = S.wishes.list.map((w, i) => {
+        const tpl = C.WISHES.find((x) => x.id === w.id);
+        const text = tpl.text.replace("{name}", S.wispName || "your wisp").replace("{count}", tpl.count);
+        const pct = Math.min(100, (w.n / w.target) * 100);
+        const ready = w.n >= w.target && !w.claimed;
+        return `<div class="wish ${w.claimed ? "claimed" : ""}">
+          <div class="wish-main">
+            <div class="wish-text">${w.claimed ? "✔ " : ""}${text}</div>
+            <div class="meter" style="margin-top:5px"><div style="height:100%;width:${pct}%;border-radius:3px;background:linear-gradient(90deg,#8ea6ff,#b28aff);box-shadow:0 0 8px rgba(140,150,255,0.6)"></div></div>
+          </div>
+          ${ready
+            ? `<button class="btn btn-primary wish-claim" data-wish="${i}" style="padding:8px 14px;font-size:0.78rem">Claim</button>`
+            : `<span class="wish-count">${Math.floor(w.n)}/${w.target}</span>`}
+        </div>`;
+      }).join("");
+      wishesHtml =
+        `<div class="wisp-card" style="border-color: rgba(140,160,255,0.25)">
+          <h3>🌙 Tonight's wishes</h3>
+          ${rows}
+          <div class="shop-desc" style="margin-top:6px">${S.wishes.allDone
+            ? "Every wish came true tonight. The sky is grateful."
+            : "Fulfil all three and the sky tips you a stardust ✨"}</div>
+        </div>`;
+    }
 
     // ─ bond card ─
     const bond = S.bond;
@@ -411,6 +445,7 @@
         <div class="stat-line"><span>Things built</span><b>${U.fmtInt(W.state.totalBuildings())}</b></div>
         <div class="stat-line"><span>Production bonus</span><b>×${W.state.globalMult().toFixed(2)}</b></div>
       </div>
+      ${wishesHtml}
       ${bondHtml}
       ${wardrobeHtml}
       ${ascHtml}
@@ -424,6 +459,10 @@
 
     const ascBtn = $("btn-ascend");
     if (ascBtn) ascBtn.addEventListener("click", () => W.game.tryAscend());
+
+    els["tab-wisp"].querySelectorAll(".wish-claim").forEach((btn) => {
+      btn.addEventListener("click", () => W.game.claimWish(parseInt(btn.dataset.wish, 10)));
+    });
 
     els["tab-wisp"].querySelectorAll(".acc.unlocked").forEach((btn) => {
       btn.addEventListener("click", () => {
