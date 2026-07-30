@@ -85,7 +85,11 @@
     x.font = "600 42px ui-rounded, system-ui, sans-serif";
     x.fillText(st.name + " · level " + S.level + " · " + days + (days === 1 ? " day" : " days") + " together", PW / 2, PH - 175);
     if (S.stars.length > 0) {
-      const guardians = "watched over by " + S.stars.map((s) => s.name).join(", ");
+      const names = S.stars.map((s) => s.name);
+      const shown = names.length > 4
+        ? names.slice(0, 3).join(", ") + " and " + (names.length - 3) + " more"
+        : names.join(", ");
+      const guardians = "watched over by " + shown;
       x.fillText(S.constellation ? guardians + " — the " + S.constellation : guardians, PW / 2, PH - 118);
     }
     x.fillStyle = "#6e7aa3";
