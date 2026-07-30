@@ -24,6 +24,7 @@
   let showerTimer = U.rand(1100, 2200);
   let combo = 0;
   let lastTapAt = 0;
+  let sessionT = 0;      // seconds since boot (for first-time hints)
 
   /* ─────────────── earning ─────────────── */
 
@@ -157,13 +158,14 @@
     const deepened = W.state.gainBond(bondXp);
     W.state.addBuff("daily", "morning warmth", C.DAILY.buffMult, C.DAILY.buffMinutes * 60);
 
+    const moonLetter = S.streak.count > 0 && S.streak.count % 7 === 0;
     W.ui.modal(
       S.streak.count > 1 ? "Day " + S.streak.count + " together" : "A new day together",
       `<p>${U.pick(C.VOICE.daily)}</p>
        <span class="big-num">+${U.fmt(gift)} ✦</span>
        <p><b>×${C.DAILY.buffMult} light</b> for ${C.DAILY.buffMinutes} minutes · <b>+${bondXp}</b> bond</p>
        ${S.streak.count > 1 ? `<p class="muted" style="margin-top:8px">🔥 ${S.streak.count} days in a row — don't break the little one's heart.</p>` : ""}`,
-      [{ label: "Good morning, " + name, cls: "btn-primary" }]
+      [{ label: "Good morning, " + name, cls: "btn-primary", fn: moonLetter ? showMoonLetter : null }]
     );
     W.audio.play("levelUp");
     if (deepened) setTimeout(announceBond, 1200);
@@ -409,6 +411,23 @@
     }
   }
 
+  /** Every 7th streak day, the moon writes. Enclosed: stardust. */
+  function showMoonLetter() {
+    const S = W.state.S;
+    const week = Math.floor(S.streak.count / 7);
+    const letter = C.MOON_LETTERS[Math.min(week - 1, C.MOON_LETTERS.length - 1)];
+    S.stardust += C.MOON_LETTER_STARDUST;
+    W.state.save();
+    W.ui.modal(
+      "🌕 A letter from the Moon",
+      `<p style="white-space:pre-line;text-align:left;font-style:italic">${letter}</p>
+       <span class="big-num">+${C.MOON_LETTER_STARDUST} ✨</span>
+       <p class="muted">stardust — every future wisp shines ${Math.round(C.PRESTIGE.perStardust * 100)}% brighter</p>`,
+      [{ label: "Write back someday", cls: "btn-primary" }]
+    );
+    W.audio.play("achievement");
+  }
+
   /* ─────────────── wisp voice (idle) ─────────────── */
 
   function greet() {
@@ -473,6 +492,24 @@
       if (attnTimer <= 0) {
         attnTimer = U.rand(C.ATTENTION.minGap, C.ATTENTION.maxGap);
         if (document.visibilityState === "visible" && S.flags.introDone) startAttention();
+      }
+    }
+
+    // gentle first-time hints — the wisp asks, no tutorial boxes
+    sessionT += dt;
+    if (S.flags.introDone) {
+      const H = S.flags.hints || (S.flags.hints = {});
+      if (!H.touch && sessionT > 5 && S.taps === 0) {
+        H.touch = true;
+        W.ui.bubble("touch me? gently?", 4000);
+      }
+      if (!H.build && S.light >= 15 && W.state.totalBuildings() === 0) {
+        H.build = true;
+        W.ui.toast("✨ You have enough light to build something", "Open Build, below");
+      }
+      if (!H.pet && sessionT > 100 && S.bond.xp === 0 && S.bond.level === 1) {
+        H.pet = true;
+        W.ui.bubble("you can hold me, you know. press and stay.", 4600);
       }
     }
 

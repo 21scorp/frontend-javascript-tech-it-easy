@@ -162,9 +162,14 @@
         `<p>You were away for <b>${U.fmtDuration(off.seconds)}</b>.</p>
          <span class="big-num">+${U.fmt(off.gained)} ✦</span>
          <p>${name} kept gathering light while thinking of you.</p>
+         <p class="muted" style="margin-top:8px;font-style:italic">${U.pick(C.OFFLINE_FLAVOR)}</p>
          ${off.cappedSeconds < off.seconds ? `<p class="muted" style="margin-top:8px">(it dozed off after ${C.OFFLINE.capHours} hours)</p>` : ""}`,
         [{ label: "I'm home", cls: "btn-primary", fn: () => { W.game.greet(); setTimeout(() => W.game.maybeDailyGift(), 600); } }]
       );
+      // long trips earn a burst of saved-up excitement
+      if (off.seconds > 12 * 3600) {
+        W.state.addBuff("rested", "saved-up excitement", 3, 5 * 60);
+      }
     } else {
       setTimeout(() => { W.game.greet(); W.game.maybeDailyGift(); }, 800);
     }
@@ -226,6 +231,19 @@
 
   window.addEventListener("pointermove", (e) => {
     W.wisp.pointerMoved(e.clientX, e.clientY);
+  });
+
+  // keyboard: space/enter boops the wisp
+  window.addEventListener("keydown", (e) => {
+    if (e.repeat) return;
+    if (e.key !== " " && e.key !== "Enter") return;
+    if (ceremonyActive || W.game.ceremony) return;
+    const tag = document.activeElement && document.activeElement.tagName;
+    if (tag === "INPUT" || tag === "BUTTON" || tag === "TEXTAREA") return;
+    e.preventDefault();
+    const p = W.wisp.pos(lastT);
+    W.audio.unlock();
+    W.game.tap(p.x, p.y);
   });
 
   /* ─────────────── PWA ─────────────── */

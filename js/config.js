@@ -311,6 +311,29 @@
     minSeconds: 90,     // don't bother below this
   };
 
+  /* Little things that "happened" while you were gone. */
+  const OFFLINE_FLAVOR = [
+    "The fireflies spelled your name. Badly, but with feeling.",
+    "The owl kept one eye open the whole time. For you.",
+    "A moth came by and asked about you.",
+    "It hummed the song you tap. All night.",
+    "The moonflowers leaned toward the door.",
+    "It counted the stars twice and got two different numbers.",
+    "The lanterns stayed lit a little longer than they had to.",
+    "It practiced saying your name so it wouldn't forget the shape of it.",
+  ];
+
+  /* ─────────────── Moon letters ───────────────
+     Every 7th day of a streak, the moon itself writes to you.       */
+  const MOON_LETTERS = [
+    "Dear keeper of small lights,\n\nSeven nights in a row, I have watched you return. Do you know how rare that is? Most warmth wanders. Yours stays.\n\nEnclosed: a pinch of stardust. I was saving it for someone patient.\n\n— the Moon",
+    "Dear friend of the meadow,\n\nTwo weeks of you. The hills have started arranging themselves to face the spot where you appear. Don't tell them I told you.\n\nMore stardust. You've earned the sky's attention.\n\n— the Moon",
+    "Dear constant one,\n\nThree weeks. Even I dim sometimes, and I am the Moon. But your little light waits for you like the tide waits for me.\n\nStardust, again. Spend it on nothing. It multiplies when carried.\n\n— the Moon",
+    "Dear keeper,\n\nI have run out of formal openings. You come back. That is the whole letter, really. You come back, and everything here is more possible because of it.\n\n— the Moon (with stardust)",
+  ];
+
+  const MOON_LETTER_STARDUST = 1;
+
   /* ─────────────── Tap ─────────────── */
   const TAP = {
     base: 1,
@@ -319,10 +342,12 @@
   };
 
   W.config = {
+    BUILD: "0.3.0",
     BUILDINGS, UPGRADES, STAGES, LEVEL,
     ACHIEVEMENTS, ACH_PROD_BONUS,
     VOICE, OFFLINE, TAP, PRESTIGE,
     BOND, ATTENTION, DAILY, DEW, ACCESSORIES, TALES,
+    OFFLINE_FLAVOR, MOON_LETTERS, MOON_LETTER_STARDUST,
     SAVE_KEY: "wisp.save.v1",
     VERSION: 1,
   };

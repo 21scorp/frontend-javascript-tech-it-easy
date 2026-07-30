@@ -119,6 +119,8 @@
       rateText += " · ×" + (Math.round(bm * 10) / 10) + " " + Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0");
     }
     els["light-rate"].textContent = rateText;
+    // the tab remembers too
+    document.title = (S.wispName ? S.wispName + " · " : "") + U.fmt(S.light) + " ✦ WISP";
     els["wisp-name-tag"].textContent = S.wispName || "…";
     els["wisp-stage-tag"].textContent = W.state.stageFor(S.level).name;
     els["wisp-level-tag"].textContent = "Lv " + S.level;
@@ -495,7 +497,7 @@
          </span>
        </div>`;
 
-    modal("Settings", rowsHtml + `<p class="muted" style="margin-top:12px">WISP saves automatically in this browser. Copy a save code to move ${S.wispName || "your wisp"} to another device — don't leave it behind.</p>`, [
+    modal("Settings", rowsHtml + `<p class="muted" style="margin-top:12px">WISP saves automatically in this browser. Copy a save code to move ${S.wispName || "your wisp"} to another device — don't leave it behind.</p><p class="muted" style="margin-top:6px">WISP ${W.config.BUILD} · made with zero sprites</p>`, [
       { label: "Start over…", cls: "btn-danger", fn: confirmReset },
       { label: "Close", cls: "btn-ghost" },
     ]);
