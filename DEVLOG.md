@@ -65,6 +65,16 @@ weather.js · shower.js · share.js (postcard/export/SW) · sim.js [hours]
 - Perf: 60fps median on maxed save (perf.js); 10-min soak (soak.js).
 - v0.4.0.
 
+## Rounds 11-13 — ~02:00–01:20+ CEST · shipped & tested
+- Name sanitization (hostile save-code XSS neutralized, tested),
+  season-2 tales (19-30), offline boosts (Pillow of Clouds 75%,
+  The Long Dream 16h cap), packaging script (268K zip), live wish
+  bars, level-fx throttle (mass level-ups no longer churn DOM — soak:
+  64 cycles, 0 errors, 0 leaks, heap 6MB), petal living-moment,
+  smoke-fox visitor, tappable owl murmurs, save safety (corrupt stash
+  + daily backup rotation + auto-restore with toast). v0.5.0.
+- Test suite now 17 scripts (run-all.sh).
+
 ## Decisions
 - English-only for launch (viral reach); NL translation is a possible
   later pass — all strings live in config.js + ui.js templates.

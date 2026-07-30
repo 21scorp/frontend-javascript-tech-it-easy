@@ -177,6 +177,11 @@
   } else {
     $("intro").classList.add("hidden");
     W.ui.show();
+    if (W.state.restoredFromBackup) {
+      setTimeout(() => {
+        W.ui.toast("🕯 Restored from yesterday's backup", "Your save looked damaged — " + (W.state.S.wispName || "your wisp") + " found the way home.");
+      }, 1600);
+    }
     // gentle note when the game itself has grown since last visit
     if (W.state.S.lastBuild && W.state.S.lastBuild !== C.BUILD) {
       setTimeout(() => W.ui.toast("🌱 The meadow grew while you were away", "WISP " + C.BUILD), 2500);

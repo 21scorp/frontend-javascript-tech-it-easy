@@ -63,12 +63,31 @@
     } catch (e) { /* storage full or blocked — play on */ }
   }
 
+  let restoredFromBackup = false;
+
   function load() {
     let raw = null;
     try {
       raw = localStorage.getItem(C.SAVE_KEY);
-      if (!raw) return false;
-      const data = JSON.parse(raw);
+      let data = null;
+      if (raw) {
+        try {
+          data = JSON.parse(raw);
+        } catch (parseErr) {
+          // never silently discard someone's wisp — stash the broken save
+          try { localStorage.setItem(C.SAVE_KEY + ".corrupt", raw); } catch (e2) {}
+        }
+      }
+      if (!data || typeof data !== "object") {
+        // fall back to yesterday's automatic backup
+        const backupRaw = localStorage.getItem(C.SAVE_KEY + ".backup");
+        if (backupRaw) {
+          try {
+            data = JSON.parse(backupRaw);
+            restoredFromBackup = true;
+          } catch (e3) { data = null; }
+        }
+      }
       if (!data || typeof data !== "object") return false;
       // Merge onto defaults so new fields appear in old saves.
       S = Object.assign(defaultState(), data);
@@ -93,8 +112,6 @@
       delete S.buff;
       return true;
     } catch (e) {
-      // never silently discard someone's wisp — stash the broken save
-      try { if (raw) localStorage.setItem(C.SAVE_KEY + ".corrupt", raw); } catch (e2) {}
       return false;
     }
   }
@@ -293,6 +310,7 @@
 
   W.state = {
     get S() { return S; },
+    get restoredFromBackup() { return restoredFromBackup; },
     defaultState, save, load, wipe,
     buildingCount, totalBuildings, buildingCost, buildingCostN, maxAffordable, buildingMult,
     globalMult, lightPerSec, tapValue,
