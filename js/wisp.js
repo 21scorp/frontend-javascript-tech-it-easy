@@ -418,6 +418,58 @@
       ctx.moveTo(-eyeDX + r * 0.21, eyeY);
       ctx.lineTo(eyeDX - r * 0.21, eyeY);
       ctx.stroke();
+    } else if (id === "tophat") {
+      ctx.save();
+      ctx.translate(r * 0.05, -r * 0.92);
+      ctx.rotate(-0.12);
+      ctx.fillStyle = "#2c2749";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r * 0.42, r * 0.09, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.roundRect(-r * 0.26, -r * 0.5, r * 0.52, r * 0.5, r * 0.05);
+      ctx.fill();
+      ctx.fillStyle = "#ffd97a";
+      ctx.fillRect(-r * 0.26, -r * 0.16, r * 0.52, r * 0.09);
+      ctx.fillStyle = "#ffe9a8";
+      ctx.font = `${Math.round(r * 0.2)}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText("✦", 0, -r * 0.24);
+      ctx.restore();
+    } else if (id === "cape") {
+      // petal collar peeking behind the lower body
+      for (let i = 0; i < 7; i++) {
+        const a = Math.PI * (0.12 + (i / 6) * 0.76);
+        const px = Math.cos(a) * r * 1.02;
+        const py = Math.sin(a) * r * 1.02;
+        ctx.fillStyle = `hsla(${330 + (i % 2) * 18}, 80%, ${72 + (i % 3) * 5}%, 0.9)`;
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(a - Math.PI / 2);
+        ctx.beginPath();
+        ctx.ellipse(0, r * 0.1, r * 0.13, r * 0.24, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    } else if (id === "minilantern") {
+      // it carries its own tiny lantern on a string of light
+      const sway = Math.sin(t * 1.6) * 0.15;
+      ctx.save();
+      ctx.translate(r * 0.95, -r * 0.15);
+      ctx.rotate(sway);
+      ctx.strokeStyle = "rgba(255,224,140,0.7)";
+      ctx.lineWidth = r * 0.03;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, r * 0.5);
+      ctx.stroke();
+      ctx.fillStyle = "#ffbe6e";
+      ctx.beginPath();
+      ctx.roundRect(-r * 0.11, r * 0.5, r * 0.22, r * 0.3, r * 0.06);
+      ctx.fill();
+      ctx.fillStyle = "#7a5a2e";
+      ctx.fillRect(-r * 0.07, r * 0.46, r * 0.14, r * 0.06);
+      ctx.restore();
     }
   }
 

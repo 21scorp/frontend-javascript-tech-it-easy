@@ -263,7 +263,17 @@
       check: (s) => (s.stars || []).length >= 1 },
     { id: "glasses", name: "Moon Glasses", glyph: "🤓", unlockText: "Touch your wisp 10,000 times",
       check: (s) => s.taps >= 10000 },
+    // supporter gifts — unlocked with a gift code (cosmetics only, ever)
+    { id: "tophat", name: "Star Top Hat", glyph: "🎩", unlockText: "A supporter gift", supporter: true,
+      check: (s) => !!(s.flags && s.flags.supporter) },
+    { id: "cape", name: "Petal Cape", glyph: "🌺", unlockText: "A supporter gift", supporter: true,
+      check: (s) => !!(s.flags && s.flags.supporter) },
+    { id: "minilantern", name: "Its Own Tiny Lantern", glyph: "🏮", unlockText: "A supporter gift", supporter: true,
+      check: (s) => !!(s.flags && s.flags.supporter) },
   ];
+
+  /* Gift codes redeemable in settings (v1: honor system). */
+  const GIFT_CODES = { FIRSTLIGHT: "supporter" };
 
   /* ─────────────── Visitors ───────────────
      Rare wanderers cross the meadow. Greeting them is a small joy.  */
@@ -388,7 +398,7 @@
     VOICE, OFFLINE, TAP, PRESTIGE,
     BOND, ATTENTION, DAILY, DEW, ACCESSORIES, TALES,
     OFFLINE_FLAVOR, MOON_LETTERS, MOON_LETTER_STARDUST,
-    VISITORS, VISITOR_GAP, PLURALS, DREAMS,
+    VISITORS, VISITOR_GAP, PLURALS, DREAMS, GIFT_CODES,
     SAVE_KEY: "wisp.save.v1",
     VERSION: 1,
   };

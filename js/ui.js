@@ -85,6 +85,23 @@
     x.font = "600 34px ui-rounded, system-ui, sans-serif";
     x.fillText("— WISP · a tiny light that grows with you —", PW / 2, PH - 48);
 
+    // supporters get a golden frame
+    if (S.flags.supporter) {
+      x.strokeStyle = "rgba(255,217,122,0.85)";
+      x.lineWidth = 10;
+      x.strokeRect(18, 18, PW - 36, PH - 36);
+      x.strokeStyle = "rgba(255,217,122,0.35)";
+      x.lineWidth = 2;
+      x.strokeRect(34, 34, PW - 68, PH - 68);
+      x.fillStyle = "#ffd97a";
+      x.font = "44px sans-serif";
+      x.textAlign = "left";
+      x.fillText("✦", 34, 70);
+      x.textAlign = "right";
+      x.fillText("✦", PW - 34, 70);
+      x.textAlign = "center";
+    }
+
     c.toBlob(async (blob) => {
       if (!blob) return;
       const file = new File([blob], "wisp-postcard.png", { type: "image/png" });
@@ -496,6 +513,9 @@
            <button class="btn btn-ghost" id="btn-import" style="padding:8px 14px;font-size:0.8rem">Load</button>
          </span>
        </div>
+       <div class="setting-row"><span>Gift code</span>
+         <button class="btn btn-ghost" id="btn-gift" style="padding:8px 14px;font-size:0.8rem">${S.flags.supporter ? "💛 supporter" : "Redeem"}</button>
+       </div>
        <div class="setting-row"><span>Name</span>
          <span>
            <b style="font-size:0.85rem">${S.wispName || "…"}</b>
@@ -534,6 +554,32 @@
     $("btn-export").addEventListener("click", exportSave);
     $("btn-import").addEventListener("click", importSave);
     $("btn-rename").addEventListener("click", renameWisp);
+    $("btn-gift").addEventListener("click", redeemGift);
+  }
+
+  function redeemGift() {
+    const S = W.state.S;
+    if (S.flags.supporter) {
+      toast("💛 Already a supporter", "The meadow remembers your kindness.");
+      return;
+    }
+    const raw = window.prompt("Enter a gift code:");
+    if (!raw) return;
+    const kind = C.GIFT_CODES[raw.trim().toUpperCase()];
+    if (kind === "supporter") {
+      S.flags.supporter = true;
+      W.state.save();
+      closeModal();
+      const p = W.scene.wispPos();
+      W.particles.burst(p.x, p.y, 50, { speed: 240 });
+      W.particles.ring(p.x, p.y, 60, 48);
+      W.audio.play("evolve");
+      toast("💛 Thank you for supporting the meadow", "Three gifts wait in the Wardrobe.");
+      bubble("wait—for me?? for US??", 3500);
+      renderWispTab();
+    } else {
+      toast("Hmm…", "The meadow doesn't recognise that code.");
+    }
   }
 
   function renameWisp() {
