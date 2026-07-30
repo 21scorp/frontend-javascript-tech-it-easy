@@ -40,6 +40,70 @@
     });
 
     els["btn-settings"].addEventListener("click", showSettings);
+    $("btn-photo").addEventListener("click", sharePostcard);
+  }
+
+  /* ─────────────── postcard ─────────────── */
+
+  function sharePostcard() {
+    const S = W.state.S;
+    const world = document.getElementById("world");
+    const PW = 1080, PH = 1350;
+    const c = document.createElement("canvas");
+    c.width = PW; c.height = PH;
+    const x = c.getContext("2d");
+
+    // cover-fit the live frame
+    const scale = Math.max(PW / world.width, PH / world.height);
+    const dw = world.width * scale, dh = world.height * scale;
+    x.drawImage(world, (PW - dw) / 2, (PH - dh) / 2, dw, dh);
+
+    // soft dark band for text
+    const g = x.createLinearGradient(0, PH - 420, 0, PH);
+    g.addColorStop(0, "rgba(7,10,28,0)");
+    g.addColorStop(0.45, "rgba(7,10,28,0.82)");
+    g.addColorStop(1, "rgba(7,10,28,0.95)");
+    x.fillStyle = g;
+    x.fillRect(0, PH - 420, PW, 420);
+
+    const st = W.state.stageFor(S.level);
+    const days = Math.max(1, Math.ceil((Date.now() - S.born) / 86400000));
+    x.textAlign = "center";
+    x.fillStyle = "#ffedbe";
+    x.font = "800 92px ui-rounded, system-ui, sans-serif";
+    x.shadowColor = "rgba(255,217,122,0.6)";
+    x.shadowBlur = 40;
+    x.fillText(S.wispName || "wisp", PW / 2, PH - 250);
+    x.shadowBlur = 0;
+    x.fillStyle = "#aab6dd";
+    x.font = "600 42px ui-rounded, system-ui, sans-serif";
+    x.fillText(st.name + " · level " + S.level + " · " + days + (days === 1 ? " day" : " days") + " together", PW / 2, PH - 175);
+    if (S.stars.length > 0) {
+      x.fillText("watched over by " + S.stars.map((s) => s.name).join(", "), PW / 2, PH - 118);
+    }
+    x.fillStyle = "#6e7aa3";
+    x.font = "600 34px ui-rounded, system-ui, sans-serif";
+    x.fillText("— WISP · a tiny light that grows with you —", PW / 2, PH - 48);
+
+    c.toBlob(async (blob) => {
+      if (!blob) return;
+      const file = new File([blob], "wisp-postcard.png", { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: "WISP", text: "Meet " + (S.wispName || "my wisp") + " ✦" });
+          return;
+        } catch (e) { /* fall through to download */ }
+      }
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "wisp-postcard.png";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      toast("📷 Postcard saved", "Share " + (S.wispName || "your wisp") + " with someone kind.");
+    }, "image/png");
+    W.audio.play("achievement");
+    const p = W.scene.wispPos();
+    W.particles.burst(p.x, p.y, 20, { speed: 160 });
   }
 
   /* ─────────────── counters ─────────────── */
@@ -375,9 +439,15 @@
     const rowsHtml =
       `<div class="setting-row"><span>Sound</span><button class="switch ${S.settings.sound ? "on" : ""}" id="sw-sound"></button></div>
        <div class="setting-row"><span>Particles</span><button class="switch ${S.settings.particles ? "on" : ""}" id="sw-particles"></button></div>
-       <div class="setting-row"><span>Playing since</span><b style="font-size:0.85rem">${new Date(S.born).toLocaleDateString()}</b></div>`;
+       <div class="setting-row"><span>Playing since</span><b style="font-size:0.85rem">${new Date(S.born).toLocaleDateString()}</b></div>
+       <div class="setting-row"><span>Save code</span>
+         <span>
+           <button class="btn btn-ghost" id="btn-export" style="padding:8px 14px;font-size:0.8rem">Copy</button>
+           <button class="btn btn-ghost" id="btn-import" style="padding:8px 14px;font-size:0.8rem">Load</button>
+         </span>
+       </div>`;
 
-    modal("Settings", rowsHtml + `<p class="muted" style="margin-top:12px">WISP saves automatically, right here in your browser.</p>`, [
+    modal("Settings", rowsHtml + `<p class="muted" style="margin-top:12px">WISP saves automatically in this browser. Copy a save code to move ${S.wispName || "your wisp"} to another device — don't leave it behind.</p>`, [
       { label: "Start over…", cls: "btn-danger", fn: confirmReset },
       { label: "Close", cls: "btn-ghost" },
     ]);
@@ -392,6 +462,50 @@
       S.settings.particles = !S.settings.particles;
       e.target.classList.toggle("on", S.settings.particles);
     });
+    $("btn-export").addEventListener("click", exportSave);
+    $("btn-import").addEventListener("click", importSave);
+  }
+
+  function encodeSave() {
+    W.state.save();
+    return btoa(unescape(encodeURIComponent(JSON.stringify(W.state.S))));
+  }
+
+  function exportSave() {
+    const code = encodeSave();
+    const done = () => toast("📋 Save code copied", "Keep it somewhere safe.");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(done).catch(() => window.prompt("Copy your save code:", code));
+    } else {
+      window.prompt("Copy your save code:", code);
+    }
+  }
+
+  function importSave() {
+    const code = window.prompt("Paste a save code:");
+    if (!code) return;
+    let data = null;
+    try {
+      data = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+    } catch (e) { /* fallthrough */ }
+    if (!data || typeof data !== "object" || typeof data.totalLight !== "number") {
+      modal("Hmm…", "<p>That code doesn't look like a wisp. Nothing was changed.</p>",
+        [{ label: "Okay", cls: "btn-ghost" }]);
+      return;
+    }
+    const name = data.wispName || "an unnamed wisp";
+    modal(
+      "Load this save?",
+      `<p>This code holds <b>${name}</b> (level ${data.level || 1}).</p>
+       <p class="muted" style="margin-top:8px">Your current wisp here will be replaced.</p>`,
+      [
+        { label: "Cancel", cls: "btn-ghost" },
+        { label: "Welcome home", cls: "btn-primary", fn: () => {
+          try { localStorage.setItem(W.config.SAVE_KEY, JSON.stringify(data)); } catch (e) {}
+          location.reload();
+        } },
+      ]
+    );
   }
 
   function confirmReset() {

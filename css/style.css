@@ -123,6 +123,8 @@ html, body {
 }
 #wisp-level-tag { font-size: 0.72rem; color: var(--ink-dim); margin-top: 4px; }
 
+#top-actions { display: flex; gap: 8px; }
+
 .icon-btn {
   width: 42px; height: 42px;
   border-radius: 50%;

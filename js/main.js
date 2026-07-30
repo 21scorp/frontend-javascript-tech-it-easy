@@ -225,6 +225,14 @@
     W.wisp.pointerMoved(e.clientX, e.clientY);
   });
 
+  /* ─────────────── PWA ─────────────── */
+
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  }
+
   /* ─────────────── save on leave ─────────────── */
 
   document.addEventListener("visibilitychange", () => {
