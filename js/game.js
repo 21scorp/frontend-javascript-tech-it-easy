@@ -265,7 +265,11 @@
     const p = W.scene.wispPos();
     W.ui.floater(p.x + U.rand(-30, 30), p.y - 60, "+" + U.fmt(v));
     W.audio.play("chirp");
-    if (Math.random() < 0.1) W.ui.bubble(U.pick(C.VOICE.petThanks), 1500);
+    if (Math.random() < 0.1) {
+      const h = new Date().getHours();
+      const pool = h >= 0 && h < 6 ? C.VOICE.petSleepy : C.VOICE.petThanks;
+      W.ui.bubble(U.pick(pool), 1800);
+    }
     if (deepened) announceBond();
   }
 

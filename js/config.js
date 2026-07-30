@@ -190,6 +190,7 @@
     { id: "visitor1",  glyph: "🦔", name: "First guest",     desc: "Greet a visitor to the meadow.", check: (s) => (s.visitors || 0) >= 1 },
     { id: "visitor10", glyph: "⛵", name: "Open door",       desc: "Greet 10 visitors.", check: (s) => (s.visitors || 0) >= 10 },
     { id: "constname", glyph: "✍️", name: "Sky writer",      desc: "Name your constellation.", check: (s) => !!s.constellation },
+    { id: "alltales",  glyph: "📖", name: "The whole story", desc: "Hear every tale the owl knows.", check: (s) => (s.tales || 0) >= TALES.length },
   ];
   const ACH_PROD_BONUS = 0.01;
 
@@ -209,6 +210,7 @@
     idleSoft:    ["the wind smells like moonflowers.", "I named one of the fireflies after you.", "do you think the moon gets lonely?", "I like it when you're here.", "one day I want to see the sun.", "the owl told me a secret. I'll tell you later.", "sometimes I glow extra just in case you're watching."],
     rare:        ["when I become a star… will you still visit?", "I remember the day you named me.", "I was so small when you found me.", "you built all of this. for me.", "I'm not scared of the dark. not anymore."],
     petThanks:   ["mmm…", "right there.", "don't stop!", "I could stay like this forever.", "your hands are warm."],
+    petSleepy:   ["mm… five more minutes…", "zzz… oh…. hi….", "keep doing that and I'll dream of you.", "…you should be asleep too, you know."],
     attention:   ["…psst.", "hey. hey. look at me?", "I found something! come here!", "are you busy…?", "I miss your hands."],
     attnThanks:  ["you came!!", "I knew you would.", "hehe, it was nothing. I just missed you.", "best. moment. today."],
     attnMissed:  ["…it's okay. you were busy.", "the moment passed. I'll find another one.", "I saved the feeling for later."],
@@ -377,6 +379,10 @@
     "I dreamed you stayed. …oh. you're here. even better.",
     "I dreamed {star} came down and we shared a cup of moonlight.",
     "I dreamed the sun woke up early, just to see the meadow you made.",
+    "I dreamed the {b1} threw a party and forgot to invite the dark.",
+    "I dreamed we counted every star and the last one was you.",
+    "I dreamed the owl finally told its secret. I woke up too soon.",
+    "I dreamed {star} and I raced across the sky. they let me win.",
   ];
 
   /* Little things that "happened" while you were gone. */

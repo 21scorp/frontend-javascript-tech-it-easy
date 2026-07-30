@@ -49,13 +49,31 @@ node shot.js <name> <intro|game|rich> · fresh.js (first-time mobile) ·
 ascend.js · daily.js (gift+letter) · wardrobe.js · visitors.js ·
 weather.js · shower.js · share.js (postcard/export/SW) · sim.js [hours]
 
+## Rounds 8-10 — ~01:00–02:00 CEST · shipped & tested
+- Contextual idle voice, seasons (snow/valentine/newyear), wisp dreams
+  (assembled from the player's own buildings/stars), evolution
+  shockwave rings + longer fanfare, lifetime stats + rename +
+  gift-code supporter pack (3 exclusive cosmetics + golden postcard
+  frame; code FIRSTLIGHT, honor-system v1), frenzy star-eyes + golden
+  wash, "meadow grew" version notice, Tonight's Wishes (3 daily
+  mini-goals, all-three → +1 stardust), memorial star modal,
+  constellation naming (label drawn in the sky + postcard),
+  music box (generative pentatonic lullaby, opt-in), tappable
+  memories (mobile), sleepy pet lines, more dreams/achievements.
+- FIXED: negative frame dt (rAF timer anomaly) could crash renderer
+  via negative arc radius — dt clamped [0,0.1], draw t clamped [0,1].
+- Perf: 60fps median on maxed save (perf.js); 10-min soak (soak.js).
+- v0.4.0.
+
+## Decisions
+- English-only for launch (viral reach); NL translation is a possible
+  later pass — all strings live in config.js + ui.js templates.
+- Monetization: cosmetics only, gift codes as delivery (itch/Ko-fi).
+
 ## Next ideas (priority)
-1. Fuller regression run + balance sim after each content batch.
-2. NL localization scaffold (strings table in config) — decide later;
-   English-first for viral reach.
-3. Cosmetic supporter pack hook (monetization: cosmetics only).
-4. More tales/voice/visitors; seasonal palettes (real-date holidays).
-5. Optional: Google Play wrapper (TWA) once Pages is live.
+1. More tales past day 18 (season 2 of lore), more visitors.
+2. Sprite art pass via scene.js/wisp.js seam.
+3. TWA wrapper for Play Store once Pages is live.
 
 ## Conventions
 - All balance/content in js/config.js — logic never hardcodes numbers.
