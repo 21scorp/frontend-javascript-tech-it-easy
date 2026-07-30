@@ -348,9 +348,11 @@
     if (away < C.OFFLINE.minSeconds) return null;
     const rate = W.state.lightPerSec();
     if (rate <= 0) return null;
-    const capped = Math.min(away, C.OFFLINE.capHours * 3600);
-    const gained = rate * capped * C.OFFLINE.rate;
-    return { seconds: away, cappedSeconds: capped, gained };
+    const offRate = S.upgrades.pillow ? 0.75 : C.OFFLINE.rate;
+    const capHours = S.upgrades.longdream ? 16 : C.OFFLINE.capHours;
+    const capped = Math.min(away, capHours * 3600);
+    const gained = rate * capped * offRate;
+    return { seconds: away, cappedSeconds: capped, gained, capHours };
   }
 
   function applyOffline(result) {

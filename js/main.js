@@ -195,7 +195,7 @@
          <span class="big-num">+${U.fmt(off.gained)} ✦</span>
          <p>${name} kept gathering light while thinking of you.</p>
          <p class="muted" style="margin-top:8px;font-style:italic">${flavor}</p>
-         ${off.cappedSeconds < off.seconds ? `<p class="muted" style="margin-top:8px">(it dozed off after ${C.OFFLINE.capHours} hours)</p>` : ""}`,
+         ${off.cappedSeconds < off.seconds ? `<p class="muted" style="margin-top:8px">(it dozed off after ${off.capHours} hours)</p>` : ""}`,
         [{ label: "I'm home", cls: "btn-primary", fn: () => { W.game.greet(); setTimeout(() => W.game.maybeDailyGift(), 600); } }]
       );
       // long trips earn a burst of saved-up excitement
