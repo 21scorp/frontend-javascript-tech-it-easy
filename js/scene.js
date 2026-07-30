@@ -104,6 +104,43 @@
     return 1 + (weather.type === "breeze" ? weather.k * 2.2 : 0);
   }
 
+  /* ─────────────── seasonal touches (real calendar) ─────────────── */
+  let seasonOverride = null;
+  let seasonTimer = 0;
+
+  function currentSeason() {
+    if (seasonOverride) return seasonOverride;
+    const d = new Date();
+    const m = d.getMonth() + 1, day = d.getDate();
+    if ((m === 12 && day === 31) || (m === 1 && day === 1)) return "newyear";
+    if (m === 2 && day === 14) return "valentine";
+    if (m === 12 || m === 1 || (m === 2 && day <= 15)) return "winter";
+    return null;
+  }
+
+  function updateSeason(dt) {
+    const season = currentSeason();
+    if (!season) return;
+    seasonTimer -= dt;
+    if (seasonTimer > 0) return;
+    if (season === "winter") {
+      seasonTimer = 0.25;
+      W.particles.spawn({
+        x: U.rand(0, width), y: -6,
+        vx: U.rand(-8, 8), vy: U.rand(18, 34),
+        drag: 1, life: U.rand(8, 14), size: U.rand(1.5, 2.8),
+        hue: 220, sat: 30, lum: 92, alpha: 0.8, twinkle: 0.8,
+      });
+    } else if (season === "valentine") {
+      seasonTimer = 2.5;
+      W.particles.heart(U.rand(width * 0.1, width * 0.9), U.rand(height * 0.3, height * 0.7));
+    } else if (season === "newyear") {
+      seasonTimer = 20;
+      // the sky celebrates
+      showerUntil = Math.max(showerUntil, Date.now() + 8000);
+    }
+  }
+
   function drawMist(t) {
     if (weather.type !== "mist" || weather.k < 0.02) return;
     for (let b = 0; b < 3; b++) {
@@ -1010,6 +1047,7 @@
     const own = (id) => S.buildings[id] || 0;
 
     updateWeather(dt, t);
+    updateSeason(dt);
     drawSky(pal, t);
     drawMoon(pal, t);
     drawMoonGarden(own("moongarden"), t);
@@ -1056,6 +1094,7 @@
     draw, starHit, cometHit, dewHit, visitorHit,
     startShower(seconds) { showerUntil = Date.now() + seconds * 1000; },
     setWeather(type) { weather = { type, k: weather.k }; weatherTarget = type === "clear" ? 0 : 1; },
+    setSeason(name) { seasonOverride = name; },
     get width() { return width; },
     get height() { return height; },
     hillY,

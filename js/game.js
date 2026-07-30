@@ -458,8 +458,33 @@
     W.ui.bubble(U.pick(C.VOICE[key]), 4000);
   }
 
+  /** Lines that only exist because of what YOU built. */
+  function contextLines() {
+    const S = W.state.S;
+    const own = (id) => (S.buildings[id] || 0);
+    const lines = [];
+    if (own("owl") > 0) lines.push("the owl blinked at me. twice. that means it likes you.");
+    if (own("lantern") > 0) lines.push("I count the lanterns before I sleep. they're all still here.");
+    if (own("moonwell") > 0) lines.push("the well showed me your face today. I waved.");
+    if (own("aurora") > 0) lines.push("the aurora wore your colour tonight.");
+    if (own("firefly") >= 10) lines.push("the fireflies voted. you're their favourite.");
+    if (own("comet") > 0) lines.push("a comet waved at me!! I waved back!!");
+    if (own("sunseed") > 0) lines.push("sometimes I press my glow against the seed. so it knows someone's here.");
+    if (own("glowshroom") >= 5) lines.push("the mushrooms hum louder when you're around. it's true.");
+    if (S.stars.length > 0) {
+      const star = U.pick(S.stars);
+      lines.push(star.name + " twinkled at me today. I twinkled back.");
+      lines.push("do you think " + star.name + " would be proud of me?");
+    }
+    return lines;
+  }
+
   function idleVoice() {
-    const pool = Math.random() < 0.12 ? C.VOICE.rare : C.VOICE.idleSoft;
+    const ctxLines = contextLines();
+    const roll = Math.random();
+    const pool = roll < 0.12 ? C.VOICE.rare
+      : roll < 0.45 && ctxLines.length > 0 ? ctxLines
+      : C.VOICE.idleSoft;
     W.ui.bubble(U.pick(pool), 4200);
     if (Math.random() < 0.5) W.audio.play("chirp");
   }
