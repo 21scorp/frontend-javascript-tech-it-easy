@@ -74,6 +74,20 @@
   function pointerMoved(x, y) {
     wisp.lookX = x;
     wisp.lookY = y;
+    wisp.lastPointerAt = performance.now();
+  }
+
+  /** When nobody's moving the pointer, the wisp daydreams — its gaze
+      wanders the meadow on its own. */
+  function gazeTarget(t, worldPos) {
+    const idleFor = performance.now() - (wisp.lastPointerAt || 0);
+    if (idleFor < 8000 && (wisp.lookX || wisp.lookY)) {
+      return { x: wisp.lookX, y: wisp.lookY };
+    }
+    return {
+      x: worldPos.x + Math.sin(t * 0.32) * 300,
+      y: worldPos.y + 120 + Math.sin(t * 0.21 + 1.7) * 140,
+    };
   }
 
   function isSleepy() {
@@ -249,11 +263,12 @@
       return;
     }
 
-    // pupils drift toward pointer
+    // pupils drift toward the pointer — or wander while daydreaming
     let px = 0, py = 0;
-    if (wisp.lookX || wisp.lookY) {
-      const dx = wisp.lookX - worldPos.x;
-      const dy = wisp.lookY - worldPos.y;
+    const gaze = gazeTarget(t, worldPos);
+    {
+      const dx = gaze.x - worldPos.x;
+      const dy = gaze.y - worldPos.y;
       const d = Math.hypot(dx, dy) || 1;
       const m = Math.min(d / 200, 1) * eyeR * 0.5;
       px = (dx / d) * m;
