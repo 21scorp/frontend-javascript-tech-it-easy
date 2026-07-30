@@ -163,6 +163,17 @@
   function drawMemorialStars(t) {
     const list = W.state.S.stars;
     const bless = W.game && W.game.blessing;
+    // your own constellation — faint lines joining the family
+    if (list.length >= 2) {
+      ctx.strokeStyle = `rgba(200,215,255,${0.10 + 0.05 * Math.sin(t * 0.7)})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i < list.length; i++) {
+        const x = list[i].x * width, y = list[i].y * height;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
     for (let i = 0; i < list.length; i++) {
       const s = list[i];
       const x = s.x * width, y = s.y * height;
@@ -720,6 +731,48 @@
     }
   }
 
+  /* — golden dewdrop — */
+  function dewScreenPos(t) {
+    const dew = W.game && W.game.dew;
+    if (!dew) return null;
+    const k = (Date.now() - dew.born) / 1000 / W.config.DEW.fallSec;
+    const x = (dew.x + Math.sin(t * 1.6) * 0.02) * width;
+    const y = (-0.06 + k * 0.8) * height;
+    return { x, y, k };
+  }
+
+  function drawDew(t) {
+    const p = dewScreenPos(t);
+    if (!p) return;
+    const s = 1 + Math.sin(t * 4) * 0.08;
+    const fade = p.k > 0.85 ? 1 - (p.k - 0.85) / 0.15 : 1;
+    ctx.globalAlpha = fade;
+    glow(p.x, p.y, 44 * s, GOLD, 0.55);
+    // teardrop body
+    const g = ctx.createRadialGradient(p.x - 3, p.y - 4, 1, p.x, p.y, 14 * s);
+    g.addColorStop(0, "#fffdf0");
+    g.addColorStop(0.6, "#ffe9a0");
+    g.addColorStop(1, "#ffc24d");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y - 17 * s);
+    ctx.bezierCurveTo(p.x + 11 * s, p.y - 5 * s, p.x + 10 * s, p.y + 9 * s, p.x, p.y + 11 * s);
+    ctx.bezierCurveTo(p.x - 10 * s, p.y + 9 * s, p.x - 11 * s, p.y - 5 * s, p.x, p.y - 17 * s);
+    ctx.fill();
+    // shine
+    ctx.fillStyle = "rgba(255,255,255,0.8)";
+    ctx.beginPath();
+    ctx.ellipse(p.x - 4 * s, p.y - 3 * s, 2.5 * s, 4 * s, -0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  function dewHit(x, y, t) {
+    const p = dewScreenPos(t);
+    if (!p) return false;
+    return Math.hypot(p.x - x, p.y - y) < 38;
+  }
+
   /* ─────────────── main draw ─────────────── */
 
   function draw(t, dt) {
@@ -751,6 +804,8 @@
     syncFireflies(own("firefly"));
     drawFireflies(t, dt);
 
+    drawDew(t);
+
     // wisp lives between world and particles
     W.wisp.draw(ctx, t, dt);
     W.particles.update(dt);
@@ -766,7 +821,7 @@
       window.addEventListener("resize", resize);
     },
     rebuild() { buildWorld(W.state.S.seed); },
-    draw, starHit, cometHit,
+    draw, starHit, cometHit, dewHit,
     get width() { return width; },
     get height() { return height; },
     hillY,

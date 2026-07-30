@@ -35,8 +35,10 @@
       bond: { xp: 0, level: 1 },
       // daily streak
       streak: { last: null, count: 0 },
-      // active timed boost {mult, until}
-      buff: null,
+      // active timed boosts [{id, label, mult, until}]
+      buffs: [],
+      // worn accessory id (wardrobe) or null
+      accessory: null,
     };
   }
 
@@ -67,7 +69,12 @@
       S.stars = data.stars || [];
       S.bond = Object.assign({ xp: 0, level: 1 }, data.bond);
       S.streak = Object.assign({ last: null, count: 0 }, data.streak);
-      if (S.buff && S.buff.until <= Date.now()) S.buff = null;
+      S.buffs = (data.buffs || []).filter((b) => b && b.until > Date.now());
+      // migrate the old single-buff field
+      if (data.buff && data.buff.until > Date.now()) {
+        S.buffs.push({ id: "daily", label: "morning warmth", mult: data.buff.mult, until: data.buff.until });
+      }
+      delete S.buff;
       return true;
     } catch (e) {
       return false;
@@ -129,8 +136,24 @@
     m *= 1 + Object.keys(S.achievements).length * C.ACH_PROD_BONUS;
     m *= 1 + S.stardust * C.PRESTIGE.perStardust;
     m *= 1 + (S.bond.level - 1) * C.BOND.prodPerLevel;
-    if (S.buff && S.buff.until > Date.now()) m *= S.buff.mult;
+    m *= buffMult();
     return m;
+  }
+
+  /** Combined multiplier of all active timed buffs. */
+  function buffMult() {
+    let m = 1;
+    const now = Date.now();
+    for (const b of S.buffs) {
+      if (b.until > now) m *= b.mult;
+    }
+    return m;
+  }
+
+  /** Add (or refresh) a timed buff. */
+  function addBuff(id, label, mult, seconds) {
+    S.buffs = S.buffs.filter((b) => b.id !== id && b.until > Date.now());
+    S.buffs.push({ id, label, mult, until: Date.now() + seconds * 1000 });
   }
 
   /** Passive light per second. */
@@ -250,5 +273,6 @@
     xpForLevel, stageFor, nextStage,
     stardustGain, ascend,
     bondXpForLevel, bondTitle, gainBond,
+    buffMult, addBuff,
   };
 })();

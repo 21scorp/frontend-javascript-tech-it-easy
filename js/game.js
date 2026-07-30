@@ -19,6 +19,8 @@
   let dailyTimer = 0;
   let blessing = null;   // {idx, until} while an ancestor star calls
   let blessTimer = U.rand(180, 420);
+  let dew = null;        // {x, y, born} a golden dewdrop falling
+  let dewTimer = U.rand(90, 240); // first one comes fairly soon
 
   /* ─────────────── earning ─────────────── */
 
@@ -141,7 +143,7 @@
     const bondXp = C.DAILY.bondBase + C.DAILY.bondPerDay * Math.min(S.streak.count, 30);
     earn(gift);
     const deepened = W.state.gainBond(bondXp);
-    S.buff = { mult: C.DAILY.buffMult, until: Date.now() + C.DAILY.buffMinutes * 60000 };
+    W.state.addBuff("daily", "morning warmth", C.DAILY.buffMult, C.DAILY.buffMinutes * 60);
 
     W.ui.modal(
       S.streak.count > 1 ? "Day " + S.streak.count + " together" : "A new day together",
@@ -349,6 +351,29 @@
     W.state.save();
   }
 
+  /* ─────────────── golden dewdrop ─────────────── */
+
+  function spawnDew() {
+    dew = { x: U.rand(0.12, 0.88), born: Date.now() };
+  }
+
+  function catchDew(x, y) {
+    dew = null;
+    W.particles.burst(x, y, 34, { speed: 260 });
+    W.audio.play("crit");
+    if (Math.random() < C.DEW.luckyChance) {
+      const reward = Math.max(W.state.lightPerSec() * 60 * C.DEW.luckyMinutes, W.state.tapValue() * 150);
+      earn(reward);
+      W.ui.floater(x, y, "+" + U.fmt(reward), true);
+      W.ui.toast("💧 Lucky dew!", "+" + U.fmt(reward) + " light, all at once");
+    } else {
+      W.state.addBuff("dew", "dewdrop frenzy", C.DEW.frenzyMult, C.DEW.frenzySec);
+      W.ui.toast("💧 Dewdrop frenzy!", "×" + C.DEW.frenzyMult + " light for " + C.DEW.frenzySec + " seconds — go go go!");
+      W.ui.bubble(U.pick(["it tastes like morning!!", "quick — everything is brighter!", "WHOA."]), 2600);
+    }
+    W.state.save();
+  }
+
   /* ─────────────── comet wishes ─────────────── */
 
   function cometWish(x, y) {
@@ -433,6 +458,20 @@
       }
     }
 
+    // golden dewdrop
+    if (dew) {
+      if ((Date.now() - dew.born) / 1000 > C.DEW.fallSec) dew = null;
+    } else if (!ceremony) {
+      dewTimer -= dt;
+      if (dewTimer <= 0) {
+        dewTimer = U.rand(C.DEW.minGap, C.DEW.maxGap);
+        if (document.visibilityState === "visible" && S.flags.introDone) {
+          dew = { x: U.rand(0.12, 0.88), born: Date.now() };
+          W.audio.play("chirp");
+        }
+      }
+    }
+
     // day rollover while playing (checks every 30s)
     dailyTimer += dt;
     if (dailyTimer >= 30) {
@@ -440,10 +479,14 @@
       if (S.flags.introDone && !ceremony) maybeDailyGift();
     }
 
-    // expire buff
-    if (S.buff && S.buff.until <= Date.now()) {
-      S.buff = null;
-      W.ui.toast("The morning warmth fades", "…but it was nice while it lasted.");
+    // expire buffs
+    if (S.buffs.length > 0) {
+      const now = Date.now();
+      const expired = S.buffs.filter((b) => b.until <= now);
+      if (expired.length > 0) {
+        S.buffs = S.buffs.filter((b) => b.until > now);
+        W.ui.toast("The " + expired[0].label + " fades", "…but it was nice while it lasted.");
+      }
     }
 
     voiceTimer -= dt;
@@ -458,10 +501,11 @@
     buyBuilding, buyUpgrade,
     computeOffline, applyOffline,
     checkAchievements, greet,
-    tryAscend, starTouched, cometWish,
+    tryAscend, starTouched, cometWish, catchDew, spawnDew,
     maybeDailyGift,
     get ceremony() { return ceremony; },
     get attention() { return attention; },
     get blessing() { return blessing; },
+    get dew() { return dew; },
   };
 })();

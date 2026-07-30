@@ -233,6 +233,33 @@
     tapMult: 40,                // …or at least this many taps
   };
 
+  /* ─────────────── Golden dewdrop ───────────────
+     A rare falling drop of concentrated dawn. Catch it!            */
+  const DEW = {
+    minGap: 180, maxGap: 480,   // seconds between drops
+    fallSec: 15,                // time on screen
+    frenzyMult: 7, frenzySec: 30,
+    luckyChance: 0.25,          // sometimes it's a light windfall instead
+    luckyMinutes: 15,
+  };
+
+  /* ─────────────── Wardrobe ───────────────
+     Cosmetics are never bought — they're *earned by loyalty*.       */
+  const ACCESSORIES = [
+    { id: "leaf",   name: "Little Sprout", glyph: "🌱", unlockText: "Reach level 20",
+      check: (s) => s.level >= 20 || (s.stars || []).length > 0 },
+    { id: "bow",    name: "Star Bow", glyph: "🎀", unlockText: "Own 100 buildings at once",
+      check: (s, g) => g.totalBuildings(s) >= 100 },
+    { id: "crown",  name: "Flower Crown", glyph: "💮", unlockText: "Reach bond level 5",
+      check: (s) => s.bond && s.bond.level >= 5 },
+    { id: "scarf",  name: "Night Scarf", glyph: "🧣", unlockText: "Keep a 7-day streak",
+      check: (s) => s.streak && s.streak.count >= 7 },
+    { id: "halo",   name: "Halo of the First", glyph: "😇", unlockText: "Raise a wisp to the sky",
+      check: (s) => (s.stars || []).length >= 1 },
+    { id: "glasses", name: "Moon Glasses", glyph: "🤓", unlockText: "Touch your wisp 10,000 times",
+      check: (s) => s.taps >= 10000 },
+  ];
+
   /* ─────────────── Daily gift & streak ─────────────── */
   const DAILY = {
     buffMult: 2,
@@ -269,7 +296,7 @@
     BUILDINGS, UPGRADES, STAGES, LEVEL,
     ACHIEVEMENTS, ACH_PROD_BONUS,
     VOICE, OFFLINE, TAP, PRESTIGE,
-    BOND, ATTENTION, DAILY,
+    BOND, ATTENTION, DAILY, DEW, ACCESSORIES,
     SAVE_KEY: "wisp.save.v1",
     VERSION: 1,
   };

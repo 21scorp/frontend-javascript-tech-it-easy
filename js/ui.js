@@ -112,9 +112,11 @@
     const S = W.state.S;
     els["light-amount"].textContent = U.fmt(S.light);
     let rateText = U.fmt(W.state.lightPerSec()) + " /s · tap " + U.fmt(W.state.tapValue());
-    if (S.buff && S.buff.until > Date.now()) {
-      const left = Math.ceil((S.buff.until - Date.now()) / 1000);
-      rateText += " · ×" + S.buff.mult + " " + Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0");
+    const bm = W.state.buffMult();
+    if (bm > 1) {
+      const soonest = Math.min(...S.buffs.map((b) => b.until));
+      const left = Math.max(0, Math.ceil((soonest - Date.now()) / 1000));
+      rateText += " · ×" + (Math.round(bm * 10) / 10) + " " + Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0");
     }
     els["light-rate"].textContent = rateText;
     els["wisp-name-tag"].textContent = S.wispName || "…";
@@ -331,6 +333,21 @@
         </div>`;
     }
 
+    // ─ wardrobe ─
+    const accHtml = C.ACCESSORIES.map((a) => {
+      const unlocked = (() => { try { return a.check(S, { totalBuildings: (s) => W.state.totalBuildings(s) }); } catch (e) { return false; } })();
+      const worn = S.accessory === a.id;
+      return `<button class="acc ${unlocked ? "unlocked" : ""} ${worn ? "worn" : ""}" data-acc="${a.id}"
+        title="${a.name} — ${unlocked ? (worn ? "wearing" : "tap to wear") : a.unlockText}" ${unlocked ? "" : "disabled"}>
+        ${unlocked ? a.glyph : "🔒"}</button>`;
+    }).join("");
+    const wardrobeHtml =
+      `<div class="wisp-card">
+        <h3>👒 Wardrobe</h3>
+        <div class="ach-grid">${accHtml}</div>
+        <div class="shop-desc" style="margin-top:8px">Little gifts, earned by loyalty — never bought. Tap one to dress ${S.wispName || "your wisp"}.</div>
+      </div>`;
+
     // ─ family of stars ─
     let starsHtml = "";
     if (S.stars.length > 0) {
@@ -358,6 +375,7 @@
         <div class="stat-line"><span>Production bonus</span><b>×${W.state.globalMult().toFixed(2)}</b></div>
       </div>
       ${bondHtml}
+      ${wardrobeHtml}
       ${ascHtml}
       ${starsHtml}
       <div class="wisp-card">
@@ -368,6 +386,16 @@
 
     const ascBtn = $("btn-ascend");
     if (ascBtn) ascBtn.addEventListener("click", () => W.game.tryAscend());
+
+    els["tab-wisp"].querySelectorAll(".acc.unlocked").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.acc;
+        S.accessory = S.accessory === id ? null : id;
+        W.state.save();
+        W.audio.play("buy");
+        renderWispTab();
+      });
+    });
   }
 
   /* ─────────────── floaters, toasts, bubble ─────────────── */

@@ -166,6 +166,9 @@
     const happy = wisp.happyTimer > 0 || wisp.petting;
     drawFace(ctx, r, happy, sleepy, p, t);
 
+    // ─ accessory (wardrobe) ─
+    if (W.state.S.accessory) drawAccessory(ctx, W.state.S.accessory, r, t);
+
     ctx.restore();
 
     // ─ orbiting motes ─
@@ -283,6 +286,99 @@
       ctx.beginPath();
       ctx.ellipse(side * r * 0.55, r * 0.12, r * 0.13, r * 0.08, 0, 0, Math.PI * 2);
       ctx.fill();
+    }
+  }
+
+  /* Accessories are drawn in wisp-local space (origin = centre, r = body radius). */
+  function drawAccessory(ctx, id, r, t) {
+    ctx.lineCap = "round";
+    if (id === "leaf") {
+      ctx.strokeStyle = "#7dbb7a";
+      ctx.lineWidth = r * 0.06;
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 0.96);
+      ctx.quadraticCurveTo(r * 0.05, -r * 1.18, r * 0.02, -r * 1.28);
+      ctx.stroke();
+      ctx.fillStyle = "#8fd48b";
+      ctx.save();
+      ctx.translate(r * 0.02, -r * 1.28);
+      ctx.rotate(-0.6 + Math.sin(t * 1.5) * 0.08);
+      ctx.beginPath();
+      ctx.ellipse(r * 0.14, 0, r * 0.17, r * 0.09, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    } else if (id === "bow") {
+      const bx = r * 0.5, by = -r * 0.82;
+      ctx.fillStyle = "#ff9ec4";
+      for (const side of [-1, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(bx + side * r * 0.3, by - r * 0.18);
+        ctx.lineTo(bx + side * r * 0.3, by + r * 0.18);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.fillStyle = "#ff6f9c";
+      ctx.beginPath();
+      ctx.arc(bx, by, r * 0.09, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (id === "crown") {
+      for (let i = 0; i < 5; i++) {
+        const a = Math.PI * (1.25 + i * 0.125);
+        const fx = Math.cos(a) * r * 1.02;
+        const fy = Math.sin(a) * r * 1.02;
+        const hue = [340, 45, 200, 300, 20][i];
+        for (let pmt = 0; pmt < 5; pmt++) {
+          const pa = (pmt / 5) * Math.PI * 2 + t * 0.3;
+          ctx.fillStyle = `hsla(${hue}, 85%, 78%, 0.95)`;
+          ctx.beginPath();
+          ctx.arc(fx + Math.cos(pa) * r * 0.055, fy + Math.sin(pa) * r * 0.055, r * 0.045, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.fillStyle = "#fff3c4";
+        ctx.beginPath();
+        ctx.arc(fx, fy, r * 0.035, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (id === "scarf") {
+      ctx.strokeStyle = "#5560a8";
+      ctx.lineWidth = r * 0.22;
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.92, Math.PI * 0.2, Math.PI * 0.8);
+      ctx.stroke();
+      // dangling tail with a star
+      const tx = r * 0.42, ty = r * 0.86;
+      ctx.fillStyle = "#5560a8";
+      ctx.save();
+      ctx.translate(tx, ty);
+      ctx.rotate(0.35 + Math.sin(t * 1.8) * 0.06);
+      ctx.beginPath();
+      ctx.roundRect(-r * 0.09, 0, r * 0.18, r * 0.42, r * 0.05);
+      ctx.fill();
+      ctx.fillStyle = "#ffe9a8";
+      ctx.font = `${Math.round(r * 0.16)}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText("✦", 0, r * 0.3);
+      ctx.restore();
+    } else if (id === "halo") {
+      ctx.strokeStyle = "rgba(255,224,130,0.9)";
+      ctx.lineWidth = r * 0.07;
+      ctx.beginPath();
+      ctx.ellipse(0, -r * 1.32 + Math.sin(t * 1.7) * r * 0.04, r * 0.5, r * 0.14, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (id === "glasses") {
+      const eyeY = -r * 0.12, eyeDX = r * 0.34;
+      ctx.strokeStyle = "#3a3456";
+      ctx.lineWidth = r * 0.045;
+      for (const side of [-1, 1]) {
+        ctx.beginPath();
+        ctx.arc(side * eyeDX, eyeY, r * 0.21, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.moveTo(-eyeDX + r * 0.21, eyeY);
+      ctx.lineTo(eyeDX - r * 0.21, eyeY);
+      ctx.stroke();
     }
   }
 
