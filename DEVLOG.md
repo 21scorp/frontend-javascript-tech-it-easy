@@ -75,6 +75,17 @@ weather.js · shower.js · share.js (postcard/export/SW) · sim.js [hours]
   + daily backup rotation + auto-restore with toast). v0.5.0.
 - Test suite now 17 scripts (run-all.sh).
 
+## Rounds 14-16 — ~01:20–02:00 CEST · shipped & tested
+- Collection layer: dew/comet/best-streak counters, Dewdrop Pendant +
+  Comet Ribbon accessories, 5 memories (50 total incl. hidden
+  moon-touch), moon is tappable, ground light-pool under the wisp,
+  daydreaming gaze, palette caching, Wisp-tab scroll preserved,
+  gen-5+ rebirth verses, reduced-motion flash guard, name
+  suggestions in the intro placeholder, postcard guardian-line
+  truncation, itch.io page copy (docs/ITCH-PAGE.md), README totals.
+- Verified: mobile ascension e2e, idle-only pacing (1h21), gen-2
+  loop (~70m), pricing math vs brute force, 17/17 suite green.
+
 ## Decisions
 - English-only for launch (viral reach); NL translation is a possible
   later pass — all strings live in config.js + ui.js templates.
