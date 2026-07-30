@@ -297,6 +297,25 @@
     setTabDot("boosts", anyAffordable);
     const S2 = W.state.S;
     setTabDot("wisp", !!(S2.wishes && S2.wishes.list.some((w) => w.n >= w.target && !w.claimed)));
+    updateWishRows();
+  }
+
+  /** Keep open wish rows live without a full re-render. */
+  function updateWishRows() {
+    const S = W.state.S;
+    if (!S.wishes) return;
+    const page = els["tab-wisp"];
+    if (!page.classList.contains("active")) return;
+    page.querySelectorAll("[data-wish-row]").forEach((row) => {
+      const w = S.wishes.list[parseInt(row.dataset.wishRow, 10)];
+      if (!w) return;
+      const ready = w.n >= w.target && !w.claimed;
+      if (String(ready ? 1 : 0) !== row.dataset.ready) { renderWispTab(); return; }
+      const fill = row.querySelector(".wish-fill");
+      if (fill) fill.style.width = Math.min(100, (w.n / w.target) * 100) + "%";
+      const count = row.querySelector(".wish-count");
+      if (count) count.textContent = Math.floor(w.n) + "/" + w.target;
+    });
   }
 
   function setTabDot(tabName, on) {
@@ -334,10 +353,10 @@
         const text = tpl.text.replace("{name}", S.wispName || "your wisp").replace("{count}", tpl.count);
         const pct = Math.min(100, (w.n / w.target) * 100);
         const ready = w.n >= w.target && !w.claimed;
-        return `<div class="wish ${w.claimed ? "claimed" : ""}">
+        return `<div class="wish ${w.claimed ? "claimed" : ""}" data-wish-row="${i}" data-ready="${ready ? 1 : 0}">
           <div class="wish-main">
             <div class="wish-text">${w.claimed ? "✔ " : ""}${text}</div>
-            <div class="meter" style="margin-top:5px"><div style="height:100%;width:${pct}%;border-radius:3px;background:linear-gradient(90deg,#8ea6ff,#b28aff);box-shadow:0 0 8px rgba(140,150,255,0.6)"></div></div>
+            <div class="meter" style="margin-top:5px"><div class="wish-fill" style="height:100%;width:${pct}%;border-radius:3px;background:linear-gradient(90deg,#8ea6ff,#b28aff);box-shadow:0 0 8px rgba(140,150,255,0.6)"></div></div>
           </div>
           ${ready
             ? `<button class="btn btn-primary wish-claim" data-wish="${i}" style="padding:8px 14px;font-size:0.78rem">Claim</button>`
