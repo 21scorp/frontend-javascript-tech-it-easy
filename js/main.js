@@ -206,6 +206,8 @@
       petting = false;
     } else if (W.scene.dewHit(e.clientX, e.clientY, lastT)) {
       W.game.catchDew(e.clientX, e.clientY);
+    } else if (W.scene.visitorHit(e.clientX, e.clientY, lastT)) {
+      W.game.greetVisitor();
     } else if (downOnWisp) {
       W.game.tap(e.clientX, e.clientY);
     } else {

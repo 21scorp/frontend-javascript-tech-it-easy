@@ -187,6 +187,8 @@
     { id: "level100",  glyph: "🌞", name: "A hundred lights", desc: "Reach level 100.", check: (s) => s.level >= 100 },
     { id: "sunseed1",  glyph: "🌻", name: "Planted hope",    desc: "Plant a Sun Seed.", check: (s) => (s.buildings.sunseed || 0) >= 1 },
     { id: "sprout",    glyph: "🌅", name: "The seed stirs",  desc: "Fill your sky with 10 stars. The Sun Seed sprouts.", check: (s) => (s.stars || []).length >= 10 },
+    { id: "visitor1",  glyph: "🦔", name: "First guest",     desc: "Greet a visitor to the meadow.", check: (s) => (s.visitors || 0) >= 1 },
+    { id: "visitor10", glyph: "⛵", name: "Open door",       desc: "Greet 10 visitors.", check: (s) => (s.visitors || 0) >= 10 },
   ];
   const ACH_PROD_BONUS = 0.01;
 
@@ -262,6 +264,21 @@
     { id: "glasses", name: "Moon Glasses", glyph: "🤓", unlockText: "Touch your wisp 10,000 times",
       check: (s) => s.taps >= 10000 },
   ];
+
+  /* ─────────────── Visitors ───────────────
+     Rare wanderers cross the meadow. Greeting them is a small joy.  */
+  const VISITORS = [
+    { id: "hedgehog", dur: 40, name: "a hedgehog with a lantern",
+      greet: "The hedgehog tips its lantern to you.",
+      lines: ["a hedgehog! hello hedgehog!!", "its lantern is so small… I love it."] },
+    { id: "boat", dur: 55, needs: "moonwell", name: "a paper boat",
+      greet: "The paper boat bobs, as if waving.",
+      lines: ["who folded it? where is it going?", "someday I want to ride it."] },
+    { id: "cloudsheep", dur: 50, name: "a lost cloud-sheep",
+      greet: "The cloud-sheep baas softly and rains a little light.",
+      lines: ["baa? baa!!", "can we keep it? …okay. okay. just tonight."] },
+  ];
+  const VISITOR_GAP = [420, 900]; // seconds between visits
 
   /* ─────────────── Daily gift & streak ─────────────── */
   const DAILY = {
@@ -349,6 +366,7 @@
     VOICE, OFFLINE, TAP, PRESTIGE,
     BOND, ATTENTION, DAILY, DEW, ACCESSORIES, TALES,
     OFFLINE_FLAVOR, MOON_LETTERS, MOON_LETTER_STARDUST,
+    VISITORS, VISITOR_GAP,
     SAVE_KEY: "wisp.save.v1",
     VERSION: 1,
   };

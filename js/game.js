@@ -25,6 +25,8 @@
   let combo = 0;
   let lastTapAt = 0;
   let sessionT = 0;      // seconds since boot (for first-time hints)
+  let visitor = null;    // {type, born, greeted} a wanderer in the meadow
+  let visitTimer = U.rand(C.VISITOR_GAP[0], C.VISITOR_GAP[1]);
 
   /* ─────────────── earning ─────────────── */
 
@@ -393,6 +395,22 @@
     W.state.save();
   }
 
+  /* ─────────────── visitors ─────────────── */
+
+  function greetVisitor() {
+    if (!visitor || visitor.greeted) return;
+    visitor.greeted = true;
+    const S = W.state.S;
+    S.visitors = (S.visitors || 0) + 1;
+    const reward = Math.max(W.state.lightPerSec() * 60 * 3, W.state.tapValue() * 30);
+    earn(reward);
+    W.state.gainBond(5);
+    W.audio.play("upgrade");
+    W.ui.toast("💛 " + visitor.type.greet, "+" + U.fmt(reward) + " light · +5 bond");
+    if (Math.random() < 0.7) W.ui.bubble(U.pick(visitor.type.lines), 3200);
+    W.state.save();
+  }
+
   /* ─────────────── comet wishes ─────────────── */
 
   function cometWish(x, y) {
@@ -541,6 +559,20 @@
       }
     }
 
+    // visitors — rare wanderers
+    if (visitor) {
+      if ((Date.now() - visitor.born) / 1000 > visitor.type.dur) visitor = null;
+    } else if (!ceremony) {
+      visitTimer -= dt;
+      if (visitTimer <= 0) {
+        visitTimer = U.rand(C.VISITOR_GAP[0], C.VISITOR_GAP[1]);
+        if (document.visibilityState === "visible" && S.flags.introDone) {
+          const options = C.VISITORS.filter((v) => !v.needs || (S.buildings[v.needs] || 0) > 0);
+          visitor = { type: U.pick(options), born: Date.now(), greeted: false };
+        }
+      }
+    }
+
     // day rollover while playing (checks every 30s)
     dailyTimer += dt;
     if (dailyTimer >= 30) {
@@ -571,10 +603,12 @@
     computeOffline, applyOffline,
     checkAchievements, greet,
     tryAscend, starTouched, cometWish, catchDew, spawnDew,
-    maybeDailyGift,
+    maybeDailyGift, greetVisitor,
+    spawnVisitor(id) { const t = C.VISITORS.find((v) => v.id === id); if (t) visitor = { type: t, born: Date.now(), greeted: false }; },
     get ceremony() { return ceremony; },
     get attention() { return attention; },
     get blessing() { return blessing; },
     get dew() { return dew; },
+    get visitor() { return visitor; },
   };
 })();

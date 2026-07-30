@@ -28,20 +28,34 @@ engaging ("never done"). Work non-stop until 09:00 NL time (07:00 UTC).
 - Attention moments (dashed ring + hearts, no-punish window).
 - Daily gift modal + streak + ×2 buff with HUD countdown. All e2e-tested.
 
-## Next rounds — priority order
-1. **Balance sim**: script the first 2 hours of play headlessly; verify
-   time-to-first-building < 30s, steady unlock cadence, ascension
-   reachable in an evening. Tune costs/rates in config.
-2. **More content**: buildings 11-14 (e.g. Star Anvil, Cloud Shepherd,
-   Sun Seed…), boosts for them, tap upgrades late-game, achievements.
-3. **Juice**: buy ×1/×10/×max toggle, milestone celebrations
-   (first K/M/B), combo tap streaks, shooting-star wish (tap a comet).
-4. **Star blessings**: past wisps occasionally pulse and drop a gift.
-5. **PWA**: manifest + service worker + og: meta tags for sharing.
-6. **Mobile pass**: 390×844 viewport test, touch targets, perf.
-7. **Share postcard**: canvas snapshot of your meadow + wisp name.
-8. Later ideas: weather/seasons, rare visitors, wisp accessories bought
-   with stardust (cosmetic, sprite-ready), lore notes from the owl.
+## Rounds 4-7 — ~01:00–01:00+ CEST · everything below shipped & tested
+- Balance sim (scratchpad/sim.js): 8h arc, no dead zones, ascension
+  at ~1h08 active. Buildings 11-14 + 10 boosts + 3 stages extend arc.
+- Buy ×1/×10/×max; comet wishes; star blessings; golden dewdrop
+  (×7 frenzy / lucky windfall); starfall showers; tap combos.
+- PWA (manifest+SW+icons), og: tags, save codes, postcard camera.
+- Wardrobe (6 earned accessories), constellation lines, buff stacking.
+- Owl's Tales (18, one/day), night ambience (wind+crickets),
+  Moon Letters (every 7th streak day, +1 stardust), offline flavor,
+  rested buff (12h+ away → ×3), onboarding hints, live tab title,
+  keyboard taps, weather (mist/breeze/shimmer), hidden-tab income fix,
+  Sun Seed sprouts at 10 stars, visitors (hedgehog/boat/cloud-sheep).
+- Version 0.3.0 in settings. GH Pages workflow ready (needs merge to
+  main + Pages→GitHub Actions in repo settings).
+
+## Test harness (scratchpad)
+`python3 -m http.server 8477` in repo root, then:
+node shot.js <name> <intro|game|rich> · fresh.js (first-time mobile) ·
+ascend.js · daily.js (gift+letter) · wardrobe.js · visitors.js ·
+weather.js · shower.js · share.js (postcard/export/SW) · sim.js [hours]
+
+## Next ideas (priority)
+1. Fuller regression run + balance sim after each content batch.
+2. NL localization scaffold (strings table in config) — decide later;
+   English-first for viral reach.
+3. Cosmetic supporter pack hook (monetization: cosmetics only).
+4. More tales/voice/visitors; seasonal palettes (real-date holidays).
+5. Optional: Google Play wrapper (TWA) once Pages is live.
 
 ## Conventions
 - All balance/content in js/config.js — logic never hardcodes numbers.

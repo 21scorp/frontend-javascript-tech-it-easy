@@ -820,6 +820,146 @@
     }
   }
 
+  /* — visitors — */
+  function visitorScreenPos(t) {
+    const v = W.game && W.game.visitor;
+    if (!v) return null;
+    const age = (Date.now() - v.born) / 1000;
+    const k = U.clamp(age / v.type.dur, 0, 1);
+    if (v.type.id === "hedgehog") {
+      const ltr = v.born % 2 === 0;
+      const xn = ltr ? 0.02 + k * 0.96 : 0.98 - k * 0.96;
+      return { x: xn * width, y: hillY(2, xn) + 2, k, age, dir: ltr ? 1 : -1 };
+    }
+    if (v.type.id === "boat") {
+      const x = 0.3 * width + Math.sin(age * 0.5) * 26;
+      return { x, y: hillY(2, 0.3) + 15 + Math.sin(age * 1.3) * 2, k, age, dir: 1 };
+    }
+    // cloudsheep
+    const xn = 0.05 + k * 0.9;
+    return { x: xn * width, y: height * 0.34 + Math.sin(age * 0.8) * 10, k, age, dir: 1 };
+  }
+
+  function drawVisitor(t) {
+    const v = W.game && W.game.visitor;
+    const p = visitorScreenPos(t);
+    if (!v || !p) return;
+    const fade = p.k > 0.9 ? 1 - (p.k - 0.9) / 0.1 : p.k < 0.04 ? p.k / 0.04 : 1;
+    ctx.globalAlpha = fade;
+
+    if (v.type.id === "hedgehog") {
+      const step = Math.sin(p.age * 10) * 1.2;
+      // spikes
+      ctx.fillStyle = "#3a3050";
+      for (let i = 0; i < 7; i++) {
+        const a = Math.PI * (1 + i / 7);
+        ctx.beginPath();
+        ctx.moveTo(p.x + Math.cos(a) * 10, p.y - 6 + Math.sin(a) * 8);
+        ctx.lineTo(p.x + Math.cos(a) * 16, p.y - 7 + Math.sin(a) * 13);
+        ctx.lineTo(p.x + Math.cos(a + 0.35) * 10, p.y - 6 + Math.sin(a + 0.35) * 8);
+        ctx.fill();
+      }
+      // body + snout
+      ctx.fillStyle = "#5a4a6e";
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y - 6, 11, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(p.x + p.dir * 10, p.y - 3.5, 4.5, 3, p.dir * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#2c2440";
+      ctx.beginPath();
+      ctx.arc(p.x + p.dir * 14, p.y - 3.5, 1.3, 0, Math.PI * 2);
+      ctx.fill();
+      // legs
+      ctx.strokeStyle = "#4a3c5e";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(p.x - 4, p.y + 1); ctx.lineTo(p.x - 4 + step, p.y + 4);
+      ctx.moveTo(p.x + 4, p.y + 1); ctx.lineTo(p.x + 4 - step, p.y + 4);
+      ctx.stroke();
+      // tiny lantern on a stick
+      const lx = p.x + p.dir * 6, ly = p.y - 18 + Math.sin(p.age * 3) * 1.5;
+      ctx.strokeStyle = "#7a6a8e";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(p.x + p.dir * 2, p.y - 8);
+      ctx.lineTo(lx, ly);
+      ctx.stroke();
+      glow(lx, ly + 3, 14, GOLD, 0.5);
+      ctx.fillStyle = "#ffd97a";
+      ctx.beginPath();
+      ctx.roundRect(lx - 3, ly, 6, 8, 2);
+      ctx.fill();
+    } else if (v.type.id === "boat") {
+      glow(p.x, p.y, 18, CYAN, 0.15);
+      ctx.fillStyle = "#f2f4ff";
+      ctx.beginPath();
+      ctx.moveTo(p.x - 12, p.y);
+      ctx.lineTo(p.x + 12, p.y);
+      ctx.lineTo(p.x + 7, p.y - 5);
+      ctx.lineTo(p.x - 7, p.y - 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y - 5);
+      ctx.lineTo(p.x, p.y - 14);
+      ctx.lineTo(p.x + 7, p.y - 6);
+      ctx.closePath();
+      ctx.fill();
+    } else if (v.type.id === "cloudsheep") {
+      // fluffy body
+      for (let i = 0; i < 4; i++) {
+        const bx = p.x + (i - 1.5) * 8;
+        const by = p.y + Math.sin(i * 2.1) * 3;
+        const g = ctx.createRadialGradient(bx, by, 1, bx, by, 11);
+        g.addColorStop(0, "rgba(235,240,255,0.95)");
+        g.addColorStop(1, "rgba(235,240,255,0.25)");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(bx, by, 10, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // face
+      ctx.fillStyle = "#8a90b8";
+      ctx.beginPath();
+      ctx.ellipse(p.x + 15, p.y - 2, 6, 5, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#2e2a4a";
+      ctx.beginPath();
+      ctx.arc(p.x + 17, p.y - 3, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+      // stubby legs dangling
+      ctx.strokeStyle = "rgba(180,188,220,0.9)";
+      ctx.lineWidth = 2.5;
+      for (let i = 0; i < 3; i++) {
+        const lx = p.x + (i - 1) * 8;
+        ctx.beginPath();
+        ctx.moveTo(lx, p.y + 8);
+        ctx.lineTo(lx, p.y + 13 + Math.sin(p.age * 2 + i) * 1.5);
+        ctx.stroke();
+      }
+      // it leaks a little light
+      if (Math.random() < 0.05) {
+        W.particles.spawn({ x: p.x + U.rand(-10, 10), y: p.y + 14, vy: 30, g: 20, life: 1.2, size: 1.8, hue: 48 });
+      }
+    }
+
+    // a small heart if already greeted
+    if (v.greeted && Math.sin(t * 4) > 0) {
+      ctx.fillStyle = "rgba(255,140,170,0.8)";
+      ctx.font = "10px sans-serif";
+      ctx.fillText("♥", p.x - 3, p.y - 24);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function visitorHit(x, y, t) {
+    const p = visitorScreenPos(t);
+    if (!p) return false;
+    return Math.hypot(p.x - x, p.y - y) < 34;
+  }
+
   /* — golden dewdrop — */
   function dewScreenPos(t) {
     const dew = W.game && W.game.dew;
@@ -895,6 +1035,7 @@
     syncFireflies(own("firefly"));
     drawFireflies(t, dt);
 
+    drawVisitor(t);
     drawDew(t);
 
     // wisp lives between world and particles
@@ -912,7 +1053,7 @@
       window.addEventListener("resize", resize);
     },
     rebuild() { buildWorld(W.state.S.seed); },
-    draw, starHit, cometHit, dewHit,
+    draw, starHit, cometHit, dewHit, visitorHit,
     startShower(seconds) { showerUntil = Date.now() + seconds * 1000; },
     setWeather(type) { weather = { type, k: weather.k }; weatherTarget = type === "clear" ? 0 : 1; },
     get width() { return width; },

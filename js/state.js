@@ -41,6 +41,8 @@
       accessory: null,
       // how many of the owl's tales you've heard
       tales: 0,
+      // how many meadow visitors you've greeted
+      visitors: 0,
     };
   }
 
