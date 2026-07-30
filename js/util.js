@@ -67,9 +67,20 @@ window.W = window.W || {};
   const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
   const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 
+  /** Player-provided names end up in innerHTML — strip anything markup-ish.
+      (Matters for imported save codes from strangers.) */
+  function sanitizeName(raw, maxLen) {
+    return String(raw || "")
+      .replace(/[<>&"'`]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, maxLen || 14);
+  }
+
   W.util = {
     fmt, fmtInt, fmtDuration,
     clamp, lerp, rand, randInt, pick,
     mulberry32, easeOutCubic, easeInOut,
+    sanitizeName,
   };
 })();

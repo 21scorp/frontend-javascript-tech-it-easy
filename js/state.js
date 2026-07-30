@@ -77,6 +77,11 @@
       S.upgrades = data.upgrades || {};
       S.achievements = data.achievements || {};
       S.stars = data.stars || [];
+      // names can arrive from imported save codes — never trust them
+      const clean = W.util.sanitizeName;
+      if (S.wispName) S.wispName = clean(S.wispName) || "Wisp";
+      if (S.constellation) S.constellation = clean(S.constellation, 24) || null;
+      for (const st of S.stars) st.name = clean(st.name) || "Star";
       S.bond = Object.assign({ xp: 0, level: 1 }, data.bond);
       S.streak = Object.assign({ last: null, count: 0 }, data.streak);
       S.buffs = (data.buffs || []).filter((b) => b && b.until > Date.now());

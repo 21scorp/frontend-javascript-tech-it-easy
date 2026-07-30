@@ -91,8 +91,7 @@
     }
 
     function confirmName() {
-      const raw = input.value.trim();
-      const name = raw.length ? raw : U.pick(["Lumi", "Pip", "Glow", "Nova", "Mo"]);
+      const name = U.sanitizeName(input.value) || U.pick(["Lumi", "Pip", "Glow", "Nova", "Mo"]);
       cleanup();
       onNamed(name);
     }

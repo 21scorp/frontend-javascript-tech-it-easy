@@ -494,7 +494,7 @@
       constBtn.addEventListener("click", () => {
         const raw = window.prompt("Your stars form a shape only you can see.\nWhat is it called?");
         if (raw === null) return;
-        const name = raw.trim().slice(0, 24);
+        const name = U.sanitizeName(raw, 24);
         if (!name) return;
         S.constellation = name;
         W.state.save();
@@ -673,7 +673,7 @@
     const oldName = S.wispName || "your wisp";
     const raw = window.prompt("A new name for " + oldName + "?", S.wispName || "");
     if (raw === null) return;
-    const name = raw.trim().slice(0, 14);
+    const name = U.sanitizeName(raw);
     if (!name || name === S.wispName) return;
     S.wispName = name;
     W.state.save();
