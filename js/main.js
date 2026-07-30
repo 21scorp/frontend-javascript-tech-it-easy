@@ -311,6 +311,39 @@
     W.game.tap(p.x, p.y);
   });
 
+  /* ─────────────── debug panel (?debug=1) ───────────────
+     For development and for capturing trailer footage. Hidden
+     unless explicitly asked for; touches no balance when unused.  */
+
+  if (new URLSearchParams(location.search).has("debug")) {
+    const bar = document.createElement("div");
+    bar.style.cssText =
+      "position:fixed;bottom:0;left:0;z-index:40;display:flex;flex-wrap:wrap;gap:4px;" +
+      "padding:6px;background:rgba(10,14,34,0.9);border-top-right-radius:10px;max-width:60vw";
+    const tools = {
+      "+1h": () => W.game.earn(W.state.lightPerSec() * 3600 + W.state.tapValue() * 500),
+      "lvl+5": () => { W.state.S.xp += W.state.xpForLevel(W.state.S.level) * 6; W.game.earn(1); },
+      dew: () => W.game.spawnDew(),
+      shower: () => W.scene.startShower(20),
+      petal: () => W.scene.startPetal(),
+      hedgehog: () => W.game.spawnVisitor("hedgehog"),
+      fox: () => W.game.spawnVisitor("smokefox"),
+      sheep: () => W.game.spawnVisitor("cloudsheep"),
+      boat: () => W.game.spawnVisitor("boat"),
+      mist: () => W.scene.setWeather("mist"),
+      breeze: () => W.scene.setWeather("breeze"),
+      snow: () => W.scene.setSeason("winter"),
+    };
+    for (const [label, fn] of Object.entries(tools)) {
+      const b = document.createElement("button");
+      b.textContent = label;
+      b.style.cssText = "font:11px monospace;padding:4px 7px;background:#232a52;color:#cdd6ff;border:0;border-radius:6px;cursor:pointer";
+      b.addEventListener("click", fn);
+      bar.appendChild(b);
+    }
+    document.body.appendChild(bar);
+  }
+
   /* ─────────────── PWA ─────────────── */
 
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
