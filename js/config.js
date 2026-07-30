@@ -138,6 +138,9 @@
     { id: "allbuild",  glyph: "🗝️", name: "One of everything", desc: "Own every kind of building.", check: (s) => BUILDINGS.every((b) => (s.buildings[b.id] || 0) > 0) },
     { id: "upg5",      glyph: "📦", name: "Collector",       desc: "Buy 5 boosts.", check: (s) => Object.keys(s.upgrades).length >= 5 },
     { id: "upg10",     glyph: "🎁", name: "Connoisseur",     desc: "Buy 10 boosts.", check: (s) => Object.keys(s.upgrades).length >= 10 },
+    { id: "ascend1",   glyph: "🌠", name: "Goodbye, hello",  desc: "Watch a wisp take its place in the sky.", check: (s) => (s.stars || []).length >= 1 },
+    { id: "ascend3",   glyph: "🌌", name: "A family of stars", desc: "Raise three wisps to the sky.", check: (s) => (s.stars || []).length >= 3 },
+    { id: "dust10",    glyph: "✨", name: "Stardust keeper", desc: "Hold 10 stardust.", check: (s) => (s.stardust || 0) >= 10 },
   ];
   const ACH_PROD_BONUS = 0.01;
 
@@ -158,6 +161,16 @@
     rare:        ["when I become a star… will you still visit?", "I remember the day you named me.", "I was so small when you found me.", "you built all of this. for me.", "I'm not scared of the dark. not anymore."],
   };
 
+  /* ─────────────── Ascension (prestige) ───────────────
+     Your wisp becomes a permanent star in YOUR sky. Each point of
+     stardust makes every future wisp shine 10% brighter.           */
+  const PRESTIGE = {
+    unlockLevel: 15,     // ascension card appears in the Wisp tab
+    divisor: 5e7,        // stardust = floor(sqrt(totalLight / divisor))
+    perStardust: 0.10,
+    ceremonySec: 4.2,
+  };
+
   /* ─────────────── Offline ─────────────── */
   const OFFLINE = {
     rate: 0.6,          // earn at 60% while away
@@ -175,7 +188,7 @@
   W.config = {
     BUILDINGS, UPGRADES, STAGES, LEVEL,
     ACHIEVEMENTS, ACH_PROD_BONUS,
-    VOICE, OFFLINE, TAP,
+    VOICE, OFFLINE, TAP, PRESTIGE,
     SAVE_KEY: "wisp.save.v1",
     VERSION: 1,
   };

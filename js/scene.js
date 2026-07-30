@@ -158,6 +158,33 @@
     ctx.restore();
   }
 
+  /* ─────────────── memorial stars (ascended wisps) ─────────────── */
+
+  function drawMemorialStars(t) {
+    const list = W.state.S.stars;
+    for (let i = 0; i < list.length; i++) {
+      const s = list[i];
+      const x = s.x * width, y = s.y * height;
+      const tw = 0.82 + 0.18 * Math.sin(t * 1.1 + i * 2.3);
+      // halo in the wisp's final colour
+      const halo = ctx.createRadialGradient(x, y, 1, x, y, 26);
+      halo.addColorStop(0, `hsla(${s.hue}, 95%, 78%, ${0.5 * tw})`);
+      halo.addColorStop(1, `hsla(${s.hue}, 95%, 78%, 0)`);
+      ctx.fillStyle = halo;
+      ctx.fillRect(x - 26, y - 26, 52, 52);
+      drawStarShape(x, y, 7 * tw, `hsl(${s.hue}, 100%, 88%)`);
+    }
+  }
+
+  /** Which memorial star (if any) is at screen point x,y? */
+  function starHit(x, y) {
+    const list = W.state.S.stars;
+    for (const s of list) {
+      if (Math.hypot(s.x * width - x, s.y * height - y) < 24) return s;
+    }
+    return null;
+  }
+
   /* ─────────────── hills ─────────────── */
 
   function drawHill(layer, pal) {
@@ -536,6 +563,7 @@
 
     drawSky(pal, t);
     drawMoon(pal, t);
+    drawMemorialStars(t);
     drawAurora(own("aurora"), t);
     updateComets(own("comet"), dt);
     drawComets();
@@ -568,7 +596,7 @@
       window.addEventListener("resize", resize);
     },
     rebuild() { buildWorld(W.state.S.seed); },
-    draw,
+    draw, starHit,
     get width() { return width; },
     get height() { return height; },
     hillY,

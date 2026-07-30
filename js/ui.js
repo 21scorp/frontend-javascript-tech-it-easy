@@ -214,22 +214,62 @@
       return `<div class="ach ${has ? "unlocked" : ""}" title="${has ? a.name + " — " + a.desc : "???"}">${a.glyph}</div>`;
     }).join("");
 
+    // ─ ascension card ─
+    let ascHtml = "";
+    const gain = W.state.stardustGain();
+    if (S.level >= C.PRESTIGE.unlockLevel || S.stars.length > 0) {
+      const ready = gain >= 1;
+      ascHtml =
+        `<div class="wisp-card" style="border-color: rgba(255,217,122,0.25)">
+          <h3>🌠 Ascension</h3>
+          <div class="shop-desc">When ${S.wispName || "your wisp"} is bright enough, it can take its
+          place in the sky — a star that watches over every wisp after it, forever.
+          The meadow starts over; stardust, stars and memories stay.</div>
+          <div class="stat-line" style="margin-top:8px"><span>Stardust now</span><b>${S.stardust} ✨ (+${Math.round(S.stardust * C.PRESTIGE.perStardust * 100)}% light)</b></div>
+          <div class="stat-line"><span>If it ascends today</span><b>+${gain} ✨</b></div>
+          <button class="btn ${ready ? "btn-primary" : "btn-ghost"}" id="btn-ascend"
+            style="width:100%; margin-top:10px; ${ready ? "" : "opacity:0.55"}">
+            ${ready ? "Begin the ascension…" : "Not bright enough yet (needs " + U.fmt(C.PRESTIGE.divisor) + " ✦ lifetime)"}
+          </button>
+        </div>`;
+    }
+
+    // ─ family of stars ─
+    let starsHtml = "";
+    if (S.stars.length > 0) {
+      const rows = S.stars.map((star) =>
+        `<div class="stat-line"><span>🌟 ${star.name}</span><b>${star.stage} · Lv ${star.level}</b></div>`
+      ).join("");
+      starsHtml =
+        `<div class="wisp-card">
+          <h3>Your sky · generation ${S.generation}</h3>
+          ${rows}
+          <div class="shop-desc" style="margin-top:6px">They're in the sky right now. Tap them to say hi.</div>
+        </div>`;
+    }
+
     els["tab-wisp"].innerHTML =
       `<div class="wisp-card">
-        <h3>${S.wispName || "Your wisp"} · ${st.name}</h3>
+        <h3>${S.wispName || "Your wisp"} · ${st.name}${S.stars.length > 0 ? " · gen " + S.generation : ""}</h3>
         <div class="stat-line"><span>Age</span><b>${ageText}</b></div>
         <div class="stat-line"><span>Level</span><b>${S.level}</b></div>
         ${next ? `<div class="stat-line"><span>Next form</span><b>${next.name} at Lv ${next.level}</b></div>` : ""}
-        <div class="stat-line"><span>Light gathered (lifetime)</span><b>${U.fmt(S.totalLight)} ✦</b></div>
+        <div class="stat-line"><span>Light gathered (this life)</span><b>${U.fmt(S.totalLight)} ✦</b></div>
+        ${S.allTimeLight > 0 ? `<div class="stat-line"><span>Light across all lives</span><b>${U.fmt(S.allTimeLight + S.totalLight)} ✦</b></div>` : ""}
         <div class="stat-line"><span>Times touched</span><b>${U.fmtInt(S.taps)}</b></div>
         <div class="stat-line"><span>Things built</span><b>${U.fmtInt(W.state.totalBuildings())}</b></div>
         <div class="stat-line"><span>Production bonus</span><b>×${W.state.globalMult().toFixed(2)}</b></div>
       </div>
+      ${ascHtml}
+      ${starsHtml}
       <div class="wisp-card">
         <h3>Memories · ${Object.keys(S.achievements).length}/${C.ACHIEVEMENTS.length}</h3>
         <div class="ach-grid">${achHtml}</div>
-        <div class="shop-desc" style="margin-top:8px">Each memory makes ${S.wispName || "your wisp"} glow 1% brighter.</div>
+        <div class="shop-desc" style="margin-top:8px">Each memory makes ${S.wispName || "your wisp"} glow 1% brighter. Memories survive ascension.</div>
       </div>`;
+
+    const ascBtn = $("btn-ascend");
+    if (ascBtn) ascBtn.addEventListener("click", () => W.game.tryAscend());
   }
 
   /* ─────────────── floaters, toasts, bubble ─────────────── */

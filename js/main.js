@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    WISP — main.js
-   Boot, intro & naming, input handling, the render loop.
+   Boot, intro & naming ceremonies (first life and every rebirth),
+   input handling, the render loop.
    ═══════════════════════════════════════════════════════════════ */
 
 (function () {
@@ -12,7 +13,7 @@
 
   /* ─────────────── boot ─────────────── */
 
-  const hadSave = W.state.load();
+  W.state.load();
   W.audio.setEnabled(W.state.S.settings.sound);
 
   W.ui.init();
@@ -22,27 +23,48 @@
   W.ui.renderWispTab();
   W.ui.updateCounters();
 
-  /* ─────────────── intro / naming ─────────────── */
+  /* ─────────────── naming ceremony (reusable) ─────────────── */
 
-  const INTRO_LINES = [
+  const FIRST_LINES = [
     "In the dark between the hills,\nsomething small is falling…",
     "It lands softly in your hands.\nWarm. Barely glowing.",
     "It looks up at you.",
   ];
 
-  function runIntro() {
+  function rebirthLines(star) {
+    return [
+      `The meadow is quiet without ${star.name}.`,
+      "Then — a shimmer,\nbetween the hills you built.",
+      "Another small light lands in your hands.\nIt seems to already know them.",
+    ];
+  }
+
+  let ceremonyActive = false;
+
+  /** Show the intro overlay with the given lines, then the name form. */
+  function namingCeremony(lines, onNamed) {
+    ceremonyActive = true;
     const intro = $("intro");
     const line = $("intro-line");
     const form = $("name-form");
     const skip = $("intro-skip");
+    const input = $("name-input");
+
+    intro.classList.remove("hidden", "fading");
+    intro.style.opacity = "";
+    form.classList.add("hidden");
+    form.classList.remove("show");
+    skip.classList.remove("hidden");
+    input.value = "";
+
     let step = 0;
     let naming = false;
 
     function showStep() {
-      if (step < INTRO_LINES.length) {
+      if (step < lines.length) {
         line.classList.remove("show");
         setTimeout(() => {
-          line.textContent = INTRO_LINES[step];
+          line.textContent = lines[step];
           line.classList.add("show");
         }, 350);
       } else {
@@ -54,56 +76,79 @@
           line.classList.add("show");
           form.classList.remove("hidden");
           requestAnimationFrame(() => form.classList.add("show"));
-          $("name-input").focus();
+          input.focus();
         }, 350);
       }
     }
 
-    intro.addEventListener("click", (e) => {
+    function onClick(e) {
       if (naming) return;
       if (e.target.closest("#name-form")) return;
       step++;
       showStep();
-    });
-
-    function confirmName() {
-      const raw = $("name-input").value.trim();
-      const name = raw.length ? raw : U.pick(["Lumi", "Pip", "Glow", "Nova", "Mo"]);
-      W.state.S.wispName = name;
-      W.state.S.flags.introDone = true;
-      W.state.save();
-      W.audio.unlock();
-      W.audio.play("levelUp");
-      endIntro(true);
     }
 
-    $("name-ok").addEventListener("click", confirmName);
-    $("name-input").addEventListener("keydown", (e) => {
+    function confirmName() {
+      const raw = input.value.trim();
+      const name = raw.length ? raw : U.pick(["Lumi", "Pip", "Glow", "Nova", "Mo"]);
+      cleanup();
+      onNamed(name);
+    }
+
+    function onKey(e) {
       if (e.key === "Enter") confirmName();
-    });
+    }
+
+    function cleanup() {
+      intro.removeEventListener("click", onClick);
+      $("name-ok").removeEventListener("click", confirmName);
+      input.removeEventListener("keydown", onKey);
+      intro.classList.add("fading");
+      setTimeout(() => intro.classList.add("hidden"), 1300);
+      ceremonyActive = false;
+    }
+
+    intro.addEventListener("click", onClick);
+    $("name-ok").addEventListener("click", confirmName);
+    input.addEventListener("keydown", onKey);
 
     showStep();
   }
 
-  function endIntro(celebrate) {
-    const intro = $("intro");
-    intro.classList.add("fading");
-    setTimeout(() => intro.remove(), 1300);
+  function celebrateNaming(name) {
+    W.audio.unlock();
+    W.audio.play("levelUp");
     W.ui.show();
     W.ui.updateCounters();
-    if (celebrate) {
-      const p = W.scene.wispPos();
-      W.particles.burst(p.x, p.y, 40, { speed: 220 });
-      setTimeout(() => {
-        W.ui.bubble(W.state.S.wispName + "… I like it.", 3600);
-      }, 900);
-    }
+    const p = W.scene.wispPos();
+    W.particles.burst(p.x, p.y, 40, { speed: 220 });
+    setTimeout(() => W.ui.bubble(name + "… I like it.", 3600), 900);
   }
 
+  W.flow = {
+    /** After an ascension: welcome the next generation. */
+    rebirth(star) {
+      setTimeout(() => {
+        namingCeremony(rebirthLines(star), (name) => {
+          W.state.S.wispName = name;
+          W.state.save();
+          celebrateNaming(name);
+          W.ui.toast("🌠 Generation " + W.state.S.generation, star.name + " is watching from the sky");
+          W.ui.renderWispTab();
+        });
+      }, 1400);
+    },
+  };
+
   if (!W.state.S.flags.introDone) {
-    runIntro();
+    namingCeremony(FIRST_LINES, (name) => {
+      W.state.S.wispName = name;
+      W.state.S.flags.introDone = true;
+      W.state.save();
+      celebrateNaming(name);
+    });
   } else {
-    $("intro").remove();
+    $("intro").classList.add("hidden");
     W.ui.show();
     // Offline progress
     const off = W.game.computeOffline();
@@ -133,6 +178,7 @@
 
   canvas.addEventListener("pointerdown", (e) => {
     W.audio.unlock();
+    if (ceremonyActive || W.game.ceremony) return;
     const x = e.clientX, y = e.clientY;
     downOnWisp = W.wisp.hitTest(x, y, lastT);
     petting = false;
@@ -147,14 +193,20 @@
 
   canvas.addEventListener("pointerup", (e) => {
     clearTimeout(pressTimer);
+    if (ceremonyActive || W.game.ceremony) return;
     if (petting) {
       W.wisp.setPetting(false);
       petting = false;
     } else if (downOnWisp) {
       W.game.tap(e.clientX, e.clientY);
     } else {
-      // A tap into the night — a shy sparkle, but light comes from *touch*.
-      W.particles.burst(e.clientX, e.clientY, 3, { speed: 60 });
+      const star = W.scene.starHit(e.clientX, e.clientY);
+      if (star) {
+        W.game.starTouched(star);
+      } else {
+        // A tap into the night — a shy sparkle, but light comes from *touch*.
+        W.particles.burst(e.clientX, e.clientY, 3, { speed: 60 });
+      }
     }
     downOnWisp = false;
   });

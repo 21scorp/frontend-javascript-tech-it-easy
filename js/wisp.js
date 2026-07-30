@@ -34,15 +34,27 @@
     return base * U.clamp(scale, 0.75, 1.4);
   }
 
+  /** 0..1 while ascending, 0 otherwise. */
+  function ceremonyK() {
+    const c = W.game && W.game.ceremony;
+    if (!c) return 0;
+    return U.easeInOut(U.clamp(c.t / c.dur, 0, 1));
+  }
+
   function pos(t) {
     const p = W.scene.wispPos();
+    const home = { x: p.x, y: p.y + Math.sin(t * 1.3 + wisp.bobPhase) * 8 };
+    const c = W.game && W.game.ceremony;
+    if (!c) return home;
+    const k = ceremonyK();
     return {
-      x: p.x,
-      y: p.y + Math.sin(t * 1.3 + wisp.bobPhase) * 8,
+      x: U.lerp(home.x, c.to.x * W.scene.width, k),
+      y: U.lerp(home.y, c.to.y * W.scene.height, k),
     };
   }
 
   function hitTest(x, y, t) {
+    if (W.game && W.game.ceremony) return false;
     const p = pos(t);
     const r = radius() * 1.6; // generous — it's the whole point of the game
     const dx = x - p.x, dy = y - p.y;
@@ -99,7 +111,8 @@
     }
 
     const st = stage();
-    const r = radius();
+    const ck = ceremonyK();
+    const r = radius() * (1 - ck * 0.7);
     const p = pos(t);
     const sleepy = isSleepy();
     const hue = st.hue;

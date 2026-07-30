@@ -13,6 +13,7 @@
   let achTimer = 0;
   let voiceTimer = U.rand(20, 40);
   let petRewardCooldown = 0;
+  let ceremony = null; // {t, dur, to:{x,y}, gain} while a wisp ascends
 
   /* ─────────────── earning ─────────────── */
 
@@ -162,6 +163,73 @@
     S.flags.returned = true;
   }
 
+  /* ─────────────── ascension ─────────────── */
+
+  function tryAscend() {
+    const S = W.state.S;
+    const gain = W.state.stardustGain();
+    if (gain < 1) { W.audio.play("denied"); return; }
+    const name = S.wispName || "Your wisp";
+    W.ui.modal(
+      "Ascension",
+      `<p><b>${name}</b> has grown as far as this meadow can carry it.</p>
+       <p style="margin-top:10px">It's ready to take its place in the sky — as a <b>star that will
+       watch over every wisp that comes after</b>. Forever.</p>
+       <span class="big-num">+${gain} ✨ stardust</span>
+       <p class="muted">Each stardust makes all future light +${Math.round(C.PRESTIGE.perStardust * 100)}%.
+       The meadow starts over. Your memories — and your stars — stay.</p>`,
+      [
+        { label: "Not yet", cls: "btn-ghost" },
+        { label: "Let it shine", cls: "btn-primary", fn: () => startCeremony(gain) },
+      ]
+    );
+  }
+
+  function startCeremony(gain) {
+    const S = W.state.S;
+    W.wisp.setPetting(false);
+    // Pick a free spot in the sky, away from the moon (top-right).
+    let x, y, tries = 0;
+    do {
+      x = U.rand(0.08, 0.68);
+      y = U.rand(0.06, 0.26);
+      tries++;
+    } while (tries < 20 && S.stars.some((s) => Math.hypot(s.x - x, s.y - y) < 0.07));
+    ceremony = { t: 0, dur: C.PRESTIGE.ceremonySec, to: { x, y }, gain };
+    W.ui.bubble(U.pick(["watch me.", "I'll be right here. every night.", "don't be sad — look up."]), 3000);
+    W.audio.play("levelUp");
+  }
+
+  function finishCeremony() {
+    const S = W.state.S;
+    const to = ceremony.to;
+    ceremony = null;
+    const star = W.state.ascend(to);
+    const px = to.x * W.scene.width, py = to.y * W.scene.height;
+    W.particles.burst(px, py, 50, { speed: 200 });
+    W.audio.play("achievement");
+    checkAchievements();
+    W.ui.renderBuildTab();
+    W.ui.renderBoostsTab();
+    W.ui.renderWispTab();
+    W.flow.rebirth(star);
+  }
+
+  function starTouched(star) {
+    const S = W.state.S;
+    const days = Math.max(1, Math.ceil((star.ascended - star.born) / 86400000));
+    W.ui.toast("🌠 " + star.name, star.stage + " · " + days + " day" + (days > 1 ? "s" : "") + " together · still watching");
+    if (S.wispName && Math.random() < 0.4) {
+      W.ui.bubble(U.pick([
+        `is that… ${star.name}?`,
+        `${star.name} says hi back.`,
+        "one day I'll be up there too, right?",
+      ]), 3200);
+    }
+    const px = star.x * W.scene.width, py = star.y * W.scene.height;
+    W.particles.rise(px, py, 8, { hue: 48 });
+  }
+
   /* ─────────────── wisp voice (idle) ─────────────── */
 
   function greet() {
@@ -189,6 +257,14 @@
 
     if (petRewardCooldown > 0) petRewardCooldown -= dt;
 
+    if (ceremony) {
+      ceremony.t += dt;
+      // sparkle trail while rising
+      const p = W.wisp.pos(ceremony.t);
+      if (Math.random() < 0.6) W.particles.rise(p.x, p.y + 10, 2);
+      if (ceremony.t >= ceremony.dur) finishCeremony();
+    }
+
     achTimer += dt;
     if (achTimer >= 2) { achTimer = 0; checkAchievements(); }
 
@@ -198,7 +274,7 @@
     voiceTimer -= dt;
     if (voiceTimer <= 0) {
       voiceTimer = U.rand(50, 130);
-      if (document.visibilityState === "visible") idleVoice();
+      if (document.visibilityState === "visible" && !ceremony) idleVoice();
     }
   }
 
@@ -207,5 +283,7 @@
     buyBuilding, buyUpgrade,
     computeOffline, applyOffline,
     checkAchievements, greet,
+    tryAscend, starTouched,
+    get ceremony() { return ceremony; },
   };
 })();

@@ -26,6 +26,11 @@
       flags: { returned: false, introDone: false },
       settings: { sound: true, particles: true },
       seed: Math.floor(Math.random() * 1e9),
+      // ascension
+      stars: [],         // past wisps: {name, hue, stage, level, totalLight, born, ascended, x, y}
+      stardust: 0,
+      generation: 1,
+      allTimeLight: 0,
     };
   }
 
@@ -53,6 +58,7 @@
       S.buildings = data.buildings || {};
       S.upgrades = data.upgrades || {};
       S.achievements = data.achievements || {};
+      S.stars = data.stars || [];
       return true;
     } catch (e) {
       return false;
@@ -95,6 +101,7 @@
     }
     m *= 1 + (S.level - 1) * C.LEVEL.prodPerLevel;
     m *= 1 + Object.keys(S.achievements).length * C.ACH_PROD_BONUS;
+    m *= 1 + S.stardust * C.PRESTIGE.perStardust;
     return m;
   }
 
@@ -145,11 +152,50 @@
     return null;
   }
 
+  /* ─────────────── ascension ─────────────── */
+
+  function stardustGain() {
+    return Math.floor(Math.sqrt(S.totalLight / C.PRESTIGE.divisor));
+  }
+
+  /** Archive the current wisp as a star and start a new life.
+      The meadow keeps its shape (same seed) — home stays home. */
+  function ascend(starPos) {
+    const st = stageFor(S.level);
+    const star = {
+      name: S.wispName,
+      hue: st.hue,
+      stage: st.name,
+      level: S.level,
+      totalLight: S.totalLight,
+      born: S.born,
+      ascended: Date.now(),
+      x: starPos.x,
+      y: starPos.y,
+    };
+    S.stars.push(star);
+    S.stardust += stardustGain();
+    S.allTimeLight += S.totalLight;
+    S.generation += 1;
+
+    S.wispName = null;
+    S.born = Date.now();
+    S.light = 0;
+    S.totalLight = 0;
+    S.level = 1;
+    S.xp = 0;
+    S.buildings = {};
+    S.upgrades = {};
+    save();
+    return star;
+  }
+
   W.state = {
     get S() { return S; },
     defaultState, save, load, wipe,
     buildingCount, totalBuildings, buildingCost, buildingMult,
     globalMult, lightPerSec, tapValue,
     xpForLevel, stageFor, nextStage,
+    stardustGain, ascend,
   };
 })();
