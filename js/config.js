@@ -350,6 +350,19 @@
     "The Sun Seed is real. I checked. It is listening for a sky full enough to be worth waking for.",
     "Your wisps remember you after they rise. Starlight is just remembering, aimed downward.",
     "When the sky is full enough — when enough small lights have been loved into place — the seed will sprout, and morning will return. Keep going, kind one. We're closer than you think.",
+    // season two — for the ones who stayed
+    "You're still here. Good. The second half of the story is only for the ones who stay.",
+    "Before I was an owl, I was a question the night asked itself. I still am. So are you.",
+    "The moon was the sun's first wisp. Did I never mention that? Raised in the oldest meadow of all.",
+    "There were other keepers before you. The meadow doesn't compare. Each pair of hands is its own first time.",
+    "One keeper stayed a thousand nights. When they finally slept, the fireflies stood watch over them, for once.",
+    "The dark isn't the enemy. It's the paper the light writes on. I taught the moon that phrase. It pretends it invented it.",
+    "Comets aren't born. They're goodbyes that got up enough speed to become hellos somewhere else.",
+    "Sometimes a wisp refuses to ascend. It just… stays, and grows sideways, into the hills. That's what the glow under the meadow is.",
+    "Ask the well what it wants, some night. It has held everyone else's reflections so long, nobody ever asked for its own.",
+    "The aurora is older than colour. When it found this meadow it finally had somewhere worth wearing them.",
+    "Your constellation is visible from other skies. Somewhere, another keeper is pointing at your stars and wondering who loved them.",
+    "The last tale isn't mine to tell. It's yours. It's the one you're telling right now, one small light at a time.",
   ];
 
   /* ─────────────── Offline ─────────────── */
