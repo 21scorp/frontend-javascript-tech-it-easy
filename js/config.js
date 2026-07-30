@@ -197,6 +197,7 @@
     { id: "dew25",     glyph: "🏅", name: "Dawnproof",       desc: "Catch 25 golden dewdrops.", check: (s) => s.counters && s.counters.dews >= 25 },
     { id: "comet25",   glyph: "🌠", name: "Wish collector",  desc: "Catch 25 comet wishes.", check: (s) => s.counters && s.counters.comets >= 25 },
     { id: "comet50",   glyph: "🏆", name: "Sky fisher",      desc: "Catch 50 comet wishes.", check: (s) => s.counters && s.counters.comets >= 50 },
+    { id: "moonhi",    glyph: "🌝", name: "Hello up there",  desc: "Reach out and touch the moon.", check: (s) => s.counters && s.counters.moon >= 1 },
   ];
   const ACH_PROD_BONUS = 0.01;
 

@@ -543,6 +543,7 @@
     moonTouchedAt = now;
     W.audio.play("chirp");
     const S = W.state.S;
+    S.counters.moon = (S.counters.moon || 0) + 1;
     const lines = [
       ["🌕 The moon pretends not to notice.", "Its glow warms a little anyway."],
       ["🌕 You waved at the moon.", "Somewhere, the tide waved back."],
