@@ -376,6 +376,12 @@
   const PINK = "rgba(255,170,220,ALPHA)";
   const CYAN = "rgba(150,230,255,ALPHA)";
 
+  /** Between midnight and six, the meadow sleeps a little too. */
+  function drowsiness() {
+    const h = new Date().getHours();
+    return h >= 0 && h < 6 ? 0.55 : 1;
+  }
+
   /* — fireflies (live agents) — */
   function syncFireflies(count) {
     const target = Math.min(count, 24);
@@ -396,7 +402,8 @@
       f.y += Math.sin(f.a) * f.speed * dt * 0.6;
       f.x = U.clamp(f.x, 0.03, 0.97);
       f.y = U.clamp(f.y, 0.5, 0.86);
-      const pulse = 0.45 + 0.55 * Math.max(0, Math.sin(t * 1.4 + f.phase));
+      const drowsy = drowsiness();
+      const pulse = (0.45 + 0.55 * Math.max(0, Math.sin(t * 1.4 * drowsy + f.phase))) * drowsy;
       const x = f.x * width, y = f.y * height;
       glow(x, y, 12, GOLD, 0.35 * pulse);
       ctx.fillStyle = `rgba(255,240,170,${0.9 * pulse})`;
@@ -487,8 +494,8 @@
       ctx.moveTo(x, y);
       ctx.quadraticCurveTo(x + sway * 0.5, y - 14 * scale, hx, hy);
       ctx.stroke();
-      // petals
-      const open = 0.75 + 0.25 * Math.sin(t * 0.7 + i);
+      // petals (they half-close in the small hours)
+      const open = (0.75 + 0.25 * Math.sin(t * 0.7 + i)) * (0.6 + 0.4 * drowsiness());
       glow(hx, hy, 22 * scale, PINK, 0.25 * open);
       for (let p = 0; p < 6; p++) {
         const a = (p / 6) * Math.PI * 2 + t * 0.1;
