@@ -255,6 +255,14 @@
         W.ui.toast("🦉 The owl remembers…", "A new tale waits in " + name + "'s journal.");
       }, 2400);
     }
+    // once, after a few loyal days: gently suggest a backup
+    if (S.streak.count >= 5 && !S.flags.backupReminded) {
+      S.flags.backupReminded = true;
+      setTimeout(() => {
+        W.ui.toast("💾 Keep " + name + " safe", "Copy a save code in Settings — browsers sometimes forget.");
+        W.ui.bubble("if this window ever loses me… the code brings me home. okay?", 4600);
+      }, 6000);
+    }
     W.state.save();
   }
 
@@ -520,6 +528,24 @@
     W.state.save();
   }
 
+  /* ─────────────── living moments ─────────────── */
+
+  function petalArrived() {
+    const S = W.state.S;
+    const reward = Math.max(W.state.lightPerSec() * 60 * 2, W.state.tapValue() * 15);
+    earn(reward);
+    W.state.gainBond(2);
+    const p = W.scene.wispPos();
+    W.wisp.poke();
+    W.particles.heart(p.x, p.y - 40);
+    W.particles.rise(p.x, p.y, 8, { hue: 330 });
+    W.ui.floater(p.x, p.y - 50, "+" + U.fmt(reward));
+    W.audio.play("chirp");
+    if (Math.random() < 0.6) {
+      W.ui.bubble(U.pick(["a petal! for me??", "it flew all this way…", "I'm keeping it forever."]), 2800);
+    }
+  }
+
   /* ─────────────── comet wishes ─────────────── */
 
   function cometWish(x, y) {
@@ -738,7 +764,7 @@
     computeOffline, applyOffline,
     checkAchievements, greet,
     tryAscend, starTouched, cometWish, catchDew, spawnDew,
-    maybeDailyGift, greetVisitor, claimWish, ensureWishes,
+    maybeDailyGift, greetVisitor, claimWish, ensureWishes, petalArrived,
     spawnVisitor(id) { const t = C.VISITORS.find((v) => v.id === id); if (t) visitor = { type: t, born: Date.now(), greeted: false }; },
     get ceremony() { return ceremony; },
     get attention() { return attention; },

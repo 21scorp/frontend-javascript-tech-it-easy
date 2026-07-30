@@ -1009,6 +1009,57 @@
     return Math.hypot(p.x - x, p.y - y) < 34;
   }
 
+  /* — living moments: a petal drifts to the wisp — */
+  let petalMoment = null; // {t, dur, from:{x,y}}
+  let petalTimer2 = U.rand(420, 900);
+
+  function updatePetalMoment(dt) {
+    const own = W.state.S.buildings.moonflower || 0;
+    if (petalMoment) {
+      petalMoment.t += dt;
+      if (petalMoment.t >= petalMoment.dur) {
+        petalMoment = null;
+        if (W.game && W.game.petalArrived) W.game.petalArrived();
+      }
+      return;
+    }
+    if (own <= 0 || (W.game && W.game.ceremony)) return;
+    petalTimer2 -= dt;
+    if (petalTimer2 <= 0) {
+      petalTimer2 = U.rand(420, 900);
+      if (document.visibilityState !== "visible") return;
+      startPetal();
+    }
+  }
+
+  function startPetal() {
+    // same seeded position as the first drawn moonflower
+    const r2 = U.mulberry32(W.state.S.seed + 13);
+    const xn = 0.6 + r2() * 0.34;
+    const scale = 0.8 + r2() * 0.5;
+    petalMoment = {
+      t: 0, dur: 7,
+      from: { x: xn * width, y: hillY(1, xn) + 4 - 26 * scale },
+    };
+  }
+
+  function drawPetalMoment(t) {
+    if (!petalMoment) return;
+    const k = U.easeInOut(U.clamp(petalMoment.t / petalMoment.dur, 0, 1));
+    const to = W.scene.wispPos();
+    const x = U.lerp(petalMoment.from.x, to.x, k) + Math.sin(petalMoment.t * 2.2) * 14 * (1 - k);
+    const y = U.lerp(petalMoment.from.y, to.y, k) - Math.sin(k * Math.PI) * 40;
+    glow(x, y, 12, PINK, 0.4);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(petalMoment.t * 1.5);
+    ctx.fillStyle = "rgba(255,185,235,0.95)";
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 5, 2.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
   /* — golden dewdrop — */
   function dewScreenPos(t) {
     const dew = W.game && W.game.dew;
@@ -1087,6 +1138,8 @@
 
     drawVisitor(t);
     drawDew(t);
+    updatePetalMoment(dt);
+    drawPetalMoment(t);
 
     // wisp lives between world and particles
     W.wisp.draw(ctx, t, dt);
@@ -1115,6 +1168,7 @@
     startShower(seconds) { showerUntil = Date.now() + seconds * 1000; },
     setWeather(type) { weather = { type, k: weather.k }; weatherTarget = type === "clear" ? 0 : 1; },
     setSeason(name) { seasonOverride = name; },
+    startPetal,
     get width() { return width; },
     get height() { return height; },
     hillY,
