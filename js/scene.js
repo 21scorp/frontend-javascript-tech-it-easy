@@ -677,11 +677,16 @@
   }
 
   /* — comets — */
+  let showerUntil = 0;
+
   function updateComets(count, dt) {
-    if (count > 0) {
+    const shower = Date.now() < showerUntil;
+    if (count > 0 || shower) {
       cometTimer -= dt;
       if (cometTimer <= 0) {
-        cometTimer = Math.max(2.5, 14 - count * 0.8) + U.rand(0, 3);
+        cometTimer = shower
+          ? U.rand(0.35, 0.9)
+          : Math.max(2.5, 14 - count * 0.8) + U.rand(0, 3);
         const fromLeft = Math.random() < 0.5;
         comets.push({
           x: fromLeft ? -0.05 : 1.05,
@@ -822,6 +827,7 @@
     },
     rebuild() { buildWorld(W.state.S.seed); },
     draw, starHit, cometHit, dewHit,
+    startShower(seconds) { showerUntil = Date.now() + seconds * 1000; },
     get width() { return width; },
     get height() { return height; },
     hillY,

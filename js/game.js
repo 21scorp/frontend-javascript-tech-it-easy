@@ -21,6 +21,9 @@
   let blessTimer = U.rand(180, 420);
   let dew = null;        // {x, y, born} a golden dewdrop falling
   let dewTimer = U.rand(90, 240); // first one comes fairly soon
+  let showerTimer = U.rand(1100, 2200);
+  let combo = 0;
+  let lastTapAt = 0;
 
   /* ─────────────── earning ─────────────── */
 
@@ -69,14 +72,20 @@
     // Answering an attention moment is its own, bigger reward.
     if (attention) { answerAttention(); return; }
 
-    let v = W.state.tapValue();
+    // rhythm combo — keep tapping to warm up (max +100% at 50)
+    const now = performance.now();
+    combo = now - lastTapAt < 900 ? combo + 1 : 1;
+    lastTapAt = now;
+
+    let v = W.state.tapValue() * (1 + Math.min(combo, 50) * 0.02);
     const crit = Math.random() < C.TAP.critChance;
     if (crit) v *= C.TAP.critMult;
     earn(v);
 
     W.wisp.poke();
     W.audio.play(crit ? "crit" : "tap");
-    W.ui.floater(x, y - 20, "+" + U.fmt(v), crit);
+    const comboTag = combo >= 10 ? "  ‹" + combo + "›" : "";
+    W.ui.floater(x, y - 20, "+" + U.fmt(v) + comboTag, crit);
     W.particles.burst(x, y, crit ? 26 : 8, crit ? { speed: 240 } : {});
     if (crit) W.ui.toast("✦ Sparkle burst! ✦", "+" + U.fmt(v) + " light");
     else if (Math.random() < 0.06) W.ui.bubble(U.pick(C.VOICE.tapHappy), 1200);
@@ -441,9 +450,24 @@
     saveTimer += dt;
     if (saveTimer >= 10) { saveTimer = 0; W.state.save(); }
 
+    // starfall shower — the sky rains catchable wishes
+    showerTimer -= dt;
+    if (showerTimer <= 0) {
+      showerTimer = U.rand(1100, 2200);
+      if (document.visibilityState === "visible" && S.flags.introDone && !ceremony) {
+        W.scene.startShower(22);
+        W.ui.toast("🌠 Starfall!", "The sky is raining wishes — tap the comets!");
+        W.ui.bubble(U.pick(C.VOICE.shower), 3000);
+        W.audio.play("levelUp");
+      }
+    }
+
     // attention moments
     if (attention) {
-      if (Date.now() > attention.until) attention = null; // no punishment — it just settles
+      if (Date.now() > attention.until) {
+        attention = null; // no punishment — it just settles
+        if (Math.random() < 0.25) W.ui.bubble(U.pick(C.VOICE.attnMissed), 2600);
+      }
     } else if (!ceremony) {
       attnTimer -= dt;
       if (attnTimer <= 0) {

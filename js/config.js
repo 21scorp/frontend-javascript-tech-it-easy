@@ -207,6 +207,8 @@
     petThanks:   ["mmm…", "right there.", "don't stop!", "I could stay like this forever.", "your hands are warm."],
     attention:   ["…psst.", "hey. hey. look at me?", "I found something! come here!", "are you busy…?", "I miss your hands."],
     attnThanks:  ["you came!!", "I knew you would.", "hehe, it was nothing. I just missed you.", "best. moment. today."],
+    attnMissed:  ["…it's okay. you were busy.", "the moment passed. I'll find another one.", "I saved the feeling for later."],
+    shower:      ["the sky!! LOOK at the sky!!", "so many letters at once…", "catch them! catch them all!"],
     daily:       ["you came back! you always come back.", "I saved this for you.", "I counted the nights until you returned.", "today is a good day. you're in it."],
   };
 

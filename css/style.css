@@ -42,6 +42,13 @@ html, body {
   cursor: pointer;
 }
 
+#vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 42%, transparent 55%, rgba(4, 6, 18, 0.42) 100%);
+}
+
 .hidden { display: none !important; }
 
 /* ═══════════════ HUD ═══════════════ */
