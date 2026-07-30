@@ -47,7 +47,12 @@
   function updateCounters() {
     const S = W.state.S;
     els["light-amount"].textContent = U.fmt(S.light);
-    els["light-rate"].textContent = U.fmt(W.state.lightPerSec()) + " /s · tap " + U.fmt(W.state.tapValue());
+    let rateText = U.fmt(W.state.lightPerSec()) + " /s · tap " + U.fmt(W.state.tapValue());
+    if (S.buff && S.buff.until > Date.now()) {
+      const left = Math.ceil((S.buff.until - Date.now()) / 1000);
+      rateText += " · ×" + S.buff.mult + " " + Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0");
+    }
+    els["light-rate"].textContent = rateText;
     els["wisp-name-tag"].textContent = S.wispName || "…";
     els["wisp-stage-tag"].textContent = W.state.stageFor(S.level).name;
     els["wisp-level-tag"].textContent = "Lv " + S.level;
@@ -214,6 +219,19 @@
       return `<div class="ach ${has ? "unlocked" : ""}" title="${has ? a.name + " — " + a.desc : "???"}">${a.glyph}</div>`;
     }).join("");
 
+    // ─ bond card ─
+    const bond = S.bond;
+    const bondNeed = W.state.bondXpForLevel(bond.level);
+    const bondPct = Math.min(100, (bond.xp / bondNeed) * 100);
+    const bondHtml =
+      `<div class="wisp-card">
+        <h3>💗 Bond · ${W.state.bondTitle(bond.level)}</h3>
+        <div class="stat-line"><span>Bond level</span><b>${bond.level} (+${(bond.level - 1) * Math.round(C.BOND.prodPerLevel * 100)}% light, +${(bond.level - 1) * Math.round(C.BOND.tapPerLevel * 100)}% touch)</b></div>
+        <div class="meter" style="margin:8px 0 4px"><div style="height:100%;width:${bondPct}%;border-radius:3px;background:linear-gradient(90deg,#ff9ec4,#ff6f9c);box-shadow:0 0 8px rgba(255,140,180,0.7)"></div></div>
+        <div class="shop-desc">Hold ${S.wispName || "your wisp"} gently to pet it. Answer when it calls for you.
+        The bond is yours — it carries across every generation.</div>
+      </div>`;
+
     // ─ ascension card ─
     let ascHtml = "";
     const gain = W.state.stardustGain();
@@ -260,6 +278,7 @@
         <div class="stat-line"><span>Things built</span><b>${U.fmtInt(W.state.totalBuildings())}</b></div>
         <div class="stat-line"><span>Production bonus</span><b>×${W.state.globalMult().toFixed(2)}</b></div>
       </div>
+      ${bondHtml}
       ${ascHtml}
       ${starsHtml}
       <div class="wisp-card">

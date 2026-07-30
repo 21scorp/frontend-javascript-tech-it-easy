@@ -185,6 +185,23 @@
       ctx.globalAlpha = 1;
     }
 
+    // attention moment — a soft ring of longing
+    const attn = W.game && W.game.attention;
+    if (attn) {
+      const k = 0.5 + 0.5 * Math.sin(t * 5);
+      ctx.strokeStyle = `hsla(${hue}, 100%, 80%, ${0.35 + 0.3 * k})`;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([9, 11]);
+      ctx.lineDashOffset = -t * 30;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r * 1.7 + k * 7, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if (Math.random() < 0.03) {
+        W.particles.heart(p.x + U.rand(-r, r), p.y - r * 1.3);
+      }
+    }
+
     // sleepy "z z z"
     if (sleepy) {
       ctx.font = `600 ${Math.round(r * 0.35)}px system-ui, sans-serif`;

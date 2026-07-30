@@ -146,6 +146,7 @@
       W.state.S.flags.introDone = true;
       W.state.save();
       celebrateNaming(name);
+      W.game.maybeDailyGift(); // day 1 starts quietly
     });
   } else {
     $("intro").classList.add("hidden");
@@ -161,10 +162,10 @@
          <span class="big-num">+${U.fmt(off.gained)} ✦</span>
          <p>${name} kept gathering light while thinking of you.</p>
          ${off.cappedSeconds < off.seconds ? `<p class="muted" style="margin-top:8px">(it dozed off after ${C.OFFLINE.capHours} hours)</p>` : ""}`,
-        [{ label: "I'm home", cls: "btn-primary", fn: () => W.game.greet() }]
+        [{ label: "I'm home", cls: "btn-primary", fn: () => { W.game.greet(); setTimeout(() => W.game.maybeDailyGift(), 600); } }]
       );
     } else {
-      setTimeout(() => W.game.greet(), 800);
+      setTimeout(() => { W.game.greet(); W.game.maybeDailyGift(); }, 800);
     }
   }
 

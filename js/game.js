@@ -13,7 +13,10 @@
   let achTimer = 0;
   let voiceTimer = U.rand(20, 40);
   let petRewardCooldown = 0;
-  let ceremony = null; // {t, dur, to:{x,y}, gain} while a wisp ascends
+  let ceremony = null;   // {t, dur, to:{x,y}, gain} while a wisp ascends
+  let attention = null;  // {until} while the wisp wants you
+  let attnTimer = U.rand(C.ATTENTION.minGap, C.ATTENTION.maxGap);
+  let dailyTimer = 0;
 
   /* ─────────────── earning ─────────────── */
 
@@ -58,6 +61,10 @@
   function tap(x, y) {
     const S = W.state.S;
     S.taps++;
+
+    // Answering an attention moment is its own, bigger reward.
+    if (attention) { answerAttention(); return; }
+
     let v = W.state.tapValue();
     const crit = Math.random() < C.TAP.critChance;
     if (crit) v *= C.TAP.critMult;
@@ -71,17 +78,97 @@
     else if (Math.random() < 0.06) W.ui.bubble(U.pick(C.VOICE.tapHappy), 1200);
   }
 
+  /* ─────────────── attention moments ─────────────── */
+
+  function startAttention() {
+    attention = { until: Date.now() + C.ATTENTION.window * 1000 };
+    W.ui.bubble(U.pick(C.VOICE.attention), C.ATTENTION.window * 1000);
+    W.audio.play("chirp");
+  }
+
+  function answerAttention() {
+    attention = null;
+    const S = W.state.S;
+    const reward = Math.max(
+      W.state.tapValue() * C.ATTENTION.tapMult,
+      W.state.lightPerSec() * 60 * C.ATTENTION.prodMinutes
+    );
+    earn(reward);
+    const deepened = W.state.gainBond(C.ATTENTION.bondXp);
+    const p = W.scene.wispPos();
+    W.wisp.poke();
+    W.audio.play("crit");
+    W.particles.burst(p.x, p.y, 30, { speed: 220 });
+    for (let i = 0; i < 5; i++) W.particles.heart(p.x + U.rand(-40, 40), p.y - 30);
+    W.ui.floater(p.x, p.y - 60, "+" + U.fmt(reward), true);
+    W.ui.bubble(U.pick(C.VOICE.attnThanks), 2600);
+    if (deepened) announceBond();
+    W.state.save();
+  }
+
+  function announceBond() {
+    const S = W.state.S;
+    W.ui.toast("💗 Bond deepened", "You are now “" + W.state.bondTitle(S.bond.level) + "” · +2% light, +5% touch");
+    W.audio.play("achievement");
+  }
+
+  /* ─────────────── daily gift & streak ─────────────── */
+
+  function todayStr() {
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  function yesterdayStr() {
+    const d = new Date(Date.now() - 86400000);
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  /** Called on boot (after modals) and on day rollover while playing. */
+  function maybeDailyGift() {
+    const S = W.state.S;
+    const today = todayStr();
+    if (S.streak.last === today) return;
+    const firstEver = !S.streak.last;
+    S.streak.count = S.streak.last === yesterdayStr() ? S.streak.count + 1 : 1;
+    S.streak.last = today;
+    if (firstEver) { W.state.save(); return; } // day 1 happens quietly, inside the naming
+
+    const name = S.wispName || "Your wisp";
+    const gift = Math.max(500, W.state.lightPerSec() * 60 * C.DAILY.prodMinutes);
+    const bondXp = C.DAILY.bondBase + C.DAILY.bondPerDay * Math.min(S.streak.count, 30);
+    earn(gift);
+    const deepened = W.state.gainBond(bondXp);
+    S.buff = { mult: C.DAILY.buffMult, until: Date.now() + C.DAILY.buffMinutes * 60000 };
+
+    W.ui.modal(
+      S.streak.count > 1 ? "Day " + S.streak.count + " together" : "A new day together",
+      `<p>${U.pick(C.VOICE.daily)}</p>
+       <span class="big-num">+${U.fmt(gift)} ✦</span>
+       <p><b>×${C.DAILY.buffMult} light</b> for ${C.DAILY.buffMinutes} minutes · <b>+${bondXp}</b> bond</p>
+       ${S.streak.count > 1 ? `<p class="muted" style="margin-top:8px">🔥 ${S.streak.count} days in a row — don't break the little one's heart.</p>` : ""}`,
+      [{ label: "Good morning, " + name, cls: "btn-primary" }]
+    );
+    W.audio.play("levelUp");
+    if (deepened) setTimeout(announceBond, 1200);
+    W.state.save();
+  }
+
   /* ─────────────── petting ─────────────── */
 
   function onPet() {
     // Called by wisp.js roughly every half second while petting.
     const S = W.state.S;
     if (petRewardCooldown > 0) return;
+    if (attention) { answerAttention(); return; }
     const v = Math.max(W.state.tapValue() * 0.5, W.state.lightPerSec() * 0.25);
     earn(v);
+    const deepened = W.state.gainBond(C.BOND.petXp);
     const p = W.scene.wispPos();
     W.ui.floater(p.x + U.rand(-30, 30), p.y - 60, "+" + U.fmt(v));
     W.audio.play("chirp");
+    if (Math.random() < 0.1) W.ui.bubble(U.pick(C.VOICE.petThanks), 1500);
+    if (deepened) announceBond();
   }
 
   /* ─────────────── shop ─────────────── */
@@ -271,10 +358,34 @@
     saveTimer += dt;
     if (saveTimer >= 10) { saveTimer = 0; W.state.save(); }
 
+    // attention moments
+    if (attention) {
+      if (Date.now() > attention.until) attention = null; // no punishment — it just settles
+    } else if (!ceremony) {
+      attnTimer -= dt;
+      if (attnTimer <= 0) {
+        attnTimer = U.rand(C.ATTENTION.minGap, C.ATTENTION.maxGap);
+        if (document.visibilityState === "visible" && S.flags.introDone) startAttention();
+      }
+    }
+
+    // day rollover while playing (checks every 30s)
+    dailyTimer += dt;
+    if (dailyTimer >= 30) {
+      dailyTimer = 0;
+      if (S.flags.introDone && !ceremony) maybeDailyGift();
+    }
+
+    // expire buff
+    if (S.buff && S.buff.until <= Date.now()) {
+      S.buff = null;
+      W.ui.toast("The morning warmth fades", "…but it was nice while it lasted.");
+    }
+
     voiceTimer -= dt;
     if (voiceTimer <= 0) {
       voiceTimer = U.rand(50, 130);
-      if (document.visibilityState === "visible" && !ceremony) idleVoice();
+      if (document.visibilityState === "visible" && !ceremony && !attention) idleVoice();
     }
   }
 
@@ -284,6 +395,8 @@
     computeOffline, applyOffline,
     checkAchievements, greet,
     tryAscend, starTouched,
+    maybeDailyGift,
     get ceremony() { return ceremony; },
+    get attention() { return attention; },
   };
 })();

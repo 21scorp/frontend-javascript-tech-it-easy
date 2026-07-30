@@ -31,6 +31,12 @@
       stardust: 0,
       generation: 1,
       allTimeLight: 0,
+      // bond — carried across generations; it's *your* capacity to care
+      bond: { xp: 0, level: 1 },
+      // daily streak
+      streak: { last: null, count: 0 },
+      // active timed boost {mult, until}
+      buff: null,
     };
   }
 
@@ -59,6 +65,9 @@
       S.upgrades = data.upgrades || {};
       S.achievements = data.achievements || {};
       S.stars = data.stars || [];
+      S.bond = Object.assign({ xp: 0, level: 1 }, data.bond);
+      S.streak = Object.assign({ last: null, count: 0 }, data.streak);
+      if (S.buff && S.buff.until <= Date.now()) S.buff = null;
       return true;
     } catch (e) {
       return false;
@@ -102,6 +111,8 @@
     m *= 1 + (S.level - 1) * C.LEVEL.prodPerLevel;
     m *= 1 + Object.keys(S.achievements).length * C.ACH_PROD_BONUS;
     m *= 1 + S.stardust * C.PRESTIGE.perStardust;
+    m *= 1 + (S.bond.level - 1) * C.BOND.prodPerLevel;
+    if (S.buff && S.buff.until > Date.now()) m *= S.buff.mult;
     return m;
   }
 
@@ -122,6 +133,7 @@
       if (S.upgrades[u.id] && u.type === "tap") v *= u.mult;
     }
     v *= globalMult();
+    v *= 1 + (S.bond.level - 1) * C.BOND.tapPerLevel;
     let pct = 0;
     for (const u of C.UPGRADES) {
       if (S.upgrades[u.id] && u.type === "tapRate") pct += u.pct;
@@ -150,6 +162,29 @@
       if (s.level > level) return s;
     }
     return null;
+  }
+
+  /* ─────────────── bond ─────────────── */
+
+  function bondXpForLevel(level) {
+    return Math.ceil(C.BOND.baseXp * Math.pow(C.BOND.growth, level - 1));
+  }
+
+  function bondTitle(level) {
+    const t = C.BOND.titles;
+    return t[Math.min(level - 1, t.length - 1)];
+  }
+
+  /** Add bond XP; returns true if the bond deepened (level up). */
+  function gainBond(xp) {
+    S.bond.xp += xp;
+    let leveled = false;
+    while (S.bond.xp >= bondXpForLevel(S.bond.level)) {
+      S.bond.xp -= bondXpForLevel(S.bond.level);
+      S.bond.level++;
+      leveled = true;
+    }
+    return leveled;
   }
 
   /* ─────────────── ascension ─────────────── */
@@ -197,5 +232,6 @@
     globalMult, lightPerSec, tapValue,
     xpForLevel, stageFor, nextStage,
     stardustGain, ascend,
+    bondXpForLevel, bondTitle, gainBond,
   };
 })();

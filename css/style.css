@@ -107,7 +107,7 @@ html, body {
 }
 #wisp-name-tag { font-weight: 800; font-size: 0.95rem; }
 #wisp-stage-tag { font-size: 0.7rem; color: var(--accent); letter-spacing: 0.14em; text-transform: uppercase; margin: 1px 0 5px; }
-#xpbar {
+#xpbar, .meter {
   height: 5px;
   background: rgba(255,255,255,0.10);
   border-radius: 3px;

@@ -141,6 +141,12 @@
     { id: "ascend1",   glyph: "🌠", name: "Goodbye, hello",  desc: "Watch a wisp take its place in the sky.", check: (s) => (s.stars || []).length >= 1 },
     { id: "ascend3",   glyph: "🌌", name: "A family of stars", desc: "Raise three wisps to the sky.", check: (s) => (s.stars || []).length >= 3 },
     { id: "dust10",    glyph: "✨", name: "Stardust keeper", desc: "Hold 10 stardust.", check: (s) => (s.stardust || 0) >= 10 },
+    { id: "bond3",     glyph: "💗", name: "It trusts you",   desc: "Reach bond level 3.", check: (s) => s.bond && s.bond.level >= 3 },
+    { id: "bond5",     glyph: "💖", name: "Warmth shared",   desc: "Reach bond level 5.", check: (s) => s.bond && s.bond.level >= 5 },
+    { id: "bond8",     glyph: "💞", name: "Kindred lights",  desc: "Reach bond level 8.", check: (s) => s.bond && s.bond.level >= 8 },
+    { id: "streak3",   glyph: "📅", name: "Three nights",    desc: "Visit 3 days in a row.", check: (s) => s.streak && s.streak.count >= 3 },
+    { id: "streak7",   glyph: "🗓️", name: "A whole week",    desc: "Visit 7 days in a row.", check: (s) => s.streak && s.streak.count >= 7 },
+    { id: "streak30",  glyph: "🏆", name: "A month of light", desc: "Visit 30 days in a row.", check: (s) => s.streak && s.streak.count >= 30 },
   ];
   const ACH_PROD_BONUS = 0.01;
 
@@ -159,6 +165,41 @@
     build:       ["it's perfect.", "the meadow likes it too.", "another one! another one!", "I'll take care of it.", "it glows like me!"],
     idleSoft:    ["the wind smells like moonflowers.", "I named one of the fireflies after you.", "do you think the moon gets lonely?", "I like it when you're here.", "one day I want to see the sun.", "the owl told me a secret. I'll tell you later.", "sometimes I glow extra just in case you're watching."],
     rare:        ["when I become a star… will you still visit?", "I remember the day you named me.", "I was so small when you found me.", "you built all of this. for me.", "I'm not scared of the dark. not anymore."],
+    petThanks:   ["mmm…", "right there.", "don't stop!", "I could stay like this forever.", "your hands are warm."],
+    attention:   ["…psst.", "hey. hey. look at me?", "I found something! come here!", "are you busy…?", "I miss your hands."],
+    attnThanks:  ["you came!!", "I knew you would.", "hehe, it was nothing. I just missed you.", "best. moment. today."],
+    daily:       ["you came back! you always come back.", "I saved this for you.", "I counted the nights until you returned.", "today is a good day. you're in it."],
+  };
+
+  /* ─────────────── Bond ───────────────
+     Petting and daily visits deepen your bond. The bond is *yours* —
+     it carries across generations of wisps.                        */
+  const BOND = {
+    baseXp: 25,
+    growth: 1.7,
+    prodPerLevel: 0.02,   // +2% production per bond level
+    tapPerLevel: 0.05,    // +5% tap per bond level
+    petXp: 1,             // per pet pulse (~0.55s of holding)
+    titles: ["Curious", "Friendly", "Fond", "Close", "Warm", "Devoted",
+             "Inseparable", "Kindred", "Soulbound", "One Light"],
+  };
+
+  /* ─────────────── Attention moments ───────────────
+     Sometimes the wisp just wants you. Answering is always worth it. */
+  const ATTENTION = {
+    minGap: 150, maxGap: 420,   // seconds between moments
+    window: 22,                 // seconds to respond
+    bondXp: 15,
+    prodMinutes: 4,             // reward: minutes of production
+    tapMult: 40,                // …or at least this many taps
+  };
+
+  /* ─────────────── Daily gift & streak ─────────────── */
+  const DAILY = {
+    buffMult: 2,
+    buffMinutes: 10,
+    prodMinutes: 30,            // gift: minutes of production (min 500)
+    bondBase: 10, bondPerDay: 5,
   };
 
   /* ─────────────── Ascension (prestige) ───────────────
@@ -189,6 +230,7 @@
     BUILDINGS, UPGRADES, STAGES, LEVEL,
     ACHIEVEMENTS, ACH_PROD_BONUS,
     VOICE, OFFLINE, TAP, PRESTIGE,
+    BOND, ATTENTION, DAILY,
     SAVE_KEY: "wisp.save.v1",
     VERSION: 1,
   };
