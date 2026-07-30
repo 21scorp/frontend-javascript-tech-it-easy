@@ -62,6 +62,7 @@
 
   /* ─────────────── weather (cosmetic only) ─────────────── */
   let weather = { type: "clear", k: 0 };  // k = 0..1 intensity
+  let flashA = 0;                          // celebration flash alpha
   let weatherTimer = 300;                  // first change after ~5 min
   let weatherTarget = 0;
   let petalTimer = 0;
@@ -1235,6 +1236,13 @@
       ctx.fillStyle = `rgba(255,205,110,${a})`;
       ctx.fillRect(0, 0, width, height);
     }
+
+    // one-shot celebration flash (evolutions, ascensions)
+    if (flashA > 0.004) {
+      ctx.fillStyle = `rgba(255,240,205,${flashA})`;
+      ctx.fillRect(0, 0, width, height);
+      flashA *= Math.pow(0.02, dt); // fast exponential fade
+    }
   }
 
   W.scene = {
@@ -1251,6 +1259,7 @@
     setWeather(type) { weather = { type, k: weather.k }; weatherTarget = type === "clear" ? 0 : 1; },
     setSeason(name) { seasonOverride = name; },
     startPetal,
+    flash(strength) { flashA = Math.min(0.5, strength == null ? 0.28 : strength); },
     get width() { return width; },
     get height() { return height; },
     hillY,

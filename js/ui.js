@@ -41,6 +41,12 @@
 
     els["btn-settings"].addEventListener("click", showSettings);
     $("btn-photo").addEventListener("click", sharePostcard);
+
+    // the nameplate is a shortcut to the Wisp tab
+    $("wisp-plate").style.cursor = "pointer";
+    $("wisp-plate").addEventListener("click", () => {
+      document.querySelector('.tab[data-tab="wisp"]').click();
+    });
   }
 
   /* ─────────────── postcard ─────────────── */
@@ -443,7 +449,9 @@
     let starsHtml = "";
     if (S.stars.length > 0) {
       const rows = S.stars.map((star, i) =>
-        `<div class="stat-line star-row" data-star="${i}" style="cursor:pointer"><span>🌟 ${star.name}</span><b>${star.stage} · Lv ${star.level}</b></div>`
+        `<div class="stat-line star-row" data-star="${i}" style="cursor:pointer">
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:hsl(${star.hue},95%,78%);box-shadow:0 0 6px hsl(${star.hue},95%,70%);margin-right:6px"></span>${star.name}</span>
+          <b>${star.stage} · Lv ${star.level}</b></div>`
       ).join("");
       const constHtml = S.stars.length >= 3
         ? (S.constellation

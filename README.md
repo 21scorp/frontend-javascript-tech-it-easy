@@ -8,6 +8,10 @@ It keeps gathering light while you're away. It notices when you come back.
 
 ▶ **Play:** open `index.html` in any browser — that's the whole game. No build step, no dependencies, no accounts. Works on phones, installs as an app (PWA), plays offline.
 
+![Lumi the wisp, wearing a flower crown, above a living meadow under the constellation The Three Sisters](assets/screens/meadow.png)
+
+<p align="center"><img src="assets/screens/postcard.png" width="320" alt="A shareable postcard: Lumi, Flare, level 21, 4 days together, watched over by Pip"> <img src="assets/screens/intro.png" width="410" alt="The intro: a tiny light falling through the dark"></p>
+
 ---
 
 ## Why people stay

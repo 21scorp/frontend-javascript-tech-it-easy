@@ -48,10 +48,10 @@
   <!-- ══════════════ PANEL ══════════════ -->
   <div id="panel" class="collapsed">
     <button id="panel-toggle" aria-label="Toggle panel"><span id="panel-toggle-arrow">▲</span></button>
-    <nav id="tabs">
-      <button class="tab active" data-tab="build">Build</button>
-      <button class="tab" data-tab="boosts">Boosts</button>
-      <button class="tab" data-tab="wisp">Wisp</button>
+    <nav id="tabs" role="tablist" aria-label="Game panels">
+      <button class="tab active" data-tab="build" role="tab" aria-controls="tab-build">Build</button>
+      <button class="tab" data-tab="boosts" role="tab" aria-controls="tab-boosts">Boosts</button>
+      <button class="tab" data-tab="wisp" role="tab" aria-controls="tab-wisp">Wisp</button>
     </nav>
     <div id="tab-content">
       <div id="tab-build" class="tab-page active"></div>
