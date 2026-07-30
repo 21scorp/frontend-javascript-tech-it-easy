@@ -69,6 +69,18 @@ js/
 
 Deploys to GitHub Pages via `.github/workflows/pages.yml` (enable Pages → GitHub Actions in repo settings after merging to main).
 
+## Publishing & earning
+
+The game is a static folder — publishing is trivial:
+
+1. **GitHub Pages (free hosting).** Merge to `main`, then repo *Settings → Pages → Source: GitHub Actions*. The included workflow deploys automatically; your game gets a public URL. Add that URL as `og:image`'s absolute prefix in `index.html` for pretty link cards.
+2. **itch.io (discovery + donations).** Zip the folder, upload as an HTML game, enable "This file will be played in the browser". Set pricing to "$0 or donate". Idle games do well there.
+3. **Ko-fi / Buy Me a Coffee.** Once you have a link, add a small "Support the meadow ☕" row in the settings modal (one line in `ui.js`). Keep it out of the game world.
+4. **Google Play** via a TWA wrapper (Bubblewrap) once the PWA is live — WISP already meets installability requirements (manifest + service worker + icons).
+5. **Cosmetics-only philosophy.** The monetization path that fits this game: a one-time supporter pack unlocking extra *cosmetic* wardrobe items and postcard frames. Never sell power, never show ads inside the meadow — trust is the retention engine.
+
+Virality is designed in: the 📷 postcard (share image with your wisp's name and guardians), the emotional ascension moments people want to talk about, and save codes that make it safe to fall in love with a browser game.
+
 ## Roadmap
 
 - Weekly Moon Letters (personalized recap from the moon)

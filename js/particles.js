@@ -11,6 +11,11 @@
   const MAX = 400;
   const pool = [];
 
+  /** Expanding celebration ring (evolutions, big moments). */
+  function ring(x, y, size, hue) {
+    spawn({ x, y, size: size || 40, hue: hue == null ? 48 : hue, life: 1.1, shape: "ring", force: true });
+  }
+
   function spawn(opts) {
     if (!W.state.S.settings.particles && !opts.force) return;
     if (pool.length >= MAX) pool.shift();
@@ -104,6 +109,12 @@
       const col = `hsl(${p.hue} ${p.sat}% ${p.lum}%)`;
       if (p.shape === "heart") {
         drawHeart(ctx, p.x, p.y, p.size, col);
+      } else if (p.shape === "ring") {
+        ctx.strokeStyle = col;
+        ctx.lineWidth = Math.max(1, p.size * 0.35 * (1 - t));
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 3 * U.easeOutCubic(t) + 2, 0, Math.PI * 2);
+        ctx.stroke();
       } else {
         ctx.fillStyle = col;
         ctx.beginPath();
@@ -127,5 +138,5 @@
     ctx.restore();
   }
 
-  W.particles = { spawn, burst, rise, heart, update, draw, get count() { return pool.length; } };
+  W.particles = { spawn, burst, rise, heart, ring, update, draw, get count() { return pool.length; } };
 })();

@@ -57,6 +57,10 @@
     if (stageAfter !== stageBefore) {
       // Evolution! A big moment.
       W.particles.burst(p.x, p.y, 60, { speed: 260 });
+      W.particles.ring(p.x, p.y, 40, stageAfter.hue);
+      setTimeout(() => W.particles.ring(p.x, p.y, 60, stageAfter.hue), 220);
+      setTimeout(() => W.particles.ring(p.x, p.y, 85, 48), 440);
+      W.audio.play("evolve");
       W.ui.toast(`${S.wispName || "Your wisp"} became a ${stageAfter.name}!`, "It's growing because of you.");
       W.ui.bubble(U.pick(C.VOICE.levelUp), 4200);
     } else {
@@ -324,7 +328,8 @@
     const star = W.state.ascend(to);
     const px = to.x * W.scene.width, py = to.y * W.scene.height;
     W.particles.burst(px, py, 50, { speed: 200 });
-    W.audio.play("achievement");
+    W.particles.ring(px, py, 50, star.hue);
+    W.audio.play("evolve");
     checkAchievements();
     W.ui.renderBuildTab();
     W.ui.renderBoostsTab();

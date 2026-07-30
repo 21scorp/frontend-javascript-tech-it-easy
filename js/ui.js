@@ -495,6 +495,20 @@
            <button class="btn btn-ghost" id="btn-export" style="padding:8px 14px;font-size:0.8rem">Copy</button>
            <button class="btn btn-ghost" id="btn-import" style="padding:8px 14px;font-size:0.8rem">Load</button>
          </span>
+       </div>
+       <div class="setting-row"><span>Name</span>
+         <span>
+           <b style="font-size:0.85rem">${S.wispName || "…"}</b>
+           <button class="btn btn-ghost" id="btn-rename" style="padding:8px 14px;font-size:0.8rem;margin-left:8px">Change</button>
+         </span>
+       </div>
+       <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:4px">
+         <span style="color:var(--ink-dim);font-size:0.78rem;margin-bottom:2px">Across all lifetimes</span>
+         <div class="stat-line"><span>Generations</span><b>${S.generation}</b></div>
+         <div class="stat-line"><span>Light, all lives</span><b>${U.fmt(S.allTimeLight + S.totalLight)} ✦</b></div>
+         <div class="stat-line"><span>Stardust</span><b>${S.stardust} ✨</b></div>
+         <div class="stat-line"><span>Visitors greeted</span><b>${S.visitors || 0}</b></div>
+         <div class="stat-line"><span>Tales heard</span><b>${Math.min(S.tales || 0, C.TALES.length)}/${C.TALES.length}</b></div>
        </div>`;
 
     modal("Settings", rowsHtml + `<p class="muted" style="margin-top:12px">WISP saves automatically in this browser. Copy a save code to move ${S.wispName || "your wisp"} to another device — don't leave it behind.</p><p class="muted" style="margin-top:6px">WISP ${W.config.BUILD} · made with zero sprites</p>`, [
@@ -519,6 +533,22 @@
     });
     $("btn-export").addEventListener("click", exportSave);
     $("btn-import").addEventListener("click", importSave);
+    $("btn-rename").addEventListener("click", renameWisp);
+  }
+
+  function renameWisp() {
+    const S = W.state.S;
+    const oldName = S.wispName || "your wisp";
+    const raw = window.prompt("A new name for " + oldName + "?", S.wispName || "");
+    if (raw === null) return;
+    const name = raw.trim().slice(0, 14);
+    if (!name || name === S.wispName) return;
+    S.wispName = name;
+    W.state.save();
+    updateCounters();
+    renderWispTab();
+    bubble(name + "? …" + name + ". okay. I like this one too.", 4200);
+    W.audio.play("chirp");
   }
 
   function encodeSave() {

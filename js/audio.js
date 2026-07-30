@@ -76,6 +76,16 @@
         tone(f, { dur: 0.34, vol: 0.13, type: "triangle", delay: i * 0.09 })
       );
     },
+    evolve() {
+      // a longer fanfare: rise, shimmer, settle
+      [392, 523.25, 659.25, 783.99, 1046.5, 1318.5, 1568].forEach((f, i) =>
+        tone(f, { dur: 0.4, vol: 0.12, type: "triangle", delay: i * 0.11 })
+      );
+      [2093, 2637, 3136].forEach((f, i) =>
+        tone(f, { dur: 0.5, vol: 0.05, type: "sine", delay: 0.8 + i * 0.07 })
+      );
+      tone(523.25, { dur: 1.2, vol: 0.08, type: "sine", delay: 1.1 });
+    },
     achievement() {
       tone(880, { dur: 0.14, vol: 0.11, type: "sine" });
       tone(1174.7, { dur: 0.3, vol: 0.11, type: "sine", delay: 0.09 });

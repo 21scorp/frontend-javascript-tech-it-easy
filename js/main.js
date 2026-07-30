@@ -123,6 +123,7 @@
     W.ui.updateCounters();
     const p = W.scene.wispPos();
     W.particles.burst(p.x, p.y, 40, { speed: 220 });
+    W.particles.ring(p.x, p.y, 45, 48);
     setTimeout(() => W.ui.bubble(name + "… I like it.", 3600), 900);
   }
 
@@ -249,6 +250,9 @@
     }
     downOnWisp = false;
   });
+
+  // long-press must pet, not open a context menu
+  canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 
   canvas.addEventListener("pointercancel", () => {
     clearTimeout(pressTimer);
