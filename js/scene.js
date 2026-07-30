@@ -1277,7 +1277,10 @@
     setWeather(type) { weather = { type, k: weather.k }; weatherTarget = type === "clear" ? 0 : 1; },
     setSeason(name) { seasonOverride = name; },
     startPetal,
-    flash(strength) { flashA = Math.min(0.5, strength == null ? 0.28 : strength); },
+    flash(strength) {
+      if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      flashA = Math.min(0.5, strength == null ? 0.28 : strength);
+    },
     get width() { return width; },
     get height() { return height; },
     hillY,

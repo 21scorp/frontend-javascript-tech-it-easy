@@ -122,6 +122,16 @@
     $("name-ok").addEventListener("click", confirmName);
     input.addEventListener("keydown", onKey);
 
+    // the placeholder shyly suggests names until you start typing
+    const suggestions = ["give it a name…", "Lumi?", "Pip?", "Nova?", "Fonkel?", "Momo?", "Glim?", "give it a name…"];
+    let sug = 0;
+    const sugTimer = setInterval(() => {
+      if (!ceremonyActive) { clearInterval(sugTimer); return; }
+      if (document.activeElement === input && input.value) return;
+      sug = (sug + 1) % suggestions.length;
+      input.placeholder = suggestions[sug];
+    }, 2200);
+
     showStep();
   }
 
