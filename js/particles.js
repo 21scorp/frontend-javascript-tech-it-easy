@@ -102,7 +102,7 @@
 
   function draw(ctx) {
     for (const p of pool) {
-      const t = p.age / p.life;
+      const t = U.clamp(p.age / p.life, 0, 1);
       let a = p.alpha * (1 - t);
       if (p.twinkle) a *= 0.6 + 0.4 * Math.sin(p.age * p.twinkle * Math.PI * 2);
       ctx.globalAlpha = Math.max(0, a);

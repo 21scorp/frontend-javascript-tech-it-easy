@@ -14,6 +14,9 @@
   let tapStepResetTimer = null;
   let ambience = null;      // {windGain, cricketTimer, nodes[]}
   let ambienceWanted = false;
+  let musicTimer = null;    // music box scheduler
+  let musicWanted = false;
+  let musicStep = 2;        // random-walk position in the scale
 
   function ensure() {
     if (!ctx) {
@@ -146,22 +149,60 @@
     ambience = null;
   }
 
+  /* ─────────────── music box ───────────────
+     A slow generative lullaby: a random walk over the pentatonic
+     scale, sparse enough to stay behind the game, never repeat.     */
+
+  function startMusicBox() {
+    if (musicTimer || !enabled || !ensure()) return;
+    const step = () => {
+      if (enabled && document.visibilityState === "visible") {
+        // wander the scale, leaning back toward the middle
+        const drift = W.util.pick([-2, -1, -1, 1, 1, 2]) + (musicStep > 4 ? -1 : musicStep < 2 ? 1 : 0);
+        musicStep = Math.max(0, Math.min(SCALE.length - 1, musicStep + drift));
+        const f = SCALE[musicStep] / 2; // an octave down: soft and low
+        tone(f, { dur: 1.6, vol: 0.05, type: "sine" });
+        tone(f * 2, { dur: 1.2, vol: 0.018, type: "sine", delay: 0.02 });
+        // occasional gentle third
+        if (Math.random() < 0.3) {
+          const h = SCALE[Math.min(musicStep + 2, SCALE.length - 1)] / 2;
+          tone(h, { dur: 1.5, vol: 0.03, type: "sine", delay: 0.4 });
+        }
+      }
+      musicTimer = setTimeout(step, 1400 + Math.random() * 1800);
+    };
+    musicTimer = setTimeout(step, 600);
+  }
+
+  function stopMusicBox() {
+    clearTimeout(musicTimer);
+    musicTimer = null;
+  }
+
   W.audio = {
     play(name) { if (sfx[name]) sfx[name](); },
     setEnabled(on) {
       enabled = on;
-      if (!on) stopAmbience();
-      else if (ambienceWanted) startAmbience();
+      if (!on) { stopAmbience(); stopMusicBox(); }
+      else {
+        if (ambienceWanted) startAmbience();
+        if (musicWanted) startMusicBox();
+      }
     },
     get enabled() { return enabled; },
     setAmbience(on) {
       ambienceWanted = on;
       if (on) startAmbience(); else stopAmbience();
     },
+    setMusic(on) {
+      musicWanted = on;
+      if (on) startMusicBox(); else stopMusicBox();
+    },
     /** Must be called from a user gesture once to unlock audio on mobile. */
     unlock() {
       ensure();
       if (ambienceWanted && !ambience) startAmbience();
+      if (musicWanted && !musicTimer) startMusicBox();
     },
   };
 })();

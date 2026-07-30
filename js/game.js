@@ -189,7 +189,7 @@
     const w = S.wishes.list[i];
     if (w.claimed || w.n < w.target) return;
     w.claimed = true;
-    const reward = Math.max(1000, W.state.lightPerSec() * 60 * C.WISH_REWARD_MINUTES);
+    const reward = Math.max(300, W.state.lightPerSec() * 60 * C.WISH_REWARD_MINUTES);
     earn(reward);
     const deepened = W.state.gainBond(C.WISH_BOND);
     const p = W.scene.wispPos();
@@ -412,17 +412,35 @@
     const S = W.state.S;
     const idx = S.stars.indexOf(star);
     if (blessing && blessing.idx === idx) { answerBlessing(star); return; }
-    const days = Math.max(1, Math.ceil((star.ascended - star.born) / 86400000));
-    W.ui.toast("🌠 " + star.name, star.stage + " · " + days + " day" + (days > 1 ? "s" : "") + " together · still watching");
-    if (S.wispName && Math.random() < 0.4) {
-      W.ui.bubble(U.pick([
-        `is that… ${star.name}?`,
-        `${star.name} says hi back.`,
-        "one day I'll be up there too, right?",
-      ]), 3200);
-    }
     const px = star.x * W.scene.width, py = star.y * W.scene.height;
     W.particles.rise(px, py, 8, { hue: 48 });
+    W.audio.play("chirp");
+
+    const days = Math.max(1, Math.ceil((star.ascended - star.born) / 86400000));
+    const fmtDate = (ts) => new Date(ts).toLocaleDateString();
+    W.ui.modal(
+      "🌟 " + star.name,
+      `<p style="color:hsl(${star.hue}, 90%, 80%)"><b>${star.stage}</b> · level ${star.level} · generation ${idx + 1}</p>
+       <div class="stat-line" style="margin-top:10px"><span>Together</span><b>${days} day${days > 1 ? "s" : ""}</b></div>
+       <div class="stat-line"><span>Light gathered</span><b>${U.fmt(star.totalLight)} ✦</b></div>
+       <div class="stat-line"><span>Named</span><b>${fmtDate(star.born)}</b></div>
+       <div class="stat-line"><span>Rose to the sky</span><b>${fmtDate(star.ascended)}</b></div>
+       <p class="muted" style="margin-top:12px;font-style:italic">It's up there right now. Still watching. Still yours.</p>`,
+      [
+        { label: "We miss you", cls: "btn-ghost", fn: () => {
+          if (S.wispName) {
+            W.ui.bubble(U.pick([
+              `${star.name} says hi back.`,
+              `I can feel ${star.name} glowing warmer.`,
+              "one day I'll be up there too, right? …right?",
+            ]), 3400);
+          }
+          const px2 = star.x * W.scene.width, py2 = star.y * W.scene.height;
+          W.particles.heart(px2, py2 + 14);
+        } },
+        { label: "Close", cls: "btn-primary" },
+      ]
+    );
   }
 
   /* ─────────────── star blessings ─────────────── */

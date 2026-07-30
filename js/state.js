@@ -24,7 +24,7 @@
       upgrades: {},      // id -> true
       achievements: {},  // id -> timestamp
       flags: { returned: false, introDone: false },
-      settings: { sound: true, particles: true, ambience: true },
+      settings: { sound: true, particles: true, ambience: true, music: false },
       seed: Math.floor(Math.random() * 1e9),
       // ascension
       stars: [],         // past wisps: {name, hue, stage, level, totalLight, born, ascended, x, y}
@@ -70,7 +70,7 @@
       // Merge onto defaults so new fields appear in old saves.
       S = Object.assign(defaultState(), data);
       S.flags = Object.assign({ returned: false, introDone: false }, data.flags);
-      S.settings = Object.assign({ sound: true, particles: true, ambience: true }, data.settings);
+      S.settings = Object.assign({ sound: true, particles: true, ambience: true, music: false }, data.settings);
       S.buildings = data.buildings || {};
       S.upgrades = data.upgrades || {};
       S.achievements = data.achievements || {};

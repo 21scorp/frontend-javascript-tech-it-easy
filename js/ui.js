@@ -322,7 +322,7 @@
 
     const achHtml = C.ACHIEVEMENTS.map((a) => {
       const has = !!S.achievements[a.id];
-      return `<div class="ach ${has ? "unlocked" : ""}" title="${has ? a.name + " — " + a.desc : "???"}">${a.glyph}</div>`;
+      return `<div class="ach ${has ? "unlocked" : ""}" data-ach="${a.id}" title="${has ? a.name + " — " + a.desc : "???"}">${a.glyph}</div>`;
     }).join("");
 
     // ─ tonight's wishes ─
@@ -422,8 +422,8 @@
     // ─ family of stars ─
     let starsHtml = "";
     if (S.stars.length > 0) {
-      const rows = S.stars.map((star) =>
-        `<div class="stat-line"><span>🌟 ${star.name}</span><b>${star.stage} · Lv ${star.level}</b></div>`
+      const rows = S.stars.map((star, i) =>
+        `<div class="stat-line star-row" data-star="${i}" style="cursor:pointer"><span>🌟 ${star.name}</span><b>${star.stage} · Lv ${star.level}</b></div>`
       ).join("");
       starsHtml =
         `<div class="wisp-card">
@@ -462,6 +462,24 @@
 
     els["tab-wisp"].querySelectorAll(".wish-claim").forEach((btn) => {
       btn.addEventListener("click", () => W.game.claimWish(parseInt(btn.dataset.wish, 10)));
+    });
+
+    // memories: tap to read (mobile has no hover)
+    els["tab-wisp"].querySelectorAll(".ach").forEach((el) => {
+      el.addEventListener("click", () => {
+        const a = C.ACHIEVEMENTS.find((x) => x.id === el.dataset.ach);
+        if (!a) return;
+        const has = !!S.achievements[a.id];
+        toast(has ? a.glyph + " " + a.name : "🔒 A memory not yet made", has ? a.desc : "Keep going — you'll know it when it happens.");
+      });
+    });
+
+    // family rows open the same memorial as tapping the sky
+    els["tab-wisp"].querySelectorAll(".star-row").forEach((el) => {
+      el.addEventListener("click", () => {
+        const star = S.stars[parseInt(el.dataset.star, 10)];
+        if (star) W.game.starTouched(star);
+      });
     });
 
     els["tab-wisp"].querySelectorAll(".acc.unlocked").forEach((btn) => {
@@ -544,6 +562,7 @@
     const rowsHtml =
       `<div class="setting-row"><span>Sound</span><button class="switch ${S.settings.sound ? "on" : ""}" id="sw-sound"></button></div>
        <div class="setting-row"><span>Night ambience</span><button class="switch ${S.settings.ambience ? "on" : ""}" id="sw-ambience"></button></div>
+       <div class="setting-row"><span>Music box</span><button class="switch ${S.settings.music ? "on" : ""}" id="sw-music"></button></div>
        <div class="setting-row"><span>Particles</span><button class="switch ${S.settings.particles ? "on" : ""}" id="sw-particles"></button></div>
        <div class="setting-row"><span>Playing since</span><b style="font-size:0.85rem">${new Date(S.born).toLocaleDateString()}</b></div>
        <div class="setting-row"><span>Save code</span>
@@ -589,6 +608,11 @@
       S.settings.ambience = !S.settings.ambience;
       W.audio.setAmbience(S.settings.ambience);
       e.target.classList.toggle("on", S.settings.ambience);
+    });
+    $("sw-music").addEventListener("click", (e) => {
+      S.settings.music = !S.settings.music;
+      W.audio.setMusic(S.settings.music);
+      e.target.classList.toggle("on", S.settings.music);
     });
     $("btn-export").addEventListener("click", exportSave);
     $("btn-import").addEventListener("click", importSave);

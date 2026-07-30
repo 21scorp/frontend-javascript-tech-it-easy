@@ -16,6 +16,7 @@
   W.state.load();
   W.audio.setEnabled(W.state.S.settings.sound);
   W.audio.setAmbience(W.state.S.settings.ambience); // starts on first gesture
+  W.audio.setMusic(W.state.S.settings.music);
 
   W.ui.init();
   W.scene.init($("world"));
@@ -321,7 +322,8 @@
   let uiTimer = 0;
 
   function frame(now) {
-    const dt = Math.min((now - last) / 1000, 0.1);
+    // clamp both ways: timer anomalies must never produce negative dt
+    const dt = Math.max(0, Math.min((now - last) / 1000, 0.1));
     last = now;
     lastT += dt;
 
