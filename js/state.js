@@ -43,6 +43,8 @@
       tales: 0,
       // how many meadow visitors you've greeted
       visitors: 0,
+      // game version last seen (for "the meadow grew" notes)
+      lastBuild: null,
     };
   }
 

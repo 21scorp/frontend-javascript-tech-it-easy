@@ -177,6 +177,11 @@
   } else {
     $("intro").classList.add("hidden");
     W.ui.show();
+    // gentle note when the game itself has grown since last visit
+    if (W.state.S.lastBuild && W.state.S.lastBuild !== C.BUILD) {
+      setTimeout(() => W.ui.toast("🌱 The meadow grew while you were away", "WISP " + C.BUILD), 2500);
+    }
+    W.state.S.lastBuild = C.BUILD;
     // Offline progress
     const off = W.game.computeOffline();
     if (off) {

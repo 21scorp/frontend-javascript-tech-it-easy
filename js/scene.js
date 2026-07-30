@@ -1080,6 +1080,14 @@
     W.wisp.draw(ctx, t, dt);
     W.particles.update(dt);
     W.particles.draw(ctx);
+
+    // dewdrop frenzy bathes the whole meadow in gold
+    const frenzy = S.buffs && S.buffs.some((b) => b.id === "dew" && b.until > Date.now());
+    if (frenzy) {
+      const a = 0.05 + 0.025 * Math.sin(t * 6);
+      ctx.fillStyle = `rgba(255,205,110,${a})`;
+      ctx.fillRect(0, 0, width, height);
+    }
   }
 
   W.scene = {

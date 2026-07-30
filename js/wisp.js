@@ -218,10 +218,36 @@
     }
   }
 
+  function isFrenzied() {
+    const S = W.state.S;
+    return S.buffs && S.buffs.some((b) => b.id === "dew" && b.until > Date.now());
+  }
+
   function drawFace(ctx, r, happy, sleepy, worldPos, t) {
     const eyeY = -r * 0.12;
     const eyeDX = r * 0.34;
     const eyeR = r * 0.13;
+
+    // frenzy: star-struck eyes
+    if (isFrenzied()) {
+      ctx.fillStyle = "#ffb83d";
+      for (const side of [-1, 1]) {
+        drawTinyStar(ctx, side * eyeDX, eyeY, eyeR * 1.35, t * 2);
+      }
+      ctx.strokeStyle = "#2e2a4a";
+      ctx.lineWidth = r * 0.05;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.arc(0, r * 0.22, r * 0.17, Math.PI * 0.1, Math.PI * 0.9);
+      ctx.stroke();
+      ctx.fillStyle = `rgba(255,150,160,0.5)`;
+      for (const side of [-1, 1]) {
+        ctx.beginPath();
+        ctx.ellipse(side * r * 0.55, r * 0.12, r * 0.13, r * 0.08, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      return;
+    }
 
     // pupils drift toward pointer
     let px = 0, py = 0;
@@ -287,6 +313,19 @@
       ctx.ellipse(side * r * 0.55, r * 0.12, r * 0.13, r * 0.08, 0, 0, Math.PI * 2);
       ctx.fill();
     }
+  }
+
+  function drawTinyStar(ctx, x, y, r, rot) {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const rad = i % 2 === 0 ? r : r * 0.45;
+      const a = (i / 10) * Math.PI * 2 - Math.PI / 2 + rot;
+      const px = x + Math.cos(a) * rad;
+      const py = y + Math.sin(a) * rad;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
   }
 
   /* Accessories are drawn in wisp-local space (origin = centre, r = body radius). */
