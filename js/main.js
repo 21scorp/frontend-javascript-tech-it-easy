@@ -126,6 +126,30 @@
     setTimeout(() => W.ui.bubble(name + "… I like it.", 3600), 900);
   }
 
+  /** A dream assembled from the things this player actually built. */
+  function dreamLine() {
+    const S = W.state.S;
+    const owned = Object.keys(S.buildings).filter((id) => S.buildings[id] > 0);
+    const pool = C.DREAMS.filter((d) => {
+      if (d.includes("{b2}") && owned.length < 2) return false;
+      if (d.includes("{b1}") && owned.length < 1) return false;
+      if (d.includes("{star}") && S.stars.length < 1) return false;
+      return true;
+    });
+    if (pool.length === 0) return null;
+    let line = U.pick(pool);
+    if (line.includes("{b1}")) {
+      const b1 = U.pick(owned);
+      line = line.replace("{b1}", C.PLURALS[b1] || b1);
+      if (line.includes("{b2}")) {
+        const rest = owned.filter((id) => id !== b1);
+        line = line.replace("{b2}", C.PLURALS[U.pick(rest)] || "others");
+      }
+    }
+    if (line.includes("{star}")) line = line.replace("{star}", U.pick(S.stars).name);
+    return line;
+  }
+
   W.flow = {
     /** After an ascension: welcome the next generation. */
     rebirth(star) {
@@ -157,12 +181,14 @@
     if (off) {
       W.game.applyOffline(off);
       const name = W.state.S.wispName || "Your wisp";
+      const dream = Math.random() < 0.45 ? dreamLine() : null;
+      const flavor = dream ? "“" + dream + "”" : U.pick(C.OFFLINE_FLAVOR);
       W.ui.modal(
         "Welcome back",
         `<p>You were away for <b>${U.fmtDuration(off.seconds)}</b>.</p>
          <span class="big-num">+${U.fmt(off.gained)} ✦</span>
          <p>${name} kept gathering light while thinking of you.</p>
-         <p class="muted" style="margin-top:8px;font-style:italic">${U.pick(C.OFFLINE_FLAVOR)}</p>
+         <p class="muted" style="margin-top:8px;font-style:italic">${flavor}</p>
          ${off.cappedSeconds < off.seconds ? `<p class="muted" style="margin-top:8px">(it dozed off after ${C.OFFLINE.capHours} hours)</p>` : ""}`,
         [{ label: "I'm home", cls: "btn-primary", fn: () => { W.game.greet(); setTimeout(() => W.game.maybeDailyGift(), 600); } }]
       );

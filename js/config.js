@@ -329,6 +329,28 @@
     minSeconds: 90,     // don't bother below this
   };
 
+  /* Plural display names, used by dreams and flavour text. */
+  const PLURALS = {
+    firefly: "fireflies", glowshroom: "glowshrooms", lantern: "paper lanterns",
+    moonflower: "moonflowers", beacon: "little beacons", owl: "ember owls",
+    aurora: "aurora ribbons", fallenstar: "fallen stars", moonwell: "moon wells",
+    comet: "comets", anvil: "star anvils", shepherd: "cloud flocks",
+    moongarden: "moon tulips", sunseed: "sun seeds",
+  };
+
+  /* Dreams the wisp tells you when you come back. {b1}/{b2} become
+     things you own; {star} becomes one of your ascended wisps.       */
+  const DREAMS = [
+    "I dreamed the {b1} were tiny boats, and the sky was a slow river.",
+    "I dreamed the {b1} could sing. they sang about you.",
+    "I dreamed the {b1} and the {b2} swapped places and nobody noticed but me.",
+    "I dreamed I was big. really big. you still found me though.",
+    "I dreamed the moon let me hold it. it was lighter than it looks.",
+    "I dreamed you stayed. …oh. you're here. even better.",
+    "I dreamed {star} came down and we shared a cup of moonlight.",
+    "I dreamed the sun woke up early, just to see the meadow you made.",
+  ];
+
   /* Little things that "happened" while you were gone. */
   const OFFLINE_FLAVOR = [
     "The fireflies spelled your name. Badly, but with feeling.",
@@ -366,7 +388,7 @@
     VOICE, OFFLINE, TAP, PRESTIGE,
     BOND, ATTENTION, DAILY, DEW, ACCESSORIES, TALES,
     OFFLINE_FLAVOR, MOON_LETTERS, MOON_LETTER_STARDUST,
-    VISITORS, VISITOR_GAP,
+    VISITORS, VISITOR_GAP, PLURALS, DREAMS,
     SAVE_KEY: "wisp.save.v1",
     VERSION: 1,
   };
