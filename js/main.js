@@ -34,6 +34,15 @@
   ];
 
   function rebirthLines(star) {
+    const gen = W.state.S.generation;
+    if (gen >= 5) {
+      return [
+        `${star.name} settles into the sky,\namong everyone who came before.`,
+        "The meadow knows this dance now.\nIt barely holds its breath.",
+        "Still — when the shimmer comes,\nyour heart does the same small jump.",
+        "A new light. Your hands. The old promise.",
+      ];
+    }
     return [
       `The meadow is quiet without ${star.name}.`,
       "Then — a shimmer,\nbetween the hills you built.",

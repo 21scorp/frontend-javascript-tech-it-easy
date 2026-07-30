@@ -22,7 +22,18 @@
     dusk:  { top: [16, 12, 44],   mid: [58, 30, 84],   hor: [172, 84, 70],  stars: 0.7, ground: [22, 16, 46] },
   };
 
+  let palCache = null, palCacheAt = 0;
+
   function paletteNow() {
+    // the sky drifts over minutes — recompute at most once a second
+    const nowMs = Date.now();
+    if (palCache && nowMs - palCacheAt < 1000) return palCache;
+    palCacheAt = nowMs;
+    palCache = computePalette();
+    return palCache;
+  }
+
+  function computePalette() {
     const h = new Date().getHours() + new Date().getMinutes() / 60;
     // keyframes: 0h night, 6h dawn, 12h day, 19h dusk, 24h night
     const frames = [

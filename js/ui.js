@@ -341,6 +341,7 @@
 
   function renderWispTab() {
     const S = W.state.S;
+    const keepScroll = $("tab-content") ? $("tab-content").scrollTop : 0;
     const st = W.state.stageFor(S.level);
     const next = W.state.nextStage(S.level);
     const ageDays = Math.floor((Date.now() - S.born) / 86400000);
@@ -515,6 +516,8 @@
         if (star) W.game.starTouched(star);
       });
     });
+
+    $("tab-content").scrollTop = keepScroll;
 
     const constBtn = $("btn-constellation");
     if (constBtn) {
