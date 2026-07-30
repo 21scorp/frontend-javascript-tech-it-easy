@@ -61,6 +61,26 @@
       desc: "They pass overhead each night, singing light down to you.",
       baseCost: 4.5e8, rate: 700000, growth: 1.15,
     },
+    {
+      id: "anvil", name: "Star Anvil", glyph: "⚒️",
+      desc: "Where fallen light is hammered back into mornings.",
+      baseCost: 3.5e9, rate: 3.9e6, growth: 1.15,
+    },
+    {
+      id: "shepherd", name: "Cloud Shepherd", glyph: "🌥️",
+      desc: "Herds the softest clouds. Sometimes they rain starlight.",
+      baseCost: 3e10, rate: 2.2e7, growth: 1.15,
+    },
+    {
+      id: "moongarden", name: "Moon Garden", glyph: "🌷",
+      desc: "A garden on the moon itself. If you wave, it waves back.",
+      baseCost: 2.8e11, rate: 1.25e8, growth: 1.15,
+    },
+    {
+      id: "sunseed", name: "Sun Seed", glyph: "🌻",
+      desc: "One day it will sprout. Not yet. But one day.",
+      baseCost: 2.6e12, rate: 7e8, growth: 1.15,
+    },
   ];
 
   /* ─────────────── Upgrades (one-time boosts) ───────────────
@@ -84,6 +104,14 @@
     { id: "auroradye",  name: "Aurora Dye",      glyph: "🎨", cost: 6e7,    type: "building", target: "aurora", mult: 2, desc: "New colours nobody has names for. Aurora Looms ×2.", needs: ["aurora", 5] },
     { id: "heartbeat",  name: "Shared Heartbeat", glyph: "💗", cost: 2.5e8, type: "tapRate", pct: 0.05,  desc: "You can't tell whose pulse is whose. Taps gain +5% of light/sec." },
     { id: "starsong",   name: "Star Song",       glyph: "🎵", cost: 1e9,   type: "global",  mult: 1.5,  desc: "Even the sky hums along now. Everything ×1.5." },
+    { id: "cometdust",  name: "Comet Dust",      glyph: "💫", cost: 9e9,   type: "building", target: "comet", mult: 2, desc: "They shed a little extra, just for you. Comet Choirs ×2.", needs: ["comet", 5] },
+    { id: "startempo",  name: "Star Tempo",      glyph: "🥁", cost: 4e10,  type: "building", target: "anvil", mult: 2, desc: "The hammering finds a rhythm. Star Anvils ×2.", needs: ["anvil", 5] },
+    { id: "woolwind",   name: "Wool of Wind",    glyph: "🧶", cost: 2.2e11, type: "building", target: "shepherd", mult: 2, desc: "Softer flocks, brighter rain. Cloud Shepherds ×2.", needs: ["shepherd", 5] },
+    { id: "swarm",      name: "Firefly Swarm",   glyph: "🐝", cost: 6e11,  type: "building", target: "firefly", mult: 8, desc: "They told their friends about you. Fireflies ×8.", needs: ["firefly", 50] },
+    { id: "moonsong",   name: "Moon Song",       glyph: "🎼", cost: 2e12,  type: "building", target: "moongarden", mult: 2, desc: "The tulips hum back at the earth. Moon Gardens ×2.", needs: ["moongarden", 5] },
+    { id: "onepulse",   name: "One Pulse",       glyph: "❣️", cost: 8e12,  type: "tapRate", pct: 0.15,  desc: "One heart, two lights. Taps gain +15% of light/sec." },
+    { id: "dawnhymn",   name: "Dawn Hymn",       glyph: "🌅", cost: 3e13,  type: "global",  mult: 2,    desc: "A song about a sunrise neither of you has seen. Everything ×2." },
+    { id: "sunwithin",  name: "The Sun Within",  glyph: "☀️", cost: 5e14,  type: "building", target: "sunseed", mult: 3, desc: "It dreams of sprouting. The dream leaks light. Sun Seeds ×3.", needs: ["sunseed", 5] },
   ];
 
   /* ─────────────── Evolution stages ───────────────
@@ -100,6 +128,9 @@
     { level: 43, name: "Luminous",   radius: 64, hue: 300, motes: 7, rays: 12 },
     { level: 53, name: "Tiny Star",  radius: 71, hue: 255, motes: 8, rays: 14 },
     { level: 64, name: "Starheart",  radius: 78, hue: 210, motes: 10, rays: 16 },
+    { level: 78, name: "Nova",       radius: 84, hue: 190, motes: 12, rays: 18 },
+    { level: 94, name: "Little Moon", radius: 89, hue: 180, motes: 14, rays: 20 },
+    { level: 112, name: "Dawn",      radius: 94, hue: 55,  motes: 16, rays: 24 },
   ];
 
   /* ─────────────── Levels ───────────────
@@ -147,6 +178,14 @@
     { id: "streak3",   glyph: "📅", name: "Three nights",    desc: "Visit 3 days in a row.", check: (s) => s.streak && s.streak.count >= 3 },
     { id: "streak7",   glyph: "🗓️", name: "A whole week",    desc: "Visit 7 days in a row.", check: (s) => s.streak && s.streak.count >= 7 },
     { id: "streak30",  glyph: "🏆", name: "A month of light", desc: "Visit 30 days in a row.", check: (s) => s.streak && s.streak.count >= 30 },
+    { id: "light1t",   glyph: "🌅", name: "Almost a dawn",   desc: "Earn 1T light.", check: (s) => s.totalLight >= 1e12 },
+    { id: "light100t", glyph: "🌄", name: "Daybreak",        desc: "Earn 100T light.", check: (s) => s.totalLight >= 1e14 },
+    { id: "jar25",     glyph: "🫙", name: "A jar of friends", desc: "Own 25 fireflies.", check: (s) => (s.buildings.firefly || 0) >= 25 },
+    { id: "build250",  glyph: "🌌", name: "A small universe", desc: "Own 250 buildings.", check: (s, g) => g.totalBuildings(s) >= 250 },
+    { id: "level50",   glyph: "💫", name: "Half a hundred",  desc: "Reach level 50.", check: (s) => s.level >= 50 },
+    { id: "level75",   glyph: "🌠", name: "Beyond the hills", desc: "Reach level 75.", check: (s) => s.level >= 75 },
+    { id: "level100",  glyph: "🌞", name: "A hundred lights", desc: "Reach level 100.", check: (s) => s.level >= 100 },
+    { id: "sunseed1",  glyph: "🌻", name: "Planted hope",    desc: "Plant a Sun Seed.", check: (s) => (s.buildings.sunseed || 0) >= 1 },
   ];
   const ACH_PROD_BONUS = 0.01;
 

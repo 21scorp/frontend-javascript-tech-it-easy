@@ -73,12 +73,26 @@
     return Math.min(visible + 1, C.BUILDINGS.length);
   }
 
+  let buyQty = 1; // 1 | 10 | "max"
+
   function renderBuildTab() {
     const S = W.state.S;
     const count = buildingVisibleCount();
     visibleBuildings = count;
     shopRows.clear();
     const frag = document.createDocumentFragment();
+
+    // quantity selector
+    const seg = document.createElement("div");
+    seg.className = "qty-seg";
+    for (const q of [1, 10, "max"]) {
+      const btn = document.createElement("button");
+      btn.className = "qty-btn" + (buyQty === q ? " active" : "");
+      btn.textContent = q === "max" ? "×max" : "×" + q;
+      btn.addEventListener("click", () => { buyQty = q; renderBuildTab(); });
+      seg.appendChild(btn);
+    }
+    frag.appendChild(seg);
 
     for (let i = 0; i < count; i++) {
       const b = C.BUILDINGS[i];
@@ -91,7 +105,7 @@
           `<div class="shop-info"><div class="shop-name">${b.name}<span class="owned"></span></div>` +
           `<div class="shop-desc">${b.desc}</div></div>` +
           `<div class="shop-cost"><div class="cost"></div><div class="rate"></div></div>`;
-        row.addEventListener("click", () => W.game.buyBuilding(b.id));
+        row.addEventListener("click", () => W.game.buyBuilding(b.id, buyQty));
         shopRows.set(b.id, {
           row,
           costEl: row.querySelector(".cost"),
@@ -115,15 +129,16 @@
     if (buildingVisibleCount() !== visibleBuildings) { renderBuildTab(); return; }
     for (const [id, refs] of shopRows) {
       const b = C.BUILDINGS.find((x) => x.id === id);
-      const cost = W.state.buildingCost(b);
       const owned = S.buildings[id] || 0;
+      let n = buyQty === "max" ? Math.max(1, W.state.maxAffordable(b)) : buyQty;
+      const cost = W.state.buildingCostN(b, n);
       const can = S.light >= cost;
-      refs.costEl.textContent = U.fmt(cost) + " ✦";
+      refs.costEl.textContent = (n > 1 ? n + " for " : "") + U.fmt(cost) + " ✦";
       refs.costEl.classList.toggle("cant", !can);
       refs.row.classList.toggle("unaffordable", !can);
       refs.ownedEl.textContent = owned > 0 ? "×" + owned : "";
       const each = b.rate * W.state.buildingMult(id) * W.state.globalMult();
-      refs.rateEl.textContent = "+" + U.fmt(each) + "/s";
+      refs.rateEl.textContent = "+" + U.fmt(each * n) + "/s";
     }
   }
 

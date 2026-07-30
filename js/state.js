@@ -94,6 +94,23 @@
     return Math.ceil(b.baseCost * Math.pow(b.growth, buildingCount(b.id)));
   }
 
+  /** Total cost of the next n of a building (geometric series). */
+  function buildingCostN(b, n) {
+    const owned = buildingCount(b.id);
+    const g = b.growth;
+    return Math.ceil(b.baseCost * Math.pow(g, owned) * (Math.pow(g, n) - 1) / (g - 1));
+  }
+
+  /** How many of b the player can afford right now (0 if none). */
+  function maxAffordable(b) {
+    const g = b.growth;
+    const first = b.baseCost * Math.pow(g, buildingCount(b.id));
+    if (S.light < first) return 0;
+    // solve first*(g^n -1)/(g-1) <= light
+    const n = Math.floor(Math.log((S.light * (g - 1)) / first + 1) / Math.log(g));
+    return Math.max(1, n);
+  }
+
   /** Multiplier applying to a single building from its upgrades. */
   function buildingMult(id) {
     let m = 1;
@@ -228,7 +245,7 @@
   W.state = {
     get S() { return S; },
     defaultState, save, load, wipe,
-    buildingCount, totalBuildings, buildingCost, buildingMult,
+    buildingCount, totalBuildings, buildingCost, buildingCostN, maxAffordable, buildingMult,
     globalMult, lightPerSec, tapValue,
     xpForLevel, stageFor, nextStage,
     stardustGain, ascend,

@@ -162,16 +162,31 @@
 
   function drawMemorialStars(t) {
     const list = W.state.S.stars;
+    const bless = W.game && W.game.blessing;
     for (let i = 0; i < list.length; i++) {
       const s = list[i];
       const x = s.x * width, y = s.y * height;
-      const tw = 0.82 + 0.18 * Math.sin(t * 1.1 + i * 2.3);
-      // halo in the wisp's final colour
-      const halo = ctx.createRadialGradient(x, y, 1, x, y, 26);
+      const blessed = bless && bless.idx === i;
+      let tw = 0.82 + 0.18 * Math.sin(t * 1.1 + i * 2.3);
+      let haloR = 26;
+      if (blessed) {
+        tw = 1.1 + 0.35 * Math.sin(t * 6);
+        haloR = 46;
+        // a gentle ring, calling you
+        ctx.strokeStyle = `hsla(${s.hue}, 100%, 85%, ${0.4 + 0.3 * Math.sin(t * 5)})`;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 8]);
+        ctx.lineDashOffset = -t * 25;
+        ctx.beginPath();
+        ctx.arc(x, y, 24 + Math.sin(t * 3) * 4, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      const halo = ctx.createRadialGradient(x, y, 1, x, y, haloR);
       halo.addColorStop(0, `hsla(${s.hue}, 95%, 78%, ${0.5 * tw})`);
       halo.addColorStop(1, `hsla(${s.hue}, 95%, 78%, 0)`);
       ctx.fillStyle = halo;
-      ctx.fillRect(x - 26, y - 26, 52, 52);
+      ctx.fillRect(x - haloR, y - haloR, haloR * 2, haloR * 2);
       drawStarShape(x, y, 7 * tw, `hsl(${s.hue}, 100%, 88%)`);
     }
   }
@@ -511,6 +526,145 @@
     }
   }
 
+  /* — star anvil — */
+  function drawAnvil(count, t) {
+    if (count <= 0) return;
+    const xn = 0.86; // clear of the centred panel
+
+    const x = xn * width, y = hillY(2, xn) + 8;
+    const s = 1 + Math.min(count, 20) * 0.012;
+    // block + horn silhouette
+    ctx.fillStyle = "rgba(28,26,52,0.98)";
+    ctx.beginPath();
+    ctx.roundRect(x - 16 * s, y - 18 * s, 32 * s, 8 * s, 3);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + 16 * s, y - 14 * s);
+    ctx.quadraticCurveTo(x + 30 * s, y - 16 * s, x + 26 * s, y - 10 * s);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillRect(x - 7 * s, y - 10 * s, 14 * s, 10 * s);
+    // the little star being forged — pulses with each "clink"
+    const cycle = (t % 2.2) / 2.2;
+    const hit = cycle < 0.12 ? 1 - cycle / 0.12 : 0;
+    glow(x, y - 22 * s, 18 * s * (1 + hit), GOLD, 0.35 + hit * 0.35);
+    drawStarShape(x, y - 22 * s, (5 + hit * 2.5) * s, "#ffe9a8");
+    // sparks right after the clink
+    if (hit > 0) {
+      ctx.strokeStyle = `rgba(255,220,140,${hit * 0.9})`;
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI - Math.PI * 0.1 + Math.sin(i * 7) * 0.2;
+        const d = (1 - hit) * 22 * s + 6;
+        ctx.beginPath();
+        ctx.moveTo(x + Math.cos(a) * d, y - 22 * s - Math.sin(a) * d);
+        ctx.lineTo(x + Math.cos(a) * (d + 5), y - 22 * s - Math.sin(a) * (d + 5));
+        ctx.stroke();
+      }
+    }
+  }
+
+  /* — cloud shepherd — */
+  function drawShepherdClouds(count, t) {
+    if (count <= 0) return;
+    const n = Math.min(1 + Math.floor(count / 4), 4);
+    for (let i = 0; i < n; i++) {
+      const drift = ((t * 0.008 * (1 + i * 0.3) + i * 0.31) % 1.2) - 0.1;
+      const x = drift * width;
+      const y = height * (0.30 + (i % 2) * 0.06);
+      const s = 0.8 + (i % 3) * 0.25;
+      // fluffy body: overlapping soft blobs
+      for (let b = 0; b < 4; b++) {
+        const bx = x + (b - 1.5) * 20 * s;
+        const by = y + Math.sin(b * 2.4) * 5 * s;
+        const g = ctx.createRadialGradient(bx, by, 2, bx, by, 22 * s);
+        g.addColorStop(0, "rgba(210,220,255,0.22)");
+        g.addColorStop(1, "rgba(210,220,255,0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(bx - 22 * s, by - 22 * s, 44 * s, 44 * s);
+      }
+      // starlight rain
+      ctx.strokeStyle = "rgba(220,230,255,0.35)";
+      ctx.lineWidth = 1;
+      for (let r = 0; r < 3; r++) {
+        const rx = x + (r - 1) * 16 * s;
+        const fall = ((t * 0.5 + r * 0.37 + i) % 1);
+        const ry = y + 18 * s + fall * 30;
+        ctx.globalAlpha = 1 - fall;
+        ctx.beginPath();
+        ctx.moveTo(rx, ry);
+        ctx.lineTo(rx, ry + 6);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /* — moon garden — */
+  function drawMoonGarden(count, t) {
+    if (count <= 0) return;
+    const mx = width * 0.82, my = height * 0.16;
+    const r = Math.min(width, height) * 0.045;
+    const n = Math.min(count, 10);
+    for (let i = 0; i < n; i++) {
+      // tulips stand along the moon's lower rim
+      const a = Math.PI * (0.25 + (i / Math.max(n - 1, 1)) * 0.5);
+      const fx = mx + Math.cos(a) * r * 0.98;
+      const fy = my + Math.sin(a) * r * 0.98;
+      const sway = Math.sin(t * 1.4 + i) * 0.06;
+      const hue = (i * 47) % 360;
+      ctx.save();
+      ctx.translate(fx, fy);
+      ctx.rotate(a - Math.PI / 2 + sway);
+      // stem
+      ctx.strokeStyle = "rgba(110,160,120,0.9)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, r * 0.28);
+      ctx.stroke();
+      // tulip head
+      ctx.fillStyle = `hsla(${hue}, 75%, 70%, 0.95)`;
+      ctx.beginPath();
+      ctx.ellipse(0, r * 0.3, r * 0.075, r * 0.11, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  /* — sun seed — */
+  function drawSunSeed(count, t) {
+    if (count <= 0) return;
+    const xn = 0.12;
+    const x = xn * width, y = hillY(2, xn) + 10;
+    const s = 1 + Math.min(count, 10) * 0.05;
+    const pulse = 0.6 + 0.4 * Math.sin(t * 0.9);
+    // warm light seeping from under the soil
+    glow(x, y, 40 * s, GOLD, 0.28 * pulse);
+    // the seed: a dark teardrop, half-buried
+    ctx.fillStyle = "rgba(46,36,60,0.98)";
+    ctx.beginPath();
+    ctx.moveTo(x, y - 30 * s);
+    ctx.bezierCurveTo(x + 18 * s, y - 22 * s, x + 15 * s, y + 2, x, y + 4);
+    ctx.bezierCurveTo(x - 15 * s, y + 2, x - 18 * s, y - 22 * s, x, y - 30 * s);
+    ctx.fill();
+    // glowing crack — the dream leaking out
+    ctx.strokeStyle = `rgba(255,214,120,${0.65 + 0.35 * pulse})`;
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(x - 2 * s, y - 26 * s);
+    ctx.lineTo(x + 3 * s, y - 18 * s);
+    ctx.lineTo(x - 2 * s, y - 11 * s);
+    ctx.stroke();
+    if (count >= 5) {
+      ctx.beginPath();
+      ctx.moveTo(x + 6 * s, y - 22 * s);
+      ctx.lineTo(x + 3 * s, y - 14 * s);
+      ctx.stroke();
+    }
+  }
+
   /* — comets — */
   function updateComets(count, dt) {
     if (count > 0) {
@@ -534,6 +688,18 @@
       c.life += dt;
       if (c.x < -0.15 || c.x > 1.15 || c.y > 0.6) comets.splice(i, 1);
     }
+  }
+
+  /** Remove and return true if a comet is near screen point x,y. */
+  function cometHit(x, y) {
+    for (let i = 0; i < comets.length; i++) {
+      const c = comets[i];
+      if (Math.hypot(c.x * width - x, c.y * height - y) < 30) {
+        comets.splice(i, 1);
+        return true;
+      }
+    }
+    return false;
   }
 
   function drawComets() {
@@ -563,8 +729,10 @@
 
     drawSky(pal, t);
     drawMoon(pal, t);
+    drawMoonGarden(own("moongarden"), t);
     drawMemorialStars(t);
     drawAurora(own("aurora"), t);
+    drawShepherdClouds(own("shepherd"), t);
     updateComets(own("comet"), dt);
     drawComets();
 
@@ -578,6 +746,8 @@
     drawHill(2, pal);
     drawGlowshrooms(own("glowshroom"), t);
     drawMoonwell(own("moonwell"), t);
+    drawAnvil(own("anvil"), t);
+    drawSunSeed(own("sunseed"), t);
     syncFireflies(own("firefly"));
     drawFireflies(t, dt);
 
@@ -596,7 +766,7 @@
       window.addEventListener("resize", resize);
     },
     rebuild() { buildWorld(W.state.S.seed); },
-    draw, starHit,
+    draw, starHit, cometHit,
     get width() { return width; },
     get height() { return height; },
     hillY,

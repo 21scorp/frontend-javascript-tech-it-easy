@@ -17,6 +17,8 @@
   let attention = null;  // {until} while the wisp wants you
   let attnTimer = U.rand(C.ATTENTION.minGap, C.ATTENTION.maxGap);
   let dailyTimer = 0;
+  let blessing = null;   // {idx, until} while an ancestor star calls
+  let blessTimer = U.rand(180, 420);
 
   /* ─────────────── earning ─────────────── */
 
@@ -173,17 +175,22 @@
 
   /* ─────────────── shop ─────────────── */
 
-  function buyBuilding(id) {
+  function buyBuilding(id, qty) {
     const S = W.state.S;
     const b = C.BUILDINGS.find((x) => x.id === id);
     if (!b) return;
-    const cost = W.state.buildingCost(b);
-    if (S.light < cost) { W.audio.play("denied"); return; }
+    let n = qty === "max" ? W.state.maxAffordable(b) : (qty || 1);
+    if (n < 1) { W.audio.play("denied"); return; }
+    let cost = W.state.buildingCostN(b, n);
+    if (S.light < cost) {
+      if (n > 1) { n = W.state.maxAffordable(b); cost = W.state.buildingCostN(b, n); }
+      if (n < 1 || S.light < cost) { W.audio.play("denied"); return; }
+    }
 
     S.light -= cost;
     const first = W.state.totalBuildings() === 0;
     const firstOfKind = (S.buildings[id] || 0) === 0;
-    S.buildings[id] = (S.buildings[id] || 0) + 1;
+    S.buildings[id] = (S.buildings[id] || 0) + n;
 
     W.audio.play("buy");
     W.ui.updateShop();
@@ -304,6 +311,8 @@
 
   function starTouched(star) {
     const S = W.state.S;
+    const idx = S.stars.indexOf(star);
+    if (blessing && blessing.idx === idx) { answerBlessing(star); return; }
     const days = Math.max(1, Math.ceil((star.ascended - star.born) / 86400000));
     W.ui.toast("🌠 " + star.name, star.stage + " · " + days + " day" + (days > 1 ? "s" : "") + " together · still watching");
     if (S.wispName && Math.random() < 0.4) {
@@ -315,6 +324,47 @@
     }
     const px = star.x * W.scene.width, py = star.y * W.scene.height;
     W.particles.rise(px, py, 8, { hue: 48 });
+  }
+
+  /* ─────────────── star blessings ─────────────── */
+
+  function answerBlessing(star) {
+    blessing = null;
+    const reward = Math.max(W.state.lightPerSec() * 60 * 10, W.state.tapValue() * 100);
+    earn(reward);
+    const deepened = W.state.gainBond(10);
+    const px = star.x * W.scene.width, py = star.y * W.scene.height;
+    W.particles.burst(px, py, 36, { speed: 240, hue: star.hue });
+    W.ui.floater(px, py + 30, "+" + U.fmt(reward), true);
+    W.audio.play("levelUp");
+    W.ui.toast("💫 A blessing from " + star.name, "It still thinks of you.");
+    if (W.state.S.wispName && Math.random() < 0.6) {
+      W.ui.bubble(U.pick([
+        `${star.name} is warm. like you said.`,
+        "I felt that all the way down here!",
+        `thank you, ${star.name}…`,
+      ]), 3200);
+    }
+    if (deepened) announceBond();
+    W.state.save();
+  }
+
+  /* ─────────────── comet wishes ─────────────── */
+
+  function cometWish(x, y) {
+    const reward = Math.max(W.state.lightPerSec() * 60 * 8, W.state.tapValue() * 60);
+    earn(reward);
+    W.particles.burst(x, y, 30, { speed: 260 });
+    W.ui.floater(x, y, "+" + U.fmt(reward), true);
+    W.audio.play("crit");
+    W.ui.toast("☄️ You caught a wish", "+" + U.fmt(reward) + " light");
+    if (Math.random() < 0.5) {
+      W.ui.bubble(U.pick([
+        "what did you wish for? …me? really?",
+        "I wished we could stay like this.",
+        "quick, wish for something!",
+      ]), 3000);
+    }
   }
 
   /* ─────────────── wisp voice (idle) ─────────────── */
@@ -369,6 +419,20 @@
       }
     }
 
+    // star blessings — an ancestor sometimes calls
+    if (blessing) {
+      if (Date.now() > blessing.until) blessing = null;
+    } else if (S.stars.length > 0 && !ceremony) {
+      blessTimer -= dt;
+      if (blessTimer <= 0) {
+        blessTimer = U.rand(180, 420);
+        if (document.visibilityState === "visible") {
+          blessing = { idx: U.randInt(0, S.stars.length - 1), until: Date.now() + 18000 };
+          W.audio.play("chirp");
+        }
+      }
+    }
+
     // day rollover while playing (checks every 30s)
     dailyTimer += dt;
     if (dailyTimer >= 30) {
@@ -394,9 +458,10 @@
     buyBuilding, buyUpgrade,
     computeOffline, applyOffline,
     checkAchievements, greet,
-    tryAscend, starTouched,
+    tryAscend, starTouched, cometWish,
     maybeDailyGift,
     get ceremony() { return ceremony; },
     get attention() { return attention; },
+    get blessing() { return blessing; },
   };
 })();

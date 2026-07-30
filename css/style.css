@@ -257,6 +257,32 @@ html, body {
 
 /* ─────────────── shop rows ─────────────── */
 
+.qty-seg {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 10px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 3px;
+}
+.qty-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--ink-dim);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 6px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.qty-btn.active {
+  background: rgba(255,217,122,0.15);
+  color: var(--gold-soft);
+}
+
 .shop-row {
   display: flex;
   align-items: center;

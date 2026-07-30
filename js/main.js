@@ -204,6 +204,8 @@
       const star = W.scene.starHit(e.clientX, e.clientY);
       if (star) {
         W.game.starTouched(star);
+      } else if (W.scene.cometHit(e.clientX, e.clientY)) {
+        W.game.cometWish(e.clientX, e.clientY);
       } else {
         // A tap into the night — a shy sparkle, but light comes from *touch*.
         W.particles.burst(e.clientX, e.clientY, 3, { speed: 60 });
