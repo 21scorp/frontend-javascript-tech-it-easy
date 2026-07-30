@@ -1242,6 +1242,21 @@
     updatePetalMoment(dt);
     drawPetalMoment(t);
 
+    // the wisp's light pools softly on the meadow below it
+    {
+      const wp = W.scene.wispPos();
+      const st = W.state.stageFor(S.level);
+      const gy = hillY(1, 0.5) + 6;
+      const pulse = 0.09 + 0.03 * Math.sin(t * 1.8);
+      const pool = ctx.createRadialGradient(wp.x, gy, 4, wp.x, gy, 130);
+      pool.addColorStop(0, `hsla(${st.hue}, 90%, 75%, ${pulse})`);
+      pool.addColorStop(1, `hsla(${st.hue}, 90%, 75%, 0)`);
+      ctx.fillStyle = pool;
+      ctx.beginPath();
+      ctx.ellipse(wp.x, gy, 130, 34, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     // wisp lives between world and particles
     W.wisp.draw(ctx, t, dt);
     W.particles.update(dt);
