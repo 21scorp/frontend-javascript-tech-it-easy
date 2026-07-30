@@ -256,6 +256,8 @@
       W.game.greetVisitor();
     } else if (W.scene.owlHit(e.clientX, e.clientY)) {
       W.game.owlTouched();
+    } else if (W.scene.moonHit(e.clientX, e.clientY)) {
+      W.game.moonTouched();
     } else if (downOnWisp) {
       W.game.tap(e.clientX, e.clientY);
     } else {

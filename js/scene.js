@@ -326,6 +326,13 @@
     }
   }
 
+  /** Is the moon at screen point x,y? */
+  function moonHit(x, y) {
+    const mx = width * 0.82, my = height * 0.16;
+    const r = Math.min(width, height) * 0.045;
+    return Math.hypot(mx - x, my - y) < r + 12;
+  }
+
   /** Which memorial star (if any) is at screen point x,y? */
   function starHit(x, y) {
     const list = W.state.S.stars;
@@ -1265,7 +1272,7 @@
       window.addEventListener("resize", resize);
     },
     rebuild() { buildWorld(W.state.S.seed); },
-    draw, starHit, cometHit, dewHit, visitorHit, owlHit,
+    draw, starHit, cometHit, dewHit, visitorHit, owlHit, moonHit,
     startShower(seconds) { showerUntil = Date.now() + seconds * 1000; },
     setWeather(type) { weather = { type, k: weather.k }; weatherTarget = type === "clear" ? 0 : 1; },
     setSeason(name) { seasonOverride = name; },

@@ -531,6 +531,29 @@
     W.state.save();
   }
 
+  /* ─────────────── the moon, when touched ─────────────── */
+
+  let moonTouchedAt = 0;
+
+  function moonTouched() {
+    const now = Date.now();
+    if (now - moonTouchedAt < 10000) return;
+    moonTouchedAt = now;
+    W.audio.play("chirp");
+    const S = W.state.S;
+    const lines = [
+      ["🌕 The moon pretends not to notice.", "Its glow warms a little anyway."],
+      ["🌕 You waved at the moon.", "Somewhere, the tide waved back."],
+      ["🌕 The moon says nothing.", "It's keeping all its words for the letters."],
+    ];
+    if (S.streak.count >= 7) lines.push(["🌕 The moon knows you by now.", "It tilts, just barely. A nod."]);
+    const pick = U.pick(lines);
+    W.ui.toast(pick[0], pick[1]);
+    if (S.wispName && Math.random() < 0.3) {
+      W.ui.bubble(U.pick(["you two know each other?!", "say hi from me!!", "it wrote you letters, you know."]), 2600);
+    }
+  }
+
   /* ─────────────── the owl murmurs ─────────────── */
 
   let owlMurmurAt = 0;
@@ -787,7 +810,7 @@
     computeOffline, applyOffline,
     checkAchievements, greet,
     tryAscend, starTouched, cometWish, catchDew, spawnDew,
-    maybeDailyGift, greetVisitor, claimWish, ensureWishes, petalArrived, owlTouched,
+    maybeDailyGift, greetVisitor, claimWish, ensureWishes, petalArrived, owlTouched, moonTouched,
     spawnVisitor(id) { const t = C.VISITORS.find((v) => v.id === id); if (t) visitor = { type: t, born: Date.now(), greeted: false }; },
     get ceremony() { return ceremony; },
     get attention() { return attention; },
