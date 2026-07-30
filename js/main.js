@@ -256,8 +256,25 @@
 
   /* ─────────────── save on leave ─────────────── */
 
+  let hiddenAt = null;
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") W.state.save();
+    if (document.visibilityState === "hidden") {
+      hiddenAt = Date.now();
+      W.state.save();
+    } else if (hiddenAt) {
+      // rAF sleeps in hidden tabs — pay out the missed passive income
+      const sec = (Date.now() - hiddenAt) / 1000;
+      hiddenAt = null;
+      if (sec > 5) {
+        const gained = W.state.lightPerSec() * sec;
+        if (gained > 0) {
+          W.game.earn(gained);
+          if (sec > 60) {
+            W.ui.toast("✦ +" + U.fmt(gained), "gathered while this tab dozed (" + U.fmtDuration(sec) + ")");
+          }
+        }
+      }
+    }
   });
   window.addEventListener("beforeunload", () => W.state.save());
 

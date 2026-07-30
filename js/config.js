@@ -186,6 +186,7 @@
     { id: "level75",   glyph: "🌠", name: "Beyond the hills", desc: "Reach level 75.", check: (s) => s.level >= 75 },
     { id: "level100",  glyph: "🌞", name: "A hundred lights", desc: "Reach level 100.", check: (s) => s.level >= 100 },
     { id: "sunseed1",  glyph: "🌻", name: "Planted hope",    desc: "Plant a Sun Seed.", check: (s) => (s.buildings.sunseed || 0) >= 1 },
+    { id: "sprout",    glyph: "🌅", name: "The seed stirs",  desc: "Fill your sky with 10 stars. The Sun Seed sprouts.", check: (s) => (s.stars || []).length >= 10 },
   ];
   const ACH_PROD_BONUS = 0.01;
 

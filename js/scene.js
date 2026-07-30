@@ -60,6 +60,68 @@
   let comets = [];     // active comets
   let cometTimer = 0;
 
+  /* ─────────────── weather (cosmetic only) ─────────────── */
+  let weather = { type: "clear", k: 0 };  // k = 0..1 intensity
+  let weatherTimer = 300;                  // first change after ~5 min
+  let weatherTarget = 0;
+  let petalTimer = 0;
+
+  function updateWeather(dt, t) {
+    weatherTimer -= dt;
+    if (weatherTimer <= 0) {
+      weatherTimer = U.rand(360, 720);
+      const roll = Math.random();
+      const next = roll < 0.4 ? "clear" : roll < 0.6 ? "mist" : roll < 0.8 ? "breeze" : "shimmer";
+      if (next !== weather.type) {
+        weather = { type: next, k: weather.type === "clear" ? 0 : weather.k };
+        weatherTarget = next === "clear" ? 0 : 1;
+        if (next !== "clear" && W.state.S.flags.introDone) {
+          const msg = { mist: "Mist settles between the hills…", breeze: "A soft breeze wanders in…", shimmer: "The stars are extra talkative tonight…" }[next];
+          W.ui.toast("🌫 " + msg, "");
+        }
+      }
+    }
+    weather.k += (weatherTarget - weather.k) * Math.min(dt * 0.3, 1);
+
+    // breeze: loose petals drift across
+    if (weather.type === "breeze" && weather.k > 0.3) {
+      petalTimer -= dt;
+      if (petalTimer <= 0) {
+        petalTimer = U.rand(0.4, 1.2);
+        W.particles.spawn({
+          x: -10, y: U.rand(height * 0.3, height * 0.75),
+          vx: U.rand(35, 70), vy: U.rand(-6, 14),
+          drag: 1, life: U.rand(8, 14),
+          size: U.rand(2, 3.5), hue: U.pick([330, 45, 200]),
+          sat: 70, lum: 80, alpha: 0.7, twinkle: 1.2,
+        });
+      }
+    }
+  }
+
+  /** Wind multiplier for swaying things (lanterns, flowers). */
+  function windFactor() {
+    return 1 + (weather.type === "breeze" ? weather.k * 2.2 : 0);
+  }
+
+  function drawMist(t) {
+    if (weather.type !== "mist" || weather.k < 0.02) return;
+    for (let b = 0; b < 3; b++) {
+      const y = height * (0.58 + b * 0.12);
+      const drift = ((t * (4 + b * 2)) % (width * 1.6)) - width * 0.3;
+      const g = ctx.createRadialGradient(drift, y, 10, drift, y, width * 0.45);
+      g.addColorStop(0, `rgba(190,200,235,${0.05 * weather.k})`);
+      g.addColorStop(1, "rgba(190,200,235,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, y - 90, width, 180);
+      const g2 = ctx.createRadialGradient(width - drift, y + 40, 10, width - drift, y + 40, width * 0.4);
+      g2.addColorStop(0, `rgba(170,185,225,${0.04 * weather.k})`);
+      g2.addColorStop(1, "rgba(170,185,225,0)");
+      ctx.fillStyle = g2;
+      ctx.fillRect(0, y - 50, width, 180);
+    }
+  }
+
   function buildWorld(seed) {
     rng = U.mulberry32(seed);
     stars = [];
@@ -123,9 +185,10 @@
     // stars
     const vis = pal.stars;
     if (vis > 0.05) {
+      const shimmer = weather.type === "shimmer" ? weather.k : 0;
       for (const s of stars) {
-        const tw = 0.55 + 0.45 * Math.sin(t * s.speed + s.phase);
-        ctx.globalAlpha = vis * tw * 0.9;
+        const tw = (0.55 - 0.2 * shimmer) + (0.45 + 0.4 * shimmer) * Math.sin(t * s.speed * (1 + shimmer * 1.5) + s.phase);
+        ctx.globalAlpha = Math.max(0, vis * tw * 0.9);
         ctx.fillStyle = "#e8eeff";
         ctx.beginPath();
         ctx.arc(s.x * width, s.y * height, s.size, 0, Math.PI * 2);
@@ -324,7 +387,7 @@
     // lanterns hang along the rope
     for (let i = 0; i < n; i++) {
       const tt = (i + 1) / (n + 1);
-      const lx = U.lerp(x0, x1, tt) + Math.sin(t * 0.8 + i) * 2;
+      const lx = U.lerp(x0, x1, tt) + Math.sin(t * 0.8 + i) * 2 * windFactor();
       const sag = 26 * 4 * tt * (1 - tt);
       const ly = U.lerp(y0, y1, tt) + sag + 7;
       const pulse = 0.8 + 0.2 * Math.sin(t * 1.1 + i * 2.2);
@@ -347,7 +410,7 @@
       const y = hillY(1, xn) + 4;
       const x = xn * width;
       const scale = 0.8 + r2() * 0.5;
-      const sway = Math.sin(t * 0.9 + i * 1.3) * 2;
+      const sway = Math.sin(t * 0.9 + i * 1.3) * 2 * windFactor();
       const hx = x + sway, hy = y - 26 * scale;
       // stem
       ctx.strokeStyle = "rgba(90,140,110,0.85)";
@@ -674,6 +737,27 @@
       ctx.lineTo(x + 3 * s, y - 14 * s);
       ctx.stroke();
     }
+    // when the sky is full enough (10 raised stars), the seed stirs…
+    if ((W.state.S.stars || []).length >= 10) {
+      const sway = Math.sin(t * 1.1) * 0.05;
+      glow(x, y - 34 * s, 30 * s, GOLD, 0.4 + 0.15 * Math.sin(t * 1.3));
+      ctx.save();
+      ctx.translate(x, y - 28 * s);
+      ctx.rotate(sway);
+      ctx.strokeStyle = "#9fdd8f";
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(2 * s, -8 * s, 0, -14 * s);
+      ctx.stroke();
+      ctx.fillStyle = "#b5eaa2";
+      for (const side of [-1, 1]) {
+        ctx.beginPath();
+        ctx.ellipse(side * 4 * s, -13 * s, 5 * s, 2.6 * s, side * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
   }
 
   /* — comets — */
@@ -785,6 +869,7 @@
     const pal = paletteNow();
     const own = (id) => S.buildings[id] || 0;
 
+    updateWeather(dt, t);
     drawSky(pal, t);
     drawMoon(pal, t);
     drawMoonGarden(own("moongarden"), t);
@@ -802,6 +887,7 @@
     if (own("beacon") > 0) drawBeacon(own("beacon"), t);
     drawOwls(own("owl"), t);
     drawHill(2, pal);
+    drawMist(t);
     drawGlowshrooms(own("glowshroom"), t);
     drawMoonwell(own("moonwell"), t);
     drawAnvil(own("anvil"), t);
@@ -828,6 +914,7 @@
     rebuild() { buildWorld(W.state.S.seed); },
     draw, starHit, cometHit, dewHit,
     startShower(seconds) { showerUntil = Date.now() + seconds * 1000; },
+    setWeather(type) { weather = { type, k: weather.k }; weatherTarget = type === "clear" ? 0 : 1; },
     get width() { return width; },
     get height() { return height; },
     hillY,
