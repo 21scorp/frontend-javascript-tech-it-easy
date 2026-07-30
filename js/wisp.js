@@ -50,7 +50,7 @@
   }
 
   function poke() {
-    wisp.squishV -= 4.5;
+    wisp.squishV = Math.max(wisp.squishV - 3.2, -5);
     wisp.happyTimer = 2.5;
   }
 
@@ -76,7 +76,7 @@
     const springK = 60, springD = 8;
     const a = -springK * wisp.squish - springD * wisp.squishV;
     wisp.squishV += a * dt;
-    wisp.squish += wisp.squishV * dt;
+    wisp.squish = U.clamp(wisp.squish + wisp.squishV * dt, -0.38, 0.38);
 
     wisp.blinkT += dt;
     if (wisp.blinkT > wisp.nextBlink) {
@@ -102,7 +102,7 @@
     const r = radius();
     const p = pos(t);
     const sleepy = isSleepy();
-    const hue = 45 + st.hue;
+    const hue = st.hue;
 
     const sx = 1 - wisp.squish * 0.5;
     const sy = 1 + wisp.squish * 0.5;

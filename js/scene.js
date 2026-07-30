@@ -144,16 +144,18 @@
     halo.addColorStop(1, "rgba(235,240,255,0)");
     ctx.fillStyle = halo;
     ctx.fillRect(mx - r * 4, my - r * 4, r * 8, r * 8);
-    // body
-    ctx.fillStyle = "#f2f2e6";
+    // body with crescent shadow (clipped so the shadow stays on the moon)
+    ctx.save();
     ctx.beginPath();
     ctx.arc(mx, my, r, 0, Math.PI * 2);
-    ctx.fill();
-    // crescent shadow
-    ctx.fillStyle = rgb(pal.top, 0.85);
+    ctx.clip();
+    ctx.fillStyle = "#f2f2e6";
+    ctx.fillRect(mx - r, my - r, r * 2, r * 2);
+    ctx.fillStyle = rgb(pal.top, 0.9);
     ctx.beginPath();
-    ctx.arc(mx - r * 0.38, my - r * 0.12, r * 0.92, 0, Math.PI * 2);
+    ctx.arc(mx - r * 0.42, my - r * 0.14, r * 0.94, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
   }
 
   /* ─────────────── hills ─────────────── */
@@ -401,6 +403,7 @@
 
   /* — aurora — */
   function drawAurora(count, t) {
+    if (count <= 0) return;
     const bands = Math.min(1 + Math.floor(count / 5), 3);
     const strength = Math.min(0.1 + count * 0.02, 0.32);
     for (let b = 0; b < bands; b++) {

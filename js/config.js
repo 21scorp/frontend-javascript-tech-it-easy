@@ -87,18 +87,19 @@
   ];
 
   /* ─────────────── Evolution stages ───────────────
-     The wisp visibly grows. hue is a shift applied to its glow.   */
+     The wisp visibly grows. hue is the absolute glow hue:
+     gold → warm ember → rose → violet → starlight blue.           */
   const STAGES = [
-    { level: 1,  name: "Mote",       radius: 26, hue: 0,   motes: 0, rays: 0 },
-    { level: 4,  name: "Spark",      radius: 30, hue: 4,   motes: 0, rays: 0 },
-    { level: 8,  name: "Wisp",       radius: 35, hue: 8,   motes: 2, rays: 0 },
-    { level: 13, name: "Glimmer",    radius: 40, hue: 14,  motes: 3, rays: 0 },
-    { level: 19, name: "Flare",      radius: 46, hue: 22,  motes: 4, rays: 6 },
-    { level: 26, name: "Beacon",     radius: 52, hue: 30,  motes: 5, rays: 8 },
-    { level: 34, name: "Radiant",    radius: 58, hue: 40,  motes: 6, rays: 10 },
-    { level: 43, name: "Luminous",   radius: 64, hue: 52,  motes: 7, rays: 12 },
-    { level: 53, name: "Tiny Star",  radius: 71, hue: 66,  motes: 8, rays: 14 },
-    { level: 64, name: "Starheart",  radius: 78, hue: 82,  motes: 10, rays: 16 },
+    { level: 1,  name: "Mote",       radius: 26, hue: 46,  motes: 0, rays: 0 },
+    { level: 4,  name: "Spark",      radius: 30, hue: 44,  motes: 0, rays: 0 },
+    { level: 8,  name: "Wisp",       radius: 35, hue: 40,  motes: 2, rays: 0 },
+    { level: 13, name: "Glimmer",    radius: 40, hue: 34,  motes: 3, rays: 0 },
+    { level: 19, name: "Flare",      radius: 46, hue: 26,  motes: 4, rays: 6 },
+    { level: 26, name: "Beacon",     radius: 52, hue: 16,  motes: 5, rays: 8 },
+    { level: 34, name: "Radiant",    radius: 58, hue: 340, motes: 6, rays: 10 },
+    { level: 43, name: "Luminous",   radius: 64, hue: 300, motes: 7, rays: 12 },
+    { level: 53, name: "Tiny Star",  radius: 71, hue: 255, motes: 8, rays: 14 },
+    { level: 64, name: "Starheart",  radius: 78, hue: 210, motes: 10, rays: 16 },
   ];
 
   /* ─────────────── Levels ───────────────
