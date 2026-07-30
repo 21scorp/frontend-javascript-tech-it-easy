@@ -15,21 +15,33 @@ engaging ("never done"). Work non-stop until 09:00 NL time (07:00 UTC).
   intro + naming ceremony, wisp with eyes/blink/pet/squish, voice lines,
   time-of-day sky, synthesized audio, autosave.
 
+## Round 2 — ~00:00–00:35 CEST · fixes + Ascension
+- Playwright test harness in scratchpad (shot.js / ascend.js / daily.js),
+  serves on :8477. Fixed: panel-toggle overlap (redesigned to handle
+  bar), aurora ghost at count 0, moon crescent clip, squish stacking,
+  stage hues now absolute (gold→rose→violet→starlight).
+- Ascension shipped & e2e-tested: stardust (+10%/each), sky ceremony,
+  rebirth naming, memorial stars are tappable, family card in Wisp tab.
+
+## Round 3 — ~00:35–01:05 CEST · bond, attention, daily
+- Bond levels (pet + daily + attention XP), carries across generations.
+- Attention moments (dashed ring + hearts, no-punish window).
+- Daily gift modal + streak + ×2 buff with HUD countdown. All e2e-tested.
+
 ## Next rounds — priority order
-1. **Test & fix**: serve locally, Playwright screenshots, console errors,
-   balance sanity pass (first 10 minutes must feel great).
-2. **Prestige — "Ascension"**: wisp becomes a permanent named star in
-   the sky; stardust currency; new wisp inherits multiplier. THE
-   emotional hook. Constellation view of all past wisps.
-3. **Bond system**: petting builds bond XP → bond levels → multiplier +
-   new voice lines. "Wants attention" moments (heart bubble, bonus).
-4. **Daily gift + streak.**
-5. **More content**: buildings 11-14, boosts, achievements; balance curve
-   for hours 2-10.
-6. **Juice pass**: milestone celebrations, combo tapping, buy ×10/×max.
-7. **PWA manifest + meta tags (og:) for shareability.**
-8. **Polish pass on visuals**: better hills, vignette, shooting-star
-   wish mechanic (click a comet = bonus).
+1. **Balance sim**: script the first 2 hours of play headlessly; verify
+   time-to-first-building < 30s, steady unlock cadence, ascension
+   reachable in an evening. Tune costs/rates in config.
+2. **More content**: buildings 11-14 (e.g. Star Anvil, Cloud Shepherd,
+   Sun Seed…), boosts for them, tap upgrades late-game, achievements.
+3. **Juice**: buy ×1/×10/×max toggle, milestone celebrations
+   (first K/M/B), combo tap streaks, shooting-star wish (tap a comet).
+4. **Star blessings**: past wisps occasionally pulse and drop a gift.
+5. **PWA**: manifest + service worker + og: meta tags for sharing.
+6. **Mobile pass**: 390×844 viewport test, touch targets, perf.
+7. **Share postcard**: canvas snapshot of your meadow + wisp name.
+8. Later ideas: weather/seasons, rare visitors, wisp accessories bought
+   with stardust (cosmetic, sprite-ready), lore notes from the owl.
 
 ## Conventions
 - All balance/content in js/config.js — logic never hardcodes numbers.
