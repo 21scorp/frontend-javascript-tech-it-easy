@@ -273,6 +273,18 @@
         i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.stroke();
+      // …and its name, if you've given it one
+      const cname = W.state.S.constellation;
+      if (cname && list.length >= 3) {
+        let cx = 0, cy = 0;
+        for (const s of list) { cx += s.x; cy += s.y; }
+        cx = (cx / list.length) * width;
+        cy = (cy / list.length) * height + 34;
+        ctx.font = `italic 500 ${Math.max(12, Math.round(Math.min(width, height) * 0.022))}px Georgia, serif`;
+        ctx.textAlign = "center";
+        ctx.fillStyle = `rgba(205,218,255,${0.32 + 0.08 * Math.sin(t * 0.5)})`;
+        ctx.fillText(cname, cx, cy);
+      }
     }
     for (let i = 0; i < list.length; i++) {
       const s = list[i];

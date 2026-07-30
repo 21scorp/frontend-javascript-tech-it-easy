@@ -47,6 +47,8 @@
       lastBuild: null,
       // tonight's wishes: {date, list:[{id, target, n, claimed}], allDone}
       wishes: null,
+      // the name you gave your constellation (3+ stars)
+      constellation: null,
     };
   }
 

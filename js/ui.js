@@ -79,7 +79,8 @@
     x.font = "600 42px ui-rounded, system-ui, sans-serif";
     x.fillText(st.name + " · level " + S.level + " · " + days + (days === 1 ? " day" : " days") + " together", PW / 2, PH - 175);
     if (S.stars.length > 0) {
-      x.fillText("watched over by " + S.stars.map((s) => s.name).join(", "), PW / 2, PH - 118);
+      const guardians = "watched over by " + S.stars.map((s) => s.name).join(", ");
+      x.fillText(S.constellation ? guardians + " — the " + S.constellation : guardians, PW / 2, PH - 118);
     }
     x.fillStyle = "#6e7aa3";
     x.font = "600 34px ui-rounded, system-ui, sans-serif";
@@ -425,11 +426,17 @@
       const rows = S.stars.map((star, i) =>
         `<div class="stat-line star-row" data-star="${i}" style="cursor:pointer"><span>🌟 ${star.name}</span><b>${star.stage} · Lv ${star.level}</b></div>`
       ).join("");
+      const constHtml = S.stars.length >= 3
+        ? (S.constellation
+          ? `<div class="shop-desc" style="margin-top:6px">✨ Together they form <b style="color:var(--gold-soft)">${S.constellation}</b>.</div>`
+          : `<button class="btn btn-ghost" id="btn-constellation" style="width:100%;margin-top:8px;font-size:0.82rem">Name your constellation…</button>`)
+        : "";
       starsHtml =
         `<div class="wisp-card">
           <h3>Your sky · generation ${S.generation}</h3>
           ${rows}
           <div class="shop-desc" style="margin-top:6px">They're in the sky right now. Tap them to say hi.</div>
+          ${constHtml}
         </div>`;
     }
 
@@ -481,6 +488,22 @@
         if (star) W.game.starTouched(star);
       });
     });
+
+    const constBtn = $("btn-constellation");
+    if (constBtn) {
+      constBtn.addEventListener("click", () => {
+        const raw = window.prompt("Your stars form a shape only you can see.\nWhat is it called?");
+        if (raw === null) return;
+        const name = raw.trim().slice(0, 24);
+        if (!name) return;
+        S.constellation = name;
+        W.state.save();
+        W.audio.play("evolve");
+        toast("✨ " + name, "Written into the sky, between your stars.");
+        bubble("we live under " + name + " now. that's us.", 3800);
+        renderWispTab();
+      });
+    }
 
     els["tab-wisp"].querySelectorAll(".acc.unlocked").forEach((btn) => {
       btn.addEventListener("click", () => {

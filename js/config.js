@@ -189,6 +189,7 @@
     { id: "sprout",    glyph: "🌅", name: "The seed stirs",  desc: "Fill your sky with 10 stars. The Sun Seed sprouts.", check: (s) => (s.stars || []).length >= 10 },
     { id: "visitor1",  glyph: "🦔", name: "First guest",     desc: "Greet a visitor to the meadow.", check: (s) => (s.visitors || 0) >= 1 },
     { id: "visitor10", glyph: "⛵", name: "Open door",       desc: "Greet 10 visitors.", check: (s) => (s.visitors || 0) >= 10 },
+    { id: "constname", glyph: "✍️", name: "Sky writer",      desc: "Name your constellation.", check: (s) => !!s.constellation },
   ];
   const ACH_PROD_BONUS = 0.01;
 
