@@ -31,24 +31,26 @@ It keeps gathering light while you're away. It notices when you come back.
 | Loop | Cadence | What happens |
 |---|---|---|
 | Touch | seconds | tap (rhythm combos ×2), pet (hearts + bond), crits |
-| Build | minutes | 14 buildings, 25 boosts, visible in the world |
+| Build | minutes | 14 buildings, 25 boosts, all visible in the world |
+| Wish | session | 3 daily mini-goals; all three → +1 stardust |
 | Grow | hours | 13 evolution stages, from Mote to Dawn |
-| Events | surprise | golden dewdrops (×7 frenzy), starfall showers, comet wishes, attention moments, star blessings |
-| Return | daily | gift + streak + ×2 warmth + a new owl tale |
-| Ascend | days | wisp → permanent star, stardust +10% each, rebirth ceremony |
-| Collect | always | 40 memories (each +1% forever), 6 earned accessories |
+| Events | surprise | golden dewdrops (×7 frenzy), starfall showers, comet wishes, attention moments, star blessings, drifting petals, 4 kinds of visitors |
+| Return | daily | gift + streak + ×2 warmth + a new owl tale (30 tales) + weekly Moon Letters |
+| Ascend | days | wisp → permanent star, stardust +10% each, rebirth ceremony, name your constellation |
+| Collect | always | 49 memories (each +1% forever), 11 accessories — all earned, never bought |
 
 ## Features
 
-- Full offline progress with a warm welcome-back
+- Full offline progress with a warm welcome-back (and dreams about the things *you* built)
 - Daily streaks, stacking timed buffs with HUD countdown
-- Wardrobe: sprout, star bow, flower crown, night scarf, halo, moon glasses — all earned by loyalty, never bought
+- Wardrobe of 11 accessories — earned by loyalty milestones or supporter gift codes, never by grinding a shop
 - Postcard camera 📷 — renders your meadow + wisp into a 1080×1350 share image (Web Share API / download)
-- Save codes — move your wisp between devices from Settings
+- Save codes to move devices; automatic daily backup with self-healing restore; hostile save codes are sanitized
 - PWA: installable, offline-capable, procedural icon
-- Sky that breathes with your real clock (dawn/day/dusk/deep night)
-- Fully synthesized audio: pentatonic taps, chimes, wind and crickets — zero audio files
-- Everything procedural, zero sprites — with a clean renderer seam (`scene.js` / `wisp.js`) ready for a future art pass
+- Sky that breathes with your real clock (dawn/day/dusk/deep night) and season (snow in winter, hearts on Valentine's)
+- Weather: drifting mist, petal breezes, shimmer nights — cosmetic only
+- Fully synthesized audio: pentatonic taps, chimes, wind, crickets, and an optional generative music-box lullaby — zero audio files
+- Everything procedural, zero sprites — with a documented renderer seam (`assets/SPRITE-GUIDE.md`) ready for a future art pass
 
 ## Tech
 
