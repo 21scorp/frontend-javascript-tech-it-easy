@@ -38,6 +38,8 @@
     levelCheck();
   }
 
+  let lastLevelFxAt = 0;
+
   function levelCheck() {
     const S = W.state.S;
     let leveled = false;
@@ -50,6 +52,11 @@
     if (!leveled) return;
 
     const stageAfter = W.state.stageFor(S.level);
+    // when income is huge, levels chain every frame — celebrate at
+    // most ~once a second (evolutions always celebrate)
+    const now = performance.now();
+    if (stageAfter === stageBefore && now - lastLevelFxAt < 1100) return;
+    lastLevelFxAt = now;
     const p = W.scene.wispPos();
     W.audio.play("levelUp");
     W.particles.rise(p.x, p.y, 26);
