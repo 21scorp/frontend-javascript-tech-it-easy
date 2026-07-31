@@ -122,6 +122,13 @@
           desc: "Keep working +8h while away · rested lasts 10 min." },
       ],
     },
+    boat: {
+      name: "Row boat", glyph: "🛶",
+      tiers: [
+        { name: "Build a row boat", coins: 3500, mats: { oak: 25 }, buildMin: 0,
+          desc: "Row out past the buoys. Something big lives in the deep water." },
+      ],
+    },
   };
 
   /* Decorations — pure cosmetic, pure bond. Never a stat. */
@@ -144,6 +151,42 @@
 
   const RESTED = {
     minAwaySec: 600,           // being away 10+ min earns the boost
+  };
+
+  /* ─────────────── The Deep Water (boss fish) ───────────────
+     Active duels: hold to reel, release on dives, tap the jumps.
+     Each attempt costs bait made from your own catch.             */
+  const BOSSES = [
+    { id: "koi",  name: "De Oude Koi", lvl: 15, hue: 45, size: 1.0,
+      bait: { herring: 5, sardine: 2 },
+      stamina: 1.0, drainMult: 1.0, tensionMult: 1.0,
+      reward: { coins: 4000, xp: 600 }, recatchCoins: 1500,
+      perkDesc: "Fish in orders pay +5%, forever.",
+      intro: "The pond's grandfather. Patient. Enormous.",
+      taunt: "The old koi studies your bait…" },
+    { id: "pike", name: "Zilverrug",   lvl: 35, hue: 200, size: 1.25,
+      bait: { trout: 8, salmon: 3 },
+      stamina: 1.25, drainMult: 0.85, tensionMult: 1.3,
+      reward: { coins: 25000, xp: 3500 }, recatchCoins: 8000,
+      perkDesc: "Your casts find the best fish more often.",
+      intro: "A silver flash under the buoys. Fast. Furious.",
+      taunt: "Zilverrug circles the boat…" },
+  ];
+
+  const BOSSFIGHT = {
+    reelDrain: 0.11,        // stamina/s while reeling in calm
+    reelTension: 0.30,      // tension/s while reeling in calm
+    diveTensionMult: 3.4,   // reeling during a dive is how lines snap
+    relax: 0.55,            // tension/s released
+    recover: 0.025,         // fish stamina/s while you're not reeling
+    jumpHit: 0.15,          // stamina chunk for a clean jump tap
+    jumpMissRecover: 0.07,
+    jumpWindow: 1.1,        // seconds to tap the leap
+    phaseCalm: [2.6, 4.2],  // seconds (min,max)
+    phaseDive: [1.6, 2.4],
+    telegraph: 0.7,         // warning time before a dive
+    startTension: 0.25,
+    recatchDays: 7,
   };
 
   const AFFINITY = {
@@ -185,13 +228,14 @@
     home:  { x: 560, y: 1000 },  // where the character idles
     dock:  { x: 250, y: 1390 },  // pier off the beach, bottom-left
     house: { x: 130, y: 890 },   // your place, below the pond
+    boat:  { x: 810, y: 1365 },  // row boat on the beach, bottom-right
   };
 
   W.config = {
-    BUILD: "0.2.0",
+    BUILD: "0.3.0",
     SAVE_KEY: "cove.save.v1",
     SKILLS, FISH, TREES, GATHER, TOOLS,
     STALL, STALL_UPGRADES, CUSTOMERS, AFFINITY, OFFLINE, WORLD,
-    PROJECTS, DECO, FERRY, RESTED,
+    PROJECTS, DECO, FERRY, RESTED, BOSSES, BOSSFIGHT,
   };
 })();

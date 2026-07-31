@@ -135,6 +135,14 @@
     // the cove you build
     items.push({ y: WD.dock.y, fn: () => W.sprites.drawDock(ctx, WD.dock.x, WD.dock.y, { tier: S.projects.dock, t }) });
     items.push({ y: WD.house.y, fn: () => W.sprites.drawHouse(ctx, WD.house.x, WD.house.y, { tier: S.projects.house, t }) });
+    if (S.projects.boat >= 1) {
+      items.push({ y: WD.boat.y, fn: () => W.sprites.drawBoat(ctx, WD.boat.x, WD.boat.y, { t }) });
+    }
+    C.BOSSES.forEach((boss, i) => {
+      if (!S.trophies[boss.id]) return;
+      const tx = WD.stall.x + (i === 0 ? -150 : 150);
+      items.push({ y: WD.stall.y + 8, fn: () => W.sprites.drawTrophy(ctx, tx, WD.stall.y + 8, { boss, t }) });
+    });
     for (const d of C.DECO) {
       if (!S.deco[d.id]) continue;
       if (d.id === "cat") items.push({ y: d.y, fn: () => W.sprites.drawCat(ctx, d.x, d.y, { t }) });
@@ -156,6 +164,9 @@
     W.game.drawOverlays(ctx, t);
 
     ctx.restore();
+
+    // the deep-water duel covers everything (screen space)
+    if (W.boss.active) W.boss.draw(ctx, vw, vh, t);
   }
 
   W.scene = {

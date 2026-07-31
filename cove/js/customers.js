@@ -108,6 +108,14 @@
     const ups = W.state.gainXp("trading", Math.round(order.value * 0.6));
     if (ups > 0) W.ui.skillUp("trading", ups);
 
+    // the trophies get noticed
+    const shown = C.BOSSES.filter((b) => S.trophies[b.id]);
+    if (shown.length && Math.random() < 0.12) {
+      const b = U.pick(shown);
+      W.ui.toast("🏆 " + cust.name + " eyes the trophy",
+        '"Is that… ' + b.name + '? In THIS cove?"');
+    }
+
     // affinity
     S.affinity[order.cid] = (S.affinity[order.cid] || 0) + 1;
     const serves = S.affinity[order.cid];

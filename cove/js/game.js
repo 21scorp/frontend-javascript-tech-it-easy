@@ -58,7 +58,10 @@
   /** Which fish does one cast catch? Skews to the top tier. */
   function rollFish() {
     const pool = W.state.unlockedFish();
-    if (Math.random() < C.GATHER.topWeight) return pool[pool.length - 1];
+    let top = C.GATHER.topWeight;
+    // Zilverrug's trophy: your casts find the best fish more often
+    if (W.state.S.trophies.pike) top = Math.min(0.85, top + 0.1);
+    if (Math.random() < top) return pool[pool.length - 1];
     return U.pick(pool);
   }
 
@@ -182,6 +185,7 @@
   function tick(dt) {
     const S = W.state.S;
     W.actor.update(dt);
+    W.boss.tick(dt);
 
     if (S.activity && W.actor.state !== "walk") {
       cycleT += dt;
@@ -190,10 +194,10 @@
         cycleT -= ct;
         completeCycle();
       }
-      // bites only while actively gathering and the tab is visible
+      // bites only while actively gathering, tab visible, no duel on
       if (bite) {
         if (Date.now() > bite.until) bite = null;
-      } else if (document.visibilityState === "visible") {
+      } else if (document.visibilityState === "visible" && !W.boss.active) {
         biteTimer -= dt;
         if (biteTimer <= 0) {
           biteTimer = U.rand(C.GATHER.biteGapMin, C.GATHER.biteGapMax);

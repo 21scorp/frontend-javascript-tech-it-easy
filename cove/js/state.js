@@ -28,11 +28,13 @@
       activity: null,                // {type:"fish"} | {type:"chop", tree:"oak"} | null
       orders: [],                    // live queue (serialized)
       nextSpawnAt: 0,
-      projects: { dock: 0, house: 0 },  // built tier per project
+      projects: { dock: 0, house: 0, boat: 0 },  // built tier per project
       deco: {},                      // decoId -> true
       building: null,                // {id, tier, readyAt} while a crew works
       restedUntil: 0,
       ferryNextAt: 0,
+      trophies: {},                  // bossId -> true (mounted at the stall)
+      bossCooldowns: {},             // bossId -> next catch timestamp
       settings: { sound: true },
       flags: { introDone: false },
       seed: Math.floor(Math.random() * 1e9),
@@ -85,9 +87,11 @@
       S.settings = Object.assign({ sound: true }, data.settings);
       S.flags = Object.assign({ introDone: false }, data.flags);
       S.orders = Array.isArray(data.orders) ? data.orders : [];
-      S.projects = Object.assign({ dock: 0, house: 0 }, data.projects);
+      S.projects = Object.assign({ dock: 0, house: 0, boat: 0 }, data.projects);
       S.deco = data.deco || {};
       S.building = data.building || null;
+      S.trophies = data.trophies || {};
+      S.bossCooldowns = data.bossCooldowns || {};
       if (S.playerName) S.playerName = W.util.sanitizeName(S.playerName) || "Keeper";
       return true;
     } catch (e) {
@@ -240,8 +244,33 @@
 
   function orderValue(items) {
     let sum = 0;
-    for (const it of items) sum += item(it.id).price * it.n;
+    for (const it of items) {
+      let p = item(it.id).price * it.n;
+      // De Oude Koi's trophy: fish are worth more, forever
+      if (S.trophies.koi && item(it.id).kind === "fish") p *= 1.05;
+      sum += p;
+    }
     return Math.round(sum * C.STALL.orderMarkup * priceMult());
+  }
+
+  /* ─────────────── the deep water ─────────────── */
+
+  function baitCheck(boss) {
+    const missing = [];
+    for (const [mid, n] of Object.entries(boss.bait)) {
+      if (invCount(mid) < n) missing.push((n - invCount(mid)) + "× " + item(mid).name);
+    }
+    return { ok: missing.length === 0, missing };
+  }
+
+  function takeBait(boss) {
+    if (!baitCheck(boss).ok) return false;
+    for (const [mid, n] of Object.entries(boss.bait)) takeItem(mid, n);
+    return true;
+  }
+
+  function bossReady(boss) {
+    return (S.bossCooldowns[boss.id] || 0) <= Date.now();
   }
 
   W.state = {
@@ -255,5 +284,6 @@
     projectTier, nextProjectTier, checkCost, payCost,
     startProject, completeBuilding, buyDeco,
     offlineCapHours, restedMult,
+    baitCheck, takeBait, bossReady,
   };
 })();

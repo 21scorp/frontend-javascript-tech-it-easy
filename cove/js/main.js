@@ -78,8 +78,15 @@
   const canvas = $("world");
   canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 
+  // the deep-water duel wants press & release, not taps
+  canvas.addEventListener("pointerdown", () => {
+    W.audio.unlock();
+    if (W.boss.active) W.boss.pointerDown();
+  });
+
   canvas.addEventListener("pointerup", (e) => {
     W.audio.unlock();
+    if (W.boss.active) { W.boss.pointerUp(); return; }
     if (!W.state.S.flags.introDone) return;
     const wpt = W.scene.toWorld(e.clientX, e.clientY);
     const wx = wpt.x, wy = wpt.y;
@@ -129,13 +136,23 @@
       W.ui.toast("🐈 prrrr", "The cat approves of your stall.");
       return;
     }
-    // 7. house & dock open the build tab
+    // 7. the row boat → the deep water
+    if (Math.hypot(wx - C.WORLD.boat.x, wy - (C.WORLD.boat.y - 20)) < 110) {
+      if (W.state.S.projects.boat >= 1) {
+        W.boss.openDeepWater();
+      } else {
+        W.audio.play("denied");
+        W.ui.toast("🛶 The deep water calls", "Build a row boat first — check the Build tab.");
+      }
+      return;
+    }
+    // 8. house & dock open the build tab
     if (Math.hypot(wx - C.WORLD.house.x, wy - (C.WORLD.house.y - 50)) < 110 ||
         Math.hypot(wx - C.WORLD.dock.x, wy - (C.WORLD.dock.y - 20)) < 130) {
       document.querySelector('.tab[data-tab="build"]').click();
       return;
     }
-    // 8. the stall opens the gear tab
+    // 9. the stall opens the gear tab
     if (Math.hypot(wx - C.WORLD.stall.x, wy - (C.WORLD.stall.y - 60)) < 140) {
       document.querySelector('.tab[data-tab="gear"]').click();
       return;

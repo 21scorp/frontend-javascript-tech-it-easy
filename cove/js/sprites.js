@@ -32,6 +32,8 @@
     house_1: { h: 130 }, house_2: { h: 150 }, house_3: { h: 170 },
     deco_lantern: { h: 84 }, deco_flowers: { w: 92 }, deco_bench: { w: 112 },
     cat: { h: 38 },
+    boat: { w: 150 },
+    trophy_koi: { h: 112 }, trophy_pike: { h: 112 },
     cust_fien: { h: 96 },  cust_bram: { h: 98 },  cust_saar: { h: 80 },
     cust_milo: { h: 78 },  cust_vera: { h: 96 },  cust_ted: { h: 96 },
     cust_noor: { h: 96 },  cust_kas: { h: 98 },
@@ -689,6 +691,87 @@
     ctx.restore();
   }
 
+  /* ─────────────── the row boat & boss trophies ─────────────── */
+
+  function drawBoat(ctx, x, y, o) {
+    const t = o.t || 0;
+    const bob = Math.sin(t * 1.2) * 2;
+    if (art(ctx, "boat", x, y - bob, { t })) return;
+    ctx.save();
+    ctx.translate(x, y - bob);
+    // hull
+    ctx.fillStyle = "#9a6a3e";
+    ctx.beginPath();
+    ctx.moveTo(-64, -26);
+    ctx.quadraticCurveTo(0, 8, 64, -26);
+    ctx.lineTo(48, -2);
+    ctx.quadraticCurveTo(0, 18, -48, -2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#b8845a";
+    ctx.beginPath();
+    ctx.ellipse(0, -22, 58, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#7a5230";
+    ctx.beginPath();
+    ctx.ellipse(0, -22, 44, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // bench + oar
+    ctx.fillStyle = "#b8845a";
+    ctx.fillRect(-24, -28, 48, 7);
+    ctx.strokeStyle = "#8a6a42";
+    ctx.lineWidth = 5;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(20, -24); ctx.lineTo(58, -58);
+    ctx.stroke();
+    ctx.fillStyle = "#8a6a42";
+    ctx.beginPath();
+    ctx.ellipse(62, -64, 7, 11, -0.7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawTrophy(ctx, x, y, o) {
+    const boss = o.boss;
+    const t = o.t || 0;
+    shadow(ctx, x, y, 18, 6);
+    if (art(ctx, "trophy_" + boss.id, x, y, { t })) return;
+    ctx.save();
+    ctx.translate(x, y);
+    // post + shield
+    ctx.fillStyle = "#7a5a34";
+    ctx.fillRect(-5, -58, 10, 58);
+    ctx.fillStyle = "#a8784a";
+    ctx.beginPath();
+    ctx.roundRect(-30, -104, 60, 52, 10);
+    ctx.fill();
+    ctx.strokeStyle = "#e8c878";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(-25, -99, 50, 42);
+    // the fish, mounted mid-flex
+    ctx.fillStyle = `hsl(${boss.hue}, 60%, 55%)`;
+    ctx.save();
+    ctx.translate(0, -78);
+    ctx.rotate(-0.15);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 17, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(15, 0); ctx.lineTo(24, -7); ctx.lineTo(24, 7);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.arc(-8, -2, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    // a proud sparkle
+    const tw = 0.5 + Math.sin(t * 3 + boss.hue) * 0.5;
+    ctx.fillStyle = `rgba(255, 230, 140, ${tw})`;
+    ctx.beginPath();
+    ctx.arc(22, -100, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
   /* ─────────────── a build in progress ─────────────── */
 
   function drawBuildSite(ctx, x, y, o) {
@@ -752,5 +835,6 @@
 
   W.sprites = { drawChar, drawCustomer, drawStall, drawTree, drawMine,
     drawDock, drawHouse, drawDeco, drawCat, drawBuildSite,
+    drawBoat, drawTrophy,
     drawItemDot, shadow, hasArt };
 })();
