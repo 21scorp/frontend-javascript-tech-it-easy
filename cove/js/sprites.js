@@ -111,6 +111,8 @@
 
   function loadOne(slot, src) {
     const img = new Image();
+    // bundled builds inline the art as data URIs on W.ART
+    if (W.ART && W.ART[slot]) src = W.ART[slot];
     img.onload = () => {
       let rect = { sx: 0, sy: 0, sw: img.width, sh: img.height };
       try {
