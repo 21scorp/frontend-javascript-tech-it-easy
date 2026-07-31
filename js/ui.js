@@ -258,14 +258,13 @@
     boostRows.clear();
     const frag = document.createDocumentFragment();
 
-    if (list.length === 0) {
+    const anyUnbought = C.UPGRADES.some((u) => !S.upgrades[u.id]);
+    if (list.length === 0 && !anyUnbought) {
       const p = document.createElement("p");
       p.className = "shop-desc";
       p.style.textAlign = "center";
       p.style.padding = "20px 10px";
-      p.textContent = Object.keys(S.upgrades).length > 0
-        ? "You've gathered every boost within reach. Keep growing — more will come."
-        : "Boosts will appear here as your light grows.";
+      p.textContent = "Every boost is woven in. " + (S.wispName || "Your wisp") + " hums with all of them.";
       frag.appendChild(p);
     }
 
@@ -279,6 +278,25 @@
         `<div class="shop-cost"><div class="cost"></div></div>`;
       row.addEventListener("click", () => W.game.buyUpgrade(u.id));
       boostRows.set(u.id, { row, costEl: row.querySelector(".cost"), cost: u.cost });
+      frag.appendChild(row);
+    }
+
+    // tease the next boost beyond reach, so there's always a horizon
+    const shownIds = new Set(list.map((u) => u.id));
+    const nextUp = C.UPGRADES
+      .filter((u) => !S.upgrades[u.id] && !shownIds.has(u.id))
+      .sort((a, b) => a.cost - b.cost)[0];
+    if (nextUp) {
+      const row = document.createElement("div");
+      row.className = "shop-row locked";
+      const needsBuilding = nextUp.needs && (S.buildings[nextUp.needs[0]] || 0) < nextUp.needs[1];
+      const bName = needsBuilding ? (C.BUILDINGS.find((b) => b.id === nextUp.needs[0]) || {}).name : null;
+      row.innerHTML =
+        `<div class="shop-glyph">?</div>` +
+        `<div class="shop-info"><div class="shop-name">???</div>` +
+        `<div class="shop-desc">${needsBuilding
+          ? "Something stirs… it wants more " + bName + "s (" + nextUp.needs[1] + ")."
+          : "Something stirs at around " + U.fmt(nextUp.cost) + " ✦…"}</div></div>`;
       frag.appendChild(row);
     }
 
