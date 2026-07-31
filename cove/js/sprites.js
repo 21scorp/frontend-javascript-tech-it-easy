@@ -16,17 +16,21 @@
      the bottom edge) and they replace the placeholder painters
      automatically. `w` is the on-screen width in world units.       */
 
+  /* `w`/`h` = on-screen size in world units, applied to the artwork's
+     TRIMMED bounds (transparent padding is cropped automatically at
+     load). Give `h` where vertical presence matters (people, trees),
+     `w` where width does (items); the other side follows the aspect. */
   const DEFS = {
-    char_idle: { w: 95 },  char_fish: { w: 130 }, char_chop: { w: 130 },
-    char_walk: { w: 110 },
-    stall: { w: 230 },     mine: { w: 300 },
-    tree_oak: { w: 150 },  tree_birch: { w: 130 }, tree_maple: { w: 160 },
-    tree_yew: { w: 175 },  tree_elder: { w: 190 },
+    char_idle: { h: 118 }, char_fish: { h: 122 }, char_chop: { h: 122 },
+    char_walk: { h: 118 },
+    stall: { h: 235 },     mine: { h: 175 },
+    tree_oak: { h: 165 },  tree_birch: { h: 150 }, tree_maple: { h: 175 },
+    tree_yew: { h: 190 },  tree_elder: { h: 210 },
     tree_oak_stump: { w: 64 }, tree_birch_stump: { w: 56 }, tree_maple_stump: { w: 68 },
     tree_yew_stump: { w: 74 }, tree_elder_stump: { w: 80 },
-    cust_fien: { w: 78 },  cust_bram: { w: 78 },  cust_saar: { w: 78 },
-    cust_milo: { w: 78 },  cust_vera: { w: 78 },  cust_ted: { w: 78 },
-    cust_noor: { w: 78 },  cust_kas: { w: 78 },
+    cust_fien: { h: 96 },  cust_bram: { h: 98 },  cust_saar: { h: 80 },
+    cust_milo: { h: 78 },  cust_vera: { h: 96 },  cust_ted: { h: 96 },
+    cust_noor: { h: 96 },  cust_kas: { h: 98 },
     item_sardine: { w: 34 }, item_herring: { w: 34 }, item_trout: { w: 34 },
     item_salmon: { w: 34 },  item_tuna: { w: 34 },    item_sword: { w: 34 },
     item_koi: { w: 34 },
@@ -46,11 +50,39 @@
     cust_noor: { fps: 5 }, cust_kas: { fps: 5 },
   };
 
-  const IMG = {};   // key -> HTMLImageElement (only when loaded OK)
+  const IMG = {};   // slot -> { img, sx, sy, sw, sh } (only when loaded OK)
+
+  /** Opaque bounding box, so generator padding never affects scale or
+      the feet anchor. Sampled every 2px; alpha > 24 counts as art.   */
+  function opaqueBounds(img) {
+    const cvs = document.createElement("canvas");
+    cvs.width = img.width; cvs.height = img.height;
+    const c = cvs.getContext("2d", { willReadFrequently: true });
+    c.drawImage(img, 0, 0);
+    const d = c.getImageData(0, 0, cvs.width, cvs.height).data;
+    const iw = cvs.width, ih = cvs.height;
+    let minX = iw, maxX = 0, minY = ih, maxY = 0;
+    for (let y = 0; y < ih; y += 2) {
+      for (let x = 0; x < iw; x += 2) {
+        if (d[(y * iw + x) * 4 + 3] > 24) {
+          if (x < minX) minX = x; if (x > maxX) maxX = x;
+          if (y < minY) minY = y; if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (maxX <= minX) return { sx: 0, sy: 0, sw: iw, sh: ih };
+    return { sx: minX, sy: minY, sw: maxX - minX + 2, sh: maxY - minY + 2 };
+  }
 
   function loadOne(slot, src) {
     const img = new Image();
-    img.onload = () => { IMG[slot] = img; };
+    img.onload = () => {
+      let rect = { sx: 0, sy: 0, sw: img.width, sh: img.height };
+      if (!slot.endsWith("_anim")) {   // sheets keep their frame grid
+        try { rect = opaqueBounds(img); } catch (e) {}  // tainted canvas → untrimmed
+      }
+      IMG[slot] = { img, sx: rect.sx, sy: rect.sy, sw: rect.sw, sh: rect.sh };
+    };
     img.onerror = () => {};   // no file → placeholder stays
     img.src = src;
   }
@@ -67,24 +99,28 @@
       current frame is drawn instead of the static image.           */
   function art(ctx, key, x, y, opts) {
     const o = opts || {};
-    const sheet = o.t !== undefined ? IMG[key + "_anim"] : null;
-    const img = sheet || IMG[key];
-    if (!img) return false;
-    let sx = 0, sw = img.width;
-    const sh = img.height;
-    if (sheet) {
-      const frames = Math.max(1, Math.round(img.width / img.height));
-      sw = img.width / frames;
+    const sheetRec = o.t !== undefined ? IMG[key + "_anim"] : null;
+    const rec = sheetRec || IMG[key];
+    if (!rec) return false;
+    let { sx, sy, sw, sh } = rec;
+    if (sheetRec) {
+      const frames = Math.max(1, Math.round(rec.img.width / rec.img.height));
+      sw = rec.img.width / frames;
+      sh = rec.img.height;
+      sy = 0;
       const fps = (ANIM[key] && ANIM[key].fps) || 8;
       sx = (Math.floor(o.t * fps + (o.seed || 0) * 7) % frames) * sw;
     }
-    const w = DEFS[key].w * (o.scale || 1);
-    const h = w * (sh / sw);
+    const def = DEFS[key];
+    const s = o.scale || 1;
+    let w, h;
+    if (def.h) { h = def.h * s; w = h * (sw / sh); }
+    else       { w = def.w * s; h = w * (sh / sw); }
     ctx.save();
     ctx.translate(x, y);
     if (o.flip) ctx.scale(-1, 1);
     if (o.rot) ctx.rotate(o.rot);
-    ctx.drawImage(img, sx, 0, sw, sh, -w / 2, -h, w, h);
+    ctx.drawImage(rec.img, sx, sy, sw, sh, -w / 2, -h, w, h);
     ctx.restore();
     return true;
   }
