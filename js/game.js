@@ -651,6 +651,25 @@
   /* ─────────────── wisp voice (idle) ─────────────── */
 
   function greet() {
+    const S = W.state.S;
+    // togetherness anniversaries take precedence over the usual hello
+    const ageDays = Math.floor((Date.now() - S.born) / 86400000);
+    const milestones = {
+      7: "we've been together a whole week. I counted. twice.",
+      30: "a month of you. the meadow keeps saying how lucky I am.",
+      100: "a hundred days. you know what that makes you? home.",
+    };
+    if (milestones[ageDays]) {
+      const noted = S.flags.ageNoted || (S.flags.ageNoted = {});
+      if (!noted[ageDays]) {
+        noted[ageDays] = true;
+        W.ui.bubble(milestones[ageDays], 5200);
+        const p = W.scene.wispPos();
+        for (let i = 0; i < 3; i++) W.particles.heart(p.x + U.rand(-40, 40), p.y - 40);
+        W.state.save();
+        return;
+      }
+    }
     const h = new Date().getHours();
     let key = "greetDay";
     if (h >= 5 && h < 9) key = "greetDawn";
