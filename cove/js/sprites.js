@@ -83,13 +83,39 @@
     return { sx: minX, sy: minY, sw: maxX - minX + 2, sh: maxY - minY + 2 };
   }
 
+  /** Sheet variant of opaqueBounds: ONE shared frame-local crop
+      (the union over all frames), so playback never jitters and
+      generator padding inside frames doesn't affect scale/anchor.  */
+  function sheetBounds(img) {
+    const cvs = document.createElement("canvas");
+    cvs.width = img.width; cvs.height = img.height;
+    const c = cvs.getContext("2d", { willReadFrequently: true });
+    c.drawImage(img, 0, 0);
+    const d = c.getImageData(0, 0, cvs.width, cvs.height).data;
+    const iw = cvs.width, ih = cvs.height;
+    const frames = Math.max(1, Math.round(iw / ih));
+    const fw = iw / frames;
+    let minX = fw, maxX = 0, minY = ih, maxY = 0;
+    for (let y = 0; y < ih; y += 2) {
+      for (let x = 0; x < iw; x += 2) {
+        if (d[(y * iw + x) * 4 + 3] > 24) {
+          const lx = x % fw;
+          if (lx < minX) minX = lx; if (lx > maxX) maxX = lx;
+          if (y < minY) minY = y; if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (maxX <= minX) return { sx: 0, sy: 0, sw: fw, sh: ih };
+    return { sx: minX, sy: minY, sw: maxX - minX + 2, sh: maxY - minY + 2 };
+  }
+
   function loadOne(slot, src) {
     const img = new Image();
     img.onload = () => {
       let rect = { sx: 0, sy: 0, sw: img.width, sh: img.height };
-      if (!slot.endsWith("_anim")) {   // sheets keep their frame grid
-        try { rect = opaqueBounds(img); } catch (e) {}  // tainted canvas → untrimmed
-      }
+      try {
+        rect = slot.endsWith("_anim") ? sheetBounds(img) : opaqueBounds(img);
+      } catch (e) {}   // tainted canvas → untrimmed
       IMG[slot] = { img, sx: rect.sx, sy: rect.sy, sw: rect.sw, sh: rect.sh };
     };
     img.onerror = () => {};   // no file → placeholder stays
@@ -114,11 +140,10 @@
     let { sx, sy, sw, sh } = rec;
     if (sheetRec) {
       const frames = Math.max(1, Math.round(rec.img.width / rec.img.height));
-      sw = rec.img.width / frames;
-      sh = rec.img.height;
-      sy = 0;
+      const fw = rec.img.width / frames;
       const fps = (ANIM[key] && ANIM[key].fps) || 8;
-      sx = (Math.floor(o.t * fps + (o.seed || 0) * 7) % frames) * sw;
+      const fi = Math.floor(o.t * fps + (o.seed || 0) * 7) % frames;
+      sx = fi * fw + rec.sx;   // rec holds the frame-local union crop
     }
     const def = DEFS[key];
     const s = o.scale || 1;
