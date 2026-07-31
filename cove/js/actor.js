@@ -60,8 +60,10 @@
   W.actor = {
     walkTo, update, draw, hitTest,
     setState(s) { a.state = s; },
+    face(tx) { a.flip = tx < a.x; },   // look at what you work on
     get x() { return a.x; },
     get y() { return a.y; },
     get state() { return a.state; },
+    get flip() { return a.flip; },
   };
 })();

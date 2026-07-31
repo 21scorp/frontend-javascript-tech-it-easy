@@ -21,7 +21,8 @@
      load). Give `h` where vertical presence matters (people, trees),
      `w` where width does (items); the other side follows the aspect. */
   const DEFS = {
-    char_idle: { h: 118 }, char_fish: { h: 122 }, char_chop: { h: 122 },
+    // mirror: art was authored facing LEFT; convention is flip=false → right
+    char_idle: { h: 118 }, char_fish: { h: 122 }, char_chop: { h: 122, mirror: true },
     char_walk: { h: 118 },
     stall: { h: 235 },     mine: { h: 175 },
     tree_oak: { h: 165 },  tree_birch: { h: 150 }, tree_maple: { h: 175 },
@@ -154,7 +155,7 @@
     else       { w = def.w * s; h = w * (sh / sw); }
     ctx.save();
     ctx.translate(x, y);
-    if (o.flip) ctx.scale(-1, 1);
+    if (def.mirror ? !o.flip : o.flip) ctx.scale(-1, 1);
     if (o.rot) ctx.rotate(o.rot);
     ctx.drawImage(rec.img, sx, sy, sw, sh, -w / 2, -h, w, h);
     ctx.restore();

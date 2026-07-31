@@ -24,6 +24,7 @@
     S.activity = null;
     W.actor.walkTo(p.x + p.rx + 28, p.y + 30, () => {
       W.actor.setState("fish");
+      W.actor.face(p.x);              // cast toward the water
       S.activity = { type: "fish" };
       cycleT = 0;
       W.state.save();
@@ -42,6 +43,7 @@
     S.activity = null;
     W.actor.walkTo(spot.x - 55, spot.y + 12, () => {
       W.actor.setState("chop");
+      W.actor.face(spot.x);           // swing toward the trunk
       S.activity = { type: "chop", tree: spot.tree };
       choppingAt = spot;
       cycleT = 0;
