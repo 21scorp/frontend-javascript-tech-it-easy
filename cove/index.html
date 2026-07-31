@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#7ec8d8">
+<meta name="description" content="COVE — a tiny harbor stall. Fish, chop, and serve the villagers who queue up at your counter. A cozy idle grind.">
+<title>COVE — your little harbor stall</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='14' y='38' width='72' height='46' rx='8' fill='%23b07a4a'/><path d='M8 40 L50 12 L92 40 Z' fill='%23e8563f'/><path d='M20 40 L50 20 L80 40 Z' fill='%23fff3da'/></svg>">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<canvas id="world"></canvas>
+
+<!-- ══════════════ HUD ══════════════ -->
+<div id="hud" class="hidden">
+  <div id="topbar">
+    <div id="coin-plate"><span id="coin-amount">0</span><span class="coin-ico">●</span></div>
+    <div id="skill-chips">
+      <button class="skill-chip" data-skill="fishing" title="Fishing">
+        <span class="skill-ico">🎣</span><span class="skill-lv" id="lv-fishing">1</span>
+        <span class="skill-bar"><span class="skill-fill" id="fill-fishing"></span></span>
+      </button>
+      <button class="skill-chip" data-skill="woodcutting" title="Woodcutting">
+        <span class="skill-ico">🪓</span><span class="skill-lv" id="lv-woodcutting">1</span>
+        <span class="skill-bar"><span class="skill-fill" id="fill-woodcutting"></span></span>
+      </button>
+      <button class="skill-chip" data-skill="trading" title="Trading">
+        <span class="skill-ico">🪙</span><span class="skill-lv" id="lv-trading">1</span>
+        <span class="skill-bar"><span class="skill-fill" id="fill-trading"></span></span>
+      </button>
+    </div>
+    <button id="btn-settings" class="icon-btn" aria-label="Settings">⚙</button>
+  </div>
+
+  <div id="panel" class="collapsed">
+    <button id="panel-toggle" aria-label="Toggle panel"><span id="panel-handle"></span></button>
+    <nav id="tabs" role="tablist">
+      <button class="tab active" data-tab="bag" role="tab">Bag</button>
+      <button class="tab" data-tab="gear" role="tab">Gear</button>
+      <button class="tab" data-tab="friends" role="tab">Friends</button>
+    </nav>
+    <div id="tab-content">
+      <div id="tab-bag" class="tab-page active"></div>
+      <div id="tab-gear" class="tab-page"></div>
+      <div id="tab-friends" class="tab-page"></div>
+    </div>
+  </div>
+
+  <div id="toasts"></div>
+  <div id="floaters"></div>
+</div>
+
+<!-- ══════════════ INTRO ══════════════ -->
+<div id="intro">
+  <div id="intro-card">
+    <div id="intro-art"></div>
+    <p id="intro-line">The ferry drops you at a quiet cove.<br>An empty stall. A pond. A forest.<br><b>Yours now.</b></p>
+    <div id="name-form">
+      <input id="name-input" type="text" maxlength="14" placeholder="your name…" autocomplete="off" spellcheck="false">
+      <button id="name-ok">Open the stall</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL ══════════════ -->
+<div id="modal-shade" class="hidden">
+  <div id="modal">
+    <h2 id="modal-title"></h2>
+    <div id="modal-body"></div>
+    <div id="modal-actions"></div>
+  </div>
+</div>
+
+<script src="js/util.js"></script>
+<script src="js/config.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/state.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/actor.js"></script>
+<script src="js/customers.js"></script>
+<script src="js/game.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
