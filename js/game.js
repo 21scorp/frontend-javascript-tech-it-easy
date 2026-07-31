@@ -778,7 +778,7 @@
     showerTimer -= dt;
     if (showerTimer <= 0) {
       showerTimer = U.rand(1100, 2200);
-      if (document.visibilityState === "visible" && S.flags.introDone && !ceremony) {
+      if (document.visibilityState === "visible" && S.flags.introDone && !ceremony && !pendingAscension) {
         W.scene.startShower(22);
         W.ui.toast("🌠 Starfall!", "The sky is raining wishes — tap the comets!");
         W.ui.bubble(U.pick(C.VOICE.shower), 3000);
@@ -796,7 +796,7 @@
       attnTimer -= dt;
       if (attnTimer <= 0) {
         attnTimer = U.rand(C.ATTENTION.minGap, C.ATTENTION.maxGap);
-        if (document.visibilityState === "visible" && S.flags.introDone) startAttention();
+        if (document.visibilityState === "visible" && S.flags.introDone && !pendingAscension) startAttention();
       }
     }
 
@@ -853,7 +853,7 @@
       dewTimer -= dt;
       if (dewTimer <= 0) {
         dewTimer = U.rand(C.DEW.minGap, C.DEW.maxGap);
-        if (document.visibilityState === "visible" && S.flags.introDone) {
+        if (document.visibilityState === "visible" && S.flags.introDone && !pendingAscension) {
           dew = { x: U.rand(0.12, 0.88), born: Date.now() };
           W.audio.play("chirp");
         }
