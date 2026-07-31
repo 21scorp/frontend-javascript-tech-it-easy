@@ -116,6 +116,11 @@
     return 1 + (weather.type === "breeze" ? weather.k * 2.2 : 0);
   }
 
+  /** Current weather type, for flavour elsewhere. */
+  function currentWeather() {
+    return weather.k > 0.4 ? weather.type : "clear";
+  }
+
   /* ─────────────── seasonal touches (real calendar) ─────────────── */
   let seasonOverride = null;
   let seasonTimer = 0;
@@ -1348,7 +1353,7 @@
     startShower(seconds) { showerUntil = Date.now() + seconds * 1000; },
     setWeather(type) { weather = { type, k: weather.k }; weatherTarget = type === "clear" ? 0 : 1; },
     setSeason(name) { seasonOverride = name; },
-    startPetal,
+    startPetal, currentWeather,
     flash(strength) {
       if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       flashA = Math.min(0.5, strength == null ? 0.28 : strength);

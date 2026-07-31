@@ -731,6 +731,18 @@
       lines.push(star.name + " twinkled at me today. I twinkled back.");
       lines.push("do you think " + star.name + " would be proud of me?");
     }
+    // the weather is worth remarking on
+    const wx = W.scene.currentWeather();
+    if (wx === "mist") {
+      lines.push("the mist tickles. don't tell it I said that.");
+      lines.push("everything looks softer in the mist. even me?");
+    } else if (wx === "breeze") {
+      lines.push("the breeze smells like somewhere far away.");
+      lines.push("hold my glow — the wind is being playful.");
+    } else if (wx === "shimmer") {
+      lines.push("the stars are chatty tonight. they say hi.");
+      lines.push("shimmer nights are for wishing. I already made mine.");
+    }
     return lines;
   }
 
