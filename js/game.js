@@ -31,6 +31,8 @@
   /* ─────────────── earning ─────────────── */
 
   function earn(amount) {
+    // one bad number must never poison a whole save
+    if (!isFinite(amount) || amount < 0) return;
     const S = W.state.S;
     S.light += amount;
     S.totalLight += amount;
