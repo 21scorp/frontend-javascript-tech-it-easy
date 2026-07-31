@@ -28,9 +28,14 @@
     tree_yew: { h: 190 },  tree_elder: { h: 210 },
     tree_oak_stump: { w: 64 }, tree_birch_stump: { w: 56 }, tree_maple_stump: { w: 68 },
     tree_yew_stump: { w: 74 }, tree_elder_stump: { w: 80 },
+    dock_1: { w: 250 }, dock_2: { w: 250 }, dock_3: { w: 320 },
+    house_1: { h: 130 }, house_2: { h: 150 }, house_3: { h: 170 },
+    deco_lantern: { h: 84 }, deco_flowers: { w: 92 }, deco_bench: { w: 112 },
+    cat: { h: 38 },
     cust_fien: { h: 96 },  cust_bram: { h: 98 },  cust_saar: { h: 80 },
     cust_milo: { h: 78 },  cust_vera: { h: 96 },  cust_ted: { h: 96 },
     cust_noor: { h: 96 },  cust_kas: { h: 98 },
+    cust_jip: { h: 92 },   cust_lena: { h: 96 },
     item_sardine: { w: 34 }, item_herring: { w: 34 }, item_trout: { w: 34 },
     item_salmon: { w: 34 },  item_tuna: { w: 34 },    item_sword: { w: 34 },
     item_koi: { w: 34 },
@@ -48,6 +53,8 @@
     cust_fien: { fps: 5 }, cust_bram: { fps: 5 }, cust_saar: { fps: 5 },
     cust_milo: { fps: 5 }, cust_vera: { fps: 5 }, cust_ted: { fps: 5 },
     cust_noor: { fps: 5 }, cust_kas: { fps: 5 },
+    cust_jip: { fps: 5 }, cust_lena: { fps: 5 },
+    cat: { fps: 4 },
   };
 
   const IMG = {};   // slot -> { img, sx, sy, sw, sh } (only when loaded OK)
@@ -463,6 +470,254 @@
     ctx.restore();
   }
 
+  /* ─────────────── the dock (bottom beach, tiers 0–3) ─────────────── */
+
+  function drawDock(ctx, x, y, o) {
+    const tier = o.tier || 0;
+    const t = o.t || 0;
+    if (tier >= 1 && art(ctx, "dock_" + Math.min(tier, 3), x, y, { t })) return;
+    ctx.save();
+    ctx.translate(x, y);
+
+    if (tier === 0) {
+      // wrecked: tilted grey planks and post stubs poking from the water
+      ctx.fillStyle = "#8a8070";
+      ctx.save(); ctx.rotate(0.14);
+      ctx.fillRect(-60, -34, 96, 14); ctx.restore();
+      ctx.save(); ctx.rotate(-0.1);
+      ctx.fillRect(-30, -12, 80, 13); ctx.restore();
+      ctx.fillStyle = "#6a6152";
+      ctx.fillRect(-66, -20, 11, 26);
+      ctx.fillRect(52, -8, 11, 18);
+      ctx.restore();
+      return;
+    }
+
+    // planked pier running down into the water
+    const pw = 118;
+    ctx.fillStyle = "#a8784a";
+    ctx.beginPath();
+    ctx.roundRect(-pw / 2, -70, pw, 130, 8);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(90, 60, 30, 0.35)";
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 6; i++) {
+      const py = -58 + i * 21;
+      ctx.beginPath(); ctx.moveTo(-pw / 2 + 6, py); ctx.lineTo(pw / 2 - 6, py); ctx.stroke();
+    }
+    // posts
+    ctx.fillStyle = "#7a5a34";
+    for (const [px, py] of [[-pw / 2 - 4, -60], [pw / 2 - 8, -60], [-pw / 2 - 4, 30], [pw / 2 - 8, 30]]) {
+      ctx.fillRect(px, py, 12, 26);
+    }
+    if (tier >= 2) {
+      // rope between the front posts + a warm lantern
+      ctx.strokeStyle = "#c8a068";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(-pw / 2 + 2, -56);
+      ctx.quadraticCurveTo(0, -42, pw / 2 - 2, -56);
+      ctx.stroke();
+      const glow = 0.5 + Math.sin(t * 2.4) * 0.15;
+      ctx.fillStyle = `rgba(255, 200, 90, ${glow * 0.35})`;
+      ctx.beginPath(); ctx.arc(0, -44, 20, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#f3c54a";
+      ctx.beginPath(); ctx.arc(0, -44, 7, 0, Math.PI * 2); ctx.fill();
+    }
+    if (tier >= 3) {
+      // the ferry, moored on the right
+      ctx.save();
+      ctx.translate(pw / 2 + 78, Math.sin(t * 1.1) * 3 + 6);
+      ctx.fillStyle = "#c85a40";
+      ctx.beginPath();
+      ctx.moveTo(-64, -14); ctx.lineTo(64, -14); ctx.lineTo(46, 18); ctx.lineTo(-46, 18);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#fff3da";
+      ctx.beginPath(); ctx.roundRect(-34, -40, 68, 28, 6); ctx.fill();
+      ctx.fillStyle = "#5a4630";
+      ctx.fillRect(-6, -58, 9, 20);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  /* ─────────────── your house (tiers 0–3) ─────────────── */
+
+  function drawHouse(ctx, x, y, o) {
+    const tier = o.tier || 0;
+    const t = o.t || 0;
+    shadow(ctx, x, y + 2, tier === 0 ? 48 : 66, 12);
+    if (tier >= 1 && art(ctx, "house_" + Math.min(tier, 3), x, y, { t })) return;
+    ctx.save();
+    ctx.translate(x, y);
+
+    if (tier === 0) {
+      // a humble tent
+      ctx.fillStyle = "#e8dcc0";
+      ctx.beginPath();
+      ctx.moveTo(-52, 0); ctx.lineTo(0, -72); ctx.lineTo(52, 0);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#c8b896";
+      ctx.beginPath();
+      ctx.moveTo(-18, 0); ctx.lineTo(0, -44); ctx.lineTo(18, 0);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+      return;
+    }
+
+    const wHalf = tier >= 2 ? 74 : 60;
+    const wallH = tier >= 2 ? 62 : 52;
+    // walls
+    ctx.fillStyle = "#b08454";
+    ctx.beginPath();
+    ctx.roundRect(-wHalf, -wallH, wHalf * 2, wallH, 6);
+    ctx.fill();
+    // roof
+    ctx.fillStyle = "#c8442e";
+    ctx.beginPath();
+    ctx.moveTo(-wHalf - 12, -wallH + 4);
+    ctx.lineTo(0, -wallH - 46);
+    ctx.lineTo(wHalf + 12, -wallH + 4);
+    ctx.closePath(); ctx.fill();
+    // door
+    ctx.fillStyle = "#6a4a2e";
+    ctx.beginPath();
+    ctx.roundRect(-14, -40, 28, 40, 5);
+    ctx.fill();
+    if (tier >= 2) {
+      // window + chimney
+      ctx.fillStyle = "#8ad4e4";
+      ctx.beginPath(); ctx.roundRect(28, -46, 26, 22, 4); ctx.fill();
+      ctx.strokeStyle = "#6a4a2e"; ctx.lineWidth = 3;
+      ctx.strokeRect(28, -46, 26, 22);
+      ctx.fillStyle = "#8a7a66";
+      ctx.fillRect(30, -wallH - 64, 16, 30);
+    }
+    if (tier >= 3) {
+      // garden flowers + drifting chimney smoke
+      for (let i = 0; i < 4; i++) {
+        ctx.fillStyle = ["#e0688a", "#f3d54a", "#9a6ac8", "#e8823f"][i];
+        ctx.beginPath();
+        ctx.arc(-wHalf + 14 + i * 18, -4, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      for (let i = 0; i < 3; i++) {
+        const k = ((t * 0.35 + i / 3) % 1);
+        ctx.fillStyle = `rgba(240, 240, 235, ${(1 - k) * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(38 + Math.sin(k * 5) * 6, -wallH - 70 - k * 42, 7 + k * 8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  /* ─────────────── decorations & the cat ─────────────── */
+
+  function drawDeco(ctx, x, y, o) {
+    const kind = o.kind;
+    const t = o.t || 0;
+    if (art(ctx, "deco_" + kind, x, y, { t })) return;
+    ctx.save();
+    ctx.translate(x, y);
+    if (kind === "lantern") {
+      ctx.fillStyle = "#5a4630";
+      ctx.fillRect(-4, -64, 8, 64);
+      const glow = 0.5 + Math.sin(t * 2.1) * 0.18;
+      ctx.fillStyle = `rgba(255, 200, 90, ${glow * 0.4})`;
+      ctx.beginPath(); ctx.arc(0, -70, 22, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#e8563f";
+      ctx.beginPath(); ctx.roundRect(-10, -84, 20, 26, 6); ctx.fill();
+      ctx.fillStyle = "#f3c54a";
+      ctx.beginPath(); ctx.arc(0, -70, 6, 0, Math.PI * 2); ctx.fill();
+    } else if (kind === "flowers") {
+      ctx.fillStyle = "#8a5a34";
+      ctx.beginPath(); ctx.roundRect(-42, -18, 84, 18, 5); ctx.fill();
+      for (let i = 0; i < 5; i++) {
+        ctx.fillStyle = ["#e0688a", "#f3d54a", "#9a6ac8", "#e8823f", "#e0688a"][i];
+        ctx.beginPath();
+        ctx.arc(-32 + i * 16, -24 + Math.sin(t * 1.6 + i) * 1.5, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (kind === "bench") {
+      ctx.fillStyle = "#9a7048";
+      ctx.fillRect(-46, -16, 10, 16);
+      ctx.fillRect(36, -16, 10, 16);
+      ctx.beginPath(); ctx.roundRect(-52, -30, 104, 12, 5); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(-52, -52, 104, 9, 5); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawCat(ctx, x, y, o) {
+    const t = o.t || 0;
+    shadow(ctx, x, y, 16, 5);
+    if (art(ctx, "cat", x, y, { t })) return;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = "#e8964a";
+    // sitting body
+    ctx.beginPath();
+    ctx.ellipse(0, -14, 13, 15, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // tail sways
+    ctx.strokeStyle = "#e8964a";
+    ctx.lineWidth = 6;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(10, -6);
+    ctx.quadraticCurveTo(24, -8 + Math.sin(t * 1.4) * 5, 22, -24 + Math.sin(t * 1.4) * 6);
+    ctx.stroke();
+    // head + ears
+    ctx.fillStyle = "#e8964a";
+    ctx.beginPath(); ctx.arc(0, -32, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-9, -38); ctx.lineTo(-6, -48); ctx.lineTo(-1, -40);
+    ctx.moveTo(9, -38); ctx.lineTo(6, -48); ctx.lineTo(1, -40);
+    ctx.fill();
+    // eyes blink every few seconds
+    const blink = (t % 4) > 3.85;
+    ctx.fillStyle = "#3c2c1c";
+    if (blink) {
+      ctx.fillRect(-6, -33, 4, 1.6); ctx.fillRect(2, -33, 4, 1.6);
+    } else {
+      ctx.beginPath();
+      ctx.arc(-4, -33, 1.7, 0, Math.PI * 2);
+      ctx.arc(4, -33, 1.7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /* ─────────────── a build in progress ─────────────── */
+
+  function drawBuildSite(ctx, x, y, o) {
+    const t = o.t || 0;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = "#b08a5a";
+    ctx.beginPath(); ctx.roundRect(-38, -26, 30, 26, 4); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(4, -20, 34, 20, 4); ctx.fill();
+    // leaning planks
+    ctx.strokeStyle = "#8a6a42";
+    ctx.lineWidth = 8;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-6, 0); ctx.lineTo(20, -46);
+    ctx.moveTo(6, 0); ctx.lineTo(-16, -44);
+    ctx.stroke();
+    // bobbing hammer to show the crew at work
+    ctx.save();
+    ctx.translate(-28, -46);
+    ctx.rotate(Math.sin(t * 5) * 0.5 - 0.3);
+    ctx.fillStyle = "#8a6a42";
+    ctx.fillRect(-3, -18, 6, 22);
+    ctx.fillStyle = "#b8c4cc";
+    ctx.beginPath(); ctx.roundRect(-10, -26, 20, 10, 3); ctx.fill();
+    ctx.restore();
+    ctx.restore();
+  }
+
   /* ─────────────── item glyphs (for bubbles/chips) ─────────────── */
 
   function drawItemDot(ctx, x, y, hue, kind, id) {
@@ -495,5 +750,7 @@
 
   function hasArt(key) { return !!(IMG[key] || IMG[key + "_anim"]); }
 
-  W.sprites = { drawChar, drawCustomer, drawStall, drawTree, drawMine, drawItemDot, shadow, hasArt };
+  W.sprites = { drawChar, drawCustomer, drawStall, drawTree, drawMine,
+    drawDock, drawHouse, drawDeco, drawCat, drawBuildSite,
+    drawItemDot, shadow, hasArt };
 })();

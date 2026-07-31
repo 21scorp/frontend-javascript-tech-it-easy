@@ -22,6 +22,7 @@
         $("tab-" + tab.dataset.tab).classList.add("active");
         $("panel").classList.remove("collapsed");
         if (tab.dataset.tab === "gear") renderGear();
+        if (tab.dataset.tab === "build") renderBuild();
         if (tab.dataset.tab === "friends") renderFriends();
       });
     });
@@ -43,6 +44,10 @@
       $("fill-" + id).style.width = Math.min(100, (sk.xp / need) * 100) + "%";
     }
     if (bagDirty && $("tab-bag").classList.contains("active")) renderBag();
+    if ($("tab-build").classList.contains("active")) {
+      buildClock += 0.15;
+      if (buildDirty || (S.building && buildClock >= 1)) { buildClock = 0; renderBuild(); }
+    }
     document.title = (S.playerName ? S.playerName + "'s stall · " : "") + U.fmt(S.coins) + " ● COVE";
   }
 
@@ -175,12 +180,128 @@
     renderGear();
   }
 
+  /* ─────────────── Build (the cove grows) ─────────────── */
+
+  let buildDirty = true;
+  let buildClock = 0;
+
+  function costHtml(cost) {
+    const S = W.state.S;
+    const parts = [];
+    parts.push(`<span class="${S.coins >= cost.coins ? "" : "cant"}">${U.fmt(cost.coins)} ●</span>`);
+    for (const [mid, n] of Object.entries(cost.mats || {})) {
+      const ok = W.state.invCount(mid) >= n;
+      parts.push(`<span class="${ok ? "" : "cant"}">${n}× ${W.state.item(mid).name}</span>`);
+    }
+    return parts.join(" + ");
+  }
+
+  function renderBuild() {
+    buildDirty = false;
+    const S = W.state.S;
+    let html = "";
+
+    if (S.building) {
+      const proj = C.PROJECTS[S.building.id];
+      const tierSpec = proj.tiers[S.building.tier - 1];
+      const left = Math.max(0, Math.ceil((S.building.readyAt - Date.now()) / 1000));
+      html += `<div class="section-label">Under construction</div>
+        <div class="row"><div class="row-glyph">🔨</div>
+        <div class="row-info"><div class="row-name">${tierSpec.name}</div>
+        <div class="row-sub">The crew is at it — ready in ${U.fmtDuration(left)}. It finishes even while you're away.</div></div></div>`;
+    }
+
+    html += `<div class="section-label">Projects</div>`;
+    for (const [pid, proj] of Object.entries(C.PROJECTS)) {
+      const tier = W.state.projectTier(pid);
+      const next = W.state.nextProjectTier(pid);
+      if (!next) {
+        html += `<div class="row disabled"><div class="row-glyph">${proj.glyph}</div>
+          <div class="row-info"><div class="row-name">${proj.name} ✓</div>
+          <div class="row-sub">${proj.tiers[proj.tiers.length - 1].desc}</div></div></div>`;
+        continue;
+      }
+      const busy = !!S.building;
+      const can = !busy && W.state.checkCost(next).ok;
+      const timeNote = next.buildMin > 0 ? ` · builds in ${U.fmtDuration(next.buildMin * 60)}` : "";
+      html += `<button class="row ${can ? "" : "disabled"}" data-project="${pid}">
+        <div class="row-glyph">${proj.glyph}</div>
+        <div class="row-info"><div class="row-name">${next.name}${tier > 0 ? " (tier " + (tier + 1) + ")" : ""}</div>
+        <div class="row-sub">${next.desc}${timeNote}${busy ? " · the crew is busy" : ""}</div>
+        <div class="row-sub"><b>${costHtml(next)}</b></div></div>
+      </button>`;
+    }
+
+    html += `<div class="section-label">Decorations</div>`;
+    for (const d of C.DECO) {
+      if (S.deco[d.id]) {
+        html += `<div class="row disabled"><div class="row-glyph">${d.glyph}</div>
+          <div class="row-info"><div class="row-name">${d.name} ✓</div>
+          <div class="row-sub">${d.line}</div></div></div>`;
+      } else {
+        const can = S.coins >= d.cost;
+        html += `<button class="row ${can ? "" : "disabled"}" data-deco="${d.id}">
+          <div class="row-glyph">${d.glyph}</div>
+          <div class="row-info"><div class="row-name">${d.name}</div>
+          <div class="row-sub">Just because it's yours.</div></div>
+          <div class="row-end"><span class="${can ? "" : "cant"}">${U.fmt(d.cost)} ●</span></div>
+        </button>`;
+      }
+    }
+    html += `<p class="row-sub" style="padding:6px 8px">Every build changes the cove you see.
+      Wood comes from your own axe — sell it, or build with it.</p>`;
+
+    $("tab-build").innerHTML = html;
+    document.querySelectorAll("[data-project]").forEach((btn) => {
+      btn.addEventListener("click", () => buyProject(btn.dataset.project));
+    });
+    document.querySelectorAll("[data-deco]").forEach((btn) => {
+      btn.addEventListener("click", () => buyDeco(btn.dataset.deco));
+    });
+  }
+
+  function buyProject(pid) {
+    const next = W.state.nextProjectTier(pid);
+    if (!next) return;
+    const res = W.state.startProject(pid);
+    if (res === false) {
+      W.audio.play("denied");
+      const chk = W.state.checkCost(next);
+      if (W.state.S.building) toast("🔨 The crew is busy", "One project at a time — they're worth the wait.");
+      else if (!chk.ok) toast("Still needed: " + chk.missing.join(", "), "Chop, fish, and sell to get there.");
+      return;
+    }
+    W.audio.play("buy");
+    if (res === "building") {
+      toast("🔨 " + next.name + " started", "Ready in " + U.fmtDuration(next.buildMin * 60) + " — even if you close the game.");
+    }
+    // instant completion toast comes from the tick
+    bagDirty = true;
+    renderBuild();
+  }
+
+  function buyDeco(id) {
+    const d = C.DECO.find((x) => x.id === id);
+    if (!W.state.buyDeco(id)) { W.audio.play("denied"); return; }
+    W.audio.play("buy");
+    toast(d.glyph + " " + d.name, d.line);
+    renderBuild();
+  }
+
   /* ─────────────── Friends ─────────────── */
 
   function renderFriends() {
     const S = W.state.S;
     let html = `<div class="section-label">The village</div>`;
     for (const c of C.CUSTOMERS) {
+      if (c.needsDock && S.projects.dock < c.needsDock) {
+        html += `<div class="row disabled">
+          <div class="row-glyph">⛴️</div>
+          <div class="row-info"><div class="row-name">???</div>
+          <div class="row-sub">Arrives once the dock reaches tier ${c.needsDock}.</div></div>
+        </div>`;
+        continue;
+      }
       const serves = S.affinity[c.id] || 0;
       const next = C.AFFINITY.milestones.find((m) => m > serves);
       const hearts = C.AFFINITY.milestones.filter((m) => serves >= m).length;
@@ -320,9 +441,10 @@
   }
 
   W.ui = {
-    init, updateHud, renderBag, renderGear, renderFriends,
+    init, updateHud, renderBag, renderGear, renderBuild, renderFriends,
     worldFloater, toast, modal, closeModal, skillUp,
     markBagDirty() { bagDirty = true; },
+    markBuildDirty() { buildDirty = true; },
     show() { $("hud").classList.remove("hidden"); },
   };
 })();

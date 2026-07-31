@@ -122,6 +122,7 @@
     ctx.scale(scale, scale);
 
     // depth-sorted drawables
+    const S = W.state.S;
     const items = [];
     items.push({ y: WD.mine.y, fn: () => W.sprites.drawMine(ctx, WD.mine.x, WD.mine.y, {}) });
     for (const spot of WD.treeSpots) {
@@ -130,8 +131,22 @@
       items.push({ y: spot.y, fn: () => W.sprites.drawTree(ctx, spot.x, spot.y, { spec, t, shake: shaking }) });
     }
     items.push({ y: WD.stall.y, fn: () => W.sprites.drawStall(ctx, WD.stall.x, WD.stall.y, { t }) });
+
+    // the cove you build
+    items.push({ y: WD.dock.y, fn: () => W.sprites.drawDock(ctx, WD.dock.x, WD.dock.y, { tier: S.projects.dock, t }) });
+    items.push({ y: WD.house.y, fn: () => W.sprites.drawHouse(ctx, WD.house.x, WD.house.y, { tier: S.projects.house, t }) });
+    for (const d of C.DECO) {
+      if (!S.deco[d.id]) continue;
+      if (d.id === "cat") items.push({ y: d.y, fn: () => W.sprites.drawCat(ctx, d.x, d.y, { t }) });
+      else items.push({ y: d.y, fn: () => W.sprites.drawDeco(ctx, d.x, d.y, { kind: d.id, t }) });
+    }
+    if (S.building) {
+      const at = S.building.id === "dock" ? { x: WD.dock.x, y: WD.dock.y - 90 } : WD.house;
+      items.push({ y: at.y + 1, fn: () => W.sprites.drawBuildSite(ctx, at.x + 70, at.y, { t }) });
+    }
+
     items.push({ y: W.actor.y, fn: () => W.actor.draw(ctx, t) });
-    W.customers.collectDrawables(items, t);
+    W.customers.collectDrawables(items, t, ctx);
 
     items.sort((a, b) => a.y - b.y);
     for (const it of items) it.fn();

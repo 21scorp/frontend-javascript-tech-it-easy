@@ -89,7 +89,62 @@
     { id: "ted",  name: "Ted",   hue: 20,  hat: "none",   likes: "any",   line: "The inn's fireplace is hungry." },
     { id: "noor", name: "Noor",  hue: 180, hat: "scarf",  likes: "fish",  line: "Market day in the city tomorrow!" },
     { id: "kas",  name: "Kas",   hue: 90,  hat: "straw",  likes: "wood",  line: "A boat. I'm building a boat. Probably." },
+    { id: "jip",  name: "Jip",   hue: 260, hat: "cap",    likes: "any",   needsDock: 1,
+      line: "First time in the cove. The ferry captain sent me." },
+    { id: "lena", name: "Lena",  hue: 330, hat: "scarf",  likes: "fish",  needsDock: 2,
+      line: "A chef knows fresh when she sees it." },
   ];
+
+  /* ─────────────── Projects (the Building Board) ───────────────
+     Money + wood become a cove. Every tier changes the world on
+     screen and unlocks play. buildMin > 0 = timed construction
+     (one crew: a single project builds at a time, finishes offline). */
+  const PROJECTS = {
+    dock: {
+      name: "Ferry dock", glyph: "⚓",
+      tiers: [
+        { name: "Repair the planks", coins: 2000, mats: { oak: 40 }, buildMin: 0,
+          desc: "Queue +1 · a traveler finds the cove." },
+        { name: "Mooring posts", coins: 15000, mats: { birch: 60, maple: 30 }, buildMin: 45,
+          desc: "Orders pay 15% more · customers arrive 10% faster." },
+        { name: "The ferry returns", coins: 80000, mats: { yew: 40, elder: 20 }, buildMin: 240,
+          desc: "Weekly Ferry Day: a boatload of hungry travelers." },
+      ],
+    },
+    house: {
+      name: "Your house", glyph: "🏠",
+      tiers: [
+        { name: "Tent → cabin", coins: 4000, mats: { oak: 30 }, buildMin: 0,
+          desc: "Keep working +2h while away · rested: 1.5× speed for 5 min when you return." },
+        { name: "Cabin → cottage", coins: 30000, mats: { birch: 50, maple: 30 }, buildMin: 90,
+          desc: "Keep working +4h while away · rested boost becomes 2×." },
+        { name: "Garden & chimney", coins: 150000, mats: { yew: 40, elder: 20 }, buildMin: 360,
+          desc: "Keep working +8h while away · rested lasts 10 min." },
+      ],
+    },
+  };
+
+  /* Decorations — pure cosmetic, pure bond. Never a stat. */
+  const DECO = [
+    { id: "lantern", name: "Harbor lantern",  glyph: "🏮", cost: 500,   x: 420, y: 1180,
+      line: "It glows warm at the path's end." },
+    { id: "flowers", name: "Flower boxes",    glyph: "🌸", cost: 2500,  x: 645, y: 1125,
+      line: "Fien says they smell like home." },
+    { id: "bench",   name: "Driftwood bench", glyph: "🪑", cost: 9000,  x: 855, y: 1060,
+      line: "A place to watch the water." },
+    { id: "cat",     name: "The harbor cat",  glyph: "🐈", cost: 25000, x: 575, y: 1115,
+      line: "It chose you. That's how cats work." },
+  ];
+
+  const FERRY = {
+    firstWaitSec: 60,          // first Ferry Day, right after building it
+    periodDays: 7,
+    valueMult: 1.25,           // ferry orders pay extra
+  };
+
+  const RESTED = {
+    minAwaySec: 600,           // being away 10+ min earns the boost
+  };
 
   const AFFINITY = {
     milestones: [3, 10, 25, 50],
@@ -125,14 +180,18 @@
     stall: { x: 500, y: 1075 },
     queueSpots: [
       { x: 320, y: 1160 }, { x: 205, y: 1200 }, { x: 95, y: 1240 }, { x: 20, y: 1290 },
+      { x: 60, y: 1345 },
     ],
     home:  { x: 560, y: 1000 },  // where the character idles
+    dock:  { x: 250, y: 1390 },  // pier off the beach, bottom-left
+    house: { x: 130, y: 890 },   // your place, below the pond
   };
 
   W.config = {
-    BUILD: "0.1.0",
+    BUILD: "0.2.0",
     SAVE_KEY: "cove.save.v1",
     SKILLS, FISH, TREES, GATHER, TOOLS,
     STALL, STALL_UPGRADES, CUSTOMERS, AFFINITY, OFFLINE, WORLD,
+    PROJECTS, DECO, FERRY, RESTED,
   };
 })();

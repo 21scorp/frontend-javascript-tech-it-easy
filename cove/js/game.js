@@ -103,10 +103,20 @@
     const S = W.state.S;
     const away = (Date.now() - S.lastSeen) / 1000;
     if (away < C.OFFLINE.minSeconds || !S.activity) return null;
-    const capped = Math.min(away, C.OFFLINE.capHours * 3600);
+    const capped = Math.min(away, W.state.offlineCapHours() * 3600);
     const cycles = Math.floor((capped / cycleTime()) * C.OFFLINE.rate);
     if (cycles < 1) return null;
     return { away, capped, cycles };
+  }
+
+  /** House perk: coming back rested after a real break. */
+  function grantRested() {
+    const S = W.state.S;
+    if (W.state.projectTier("house") < 1) return false;
+    if ((Date.now() - S.lastSeen) / 1000 < C.RESTED.minAwaySec) return false;
+    const minutes = W.state.projectTier("house") >= 3 ? 10 : 5;
+    S.restedUntil = Date.now() + minutes * 60000;
+    return true;
   }
 
   function applyOffline(off) {
@@ -197,13 +207,23 @@
       W.customers.trySpawn(Date.now());
     }
 
+    // the crew finishes a build (also catches builds finished offline)
+    const done = W.state.completeBuilding(Date.now());
+    if (done) {
+      const proj = C.PROJECTS[done.id];
+      const tierSpec = proj.tiers[done.tier - 1];
+      W.audio.play("level");
+      W.ui.toast(proj.glyph + " " + tierSpec.name + " — finished!", tierSpec.desc);
+      W.ui.markBuildDirty();
+    }
+
     saveTimer += dt;
     if (saveTimer >= 10) { saveTimer = 0; W.state.save(); }
   }
 
   W.game = {
     tick, startFish, startChop, tryBiteTap,
-    computeOffline, applyOffline, drawOverlays,
+    computeOffline, applyOffline, grantRested, drawOverlays,
     get bite() { return bite; },
     get choppingAt() { return choppingAt; },
     restoreActivity() {

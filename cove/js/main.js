@@ -26,6 +26,12 @@
       setTimeout(() => W.ui.toast("🕯 Restored from backup", "Your save looked damaged — the stall found its way back."), 1500);
     }
 
+    // house perk: coming home rested after a real break
+    if (W.game.grantRested()) {
+      const mult = W.state.projectTier("house") >= 2 ? "2×" : "1.5×";
+      setTimeout(() => W.ui.toast("☕ Rested", "Home does you good — " + mult + " gathering speed for a bit."), 2400);
+    }
+
     // offline progress
     const off = W.game.computeOffline();
     if (off) {
@@ -115,7 +121,21 @@
       W.ui.toast("⛏️ The mine is boarded up", "Bronze, silver, gold… someday. Something rumbles below.");
       return;
     }
-    // 6. the stall opens the gear tab
+    // 6. the harbor cat purrs
+    const catDeco = C.DECO.find((d) => d.id === "cat");
+    if (W.state.S.deco.cat && Math.hypot(wx - catDeco.x, wy - (catDeco.y - 20)) < 55) {
+      W.audio.play("bonus");
+      W.ui.worldFloater(catDeco.x, catDeco.y - 70, "♥", "coin");
+      W.ui.toast("🐈 prrrr", "The cat approves of your stall.");
+      return;
+    }
+    // 7. house & dock open the build tab
+    if (Math.hypot(wx - C.WORLD.house.x, wy - (C.WORLD.house.y - 50)) < 110 ||
+        Math.hypot(wx - C.WORLD.dock.x, wy - (C.WORLD.dock.y - 20)) < 130) {
+      document.querySelector('.tab[data-tab="build"]').click();
+      return;
+    }
+    // 8. the stall opens the gear tab
     if (Math.hypot(wx - C.WORLD.stall.x, wy - (C.WORLD.stall.y - 60)) < 140) {
       document.querySelector('.tab[data-tab="gear"]').click();
       return;

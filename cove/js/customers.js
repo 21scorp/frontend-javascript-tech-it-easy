@@ -35,22 +35,46 @@
     return chosen;
   }
 
-  function trySpawn(now) {
+  function freeCustomers() {
     const S = W.state.S;
-    if (ordersLive().length >= W.state.queueSize()) return;
-    if (now < S.nextSpawnAt) return;
     const queued = new Set(ordersLive().map((o) => o.cid));
-    const free = C.CUSTOMERS.filter((c) => !queued.has(c.id));
-    if (!free.length) return;
+    return C.CUSTOMERS.filter((c) =>
+      !queued.has(c.id) && (!c.needsDock || S.projects.dock >= c.needsDock));
+  }
+
+  function spawnOne(now, ferry) {
+    const free = freeCustomers();
+    if (!free.length) return null;
     const cust = U.pick(free);
     const items = pickItems(cust);
-    ordersLive().push({
-      cid: cust.id,
-      items,
-      value: W.state.orderValue(items),
-      createdAt: now,
-    });
-    const gapMult = S.stallUpgrades.bell ? 0.8 : 1;
+    let value = W.state.orderValue(items);
+    if (ferry) value = Math.round(value * C.FERRY.valueMult);
+    ordersLive().push({ cid: cust.id, items, value, createdAt: now, ferry: !!ferry });
+    return cust;
+  }
+
+  function trySpawn(now) {
+    const S = W.state.S;
+
+    // Ferry Day: the boat empties a wave into the queue at once
+    if (S.projects.dock >= 3 && S.ferryNextAt && now >= S.ferryNextAt) {
+      S.ferryNextAt = now + C.FERRY.periodDays * 86400e3;
+      let landed = 0;
+      while (ordersLive().length < W.state.queueSize() && spawnOne(now, true)) landed++;
+      if (landed > 0) {
+        W.audio.play("bonus");
+        W.ui.toast("⛴️ Ferry Day!", landed + " hungry travelers step off the boat — ferry orders pay extra.");
+        W.state.save();
+        return;
+      }
+    }
+
+    if (ordersLive().length >= W.state.queueSize()) return;
+    if (now < S.nextSpawnAt) return;
+    const cust = spawnOne(now, false);
+    if (!cust) return;
+    let gapMult = S.stallUpgrades.bell ? 0.8 : 1;
+    if (S.projects.dock >= 2) gapMult *= 0.9;
     S.nextSpawnAt = now + U.rand(C.STALL.spawnMinSec, C.STALL.spawnMaxSec) * 1000 * gapMult;
     W.ui.toast("👋 " + cust.name + " joins the queue", cust.line);
   }
@@ -110,21 +134,18 @@
 
   function spotFor(i) { return C.WORLD.queueSpots[Math.min(i, C.WORLD.queueSpots.length - 1)]; }
 
-  function collectDrawables(items, t) {
+  function collectDrawables(items, t, ctx) {
     ordersLive().forEach((order, i) => {
       const cust = C.CUSTOMERS.find((c) => c.id === order.cid);
       const spot = spotFor(i);
       items.push({
         y: spot.y,
-        fn: () => W.sprites.drawCustomer(ctxRef, spot.x, spot.y, { customer: cust, t, seed: i * 2.1 }),
+        fn: () => W.sprites.drawCustomer(ctx, spot.x, spot.y, { customer: cust, t, seed: i * 2.1 }),
       });
     });
   }
 
-  let ctxRef = null;
-
   function drawBubbles(ctx, t) {
-    ctxRef = ctx;
     ordersLive().forEach((order, i) => {
       const spot = spotFor(i);
       const bx = spot.x;

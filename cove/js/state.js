@@ -28,6 +28,11 @@
       activity: null,                // {type:"fish"} | {type:"chop", tree:"oak"} | null
       orders: [],                    // live queue (serialized)
       nextSpawnAt: 0,
+      projects: { dock: 0, house: 0 },  // built tier per project
+      deco: {},                      // decoId -> true
+      building: null,                // {id, tier, readyAt} while a crew works
+      restedUntil: 0,
+      ferryNextAt: 0,
       settings: { sound: true },
       flags: { introDone: false },
       seed: Math.floor(Math.random() * 1e9),
@@ -80,6 +85,9 @@
       S.settings = Object.assign({ sound: true }, data.settings);
       S.flags = Object.assign({ introDone: false }, data.flags);
       S.orders = Array.isArray(data.orders) ? data.orders : [];
+      S.projects = Object.assign({ dock: 0, house: 0 }, data.projects);
+      S.deco = data.deco || {};
+      S.building = data.building || null;
       if (S.playerName) S.playerName = W.util.sanitizeName(S.playerName) || "Keeper";
       return true;
     } catch (e) {
@@ -126,12 +134,89 @@
     return true;
   }
 
+  /* ─────────────── projects (the Building Board) ─────────────── */
+
+  function projectTier(id) { return S.projects[id] || 0; }
+
+  /** The next unbuilt tier spec of a project, or null when maxed. */
+  function nextProjectTier(id) {
+    return C.PROJECTS[id].tiers[projectTier(id)] || null;
+  }
+
+  /** {ok, missing:[...]} for a {coins, mats} cost. */
+  function checkCost(cost) {
+    const missing = [];
+    if (S.coins < cost.coins) missing.push(W.util.fmt(cost.coins - S.coins) + " coins");
+    for (const [mid, n] of Object.entries(cost.mats || {})) {
+      if (invCount(mid) < n) missing.push((n - invCount(mid)) + "× " + item(mid).name);
+    }
+    return { ok: missing.length === 0, missing };
+  }
+
+  function payCost(cost) {
+    if (!checkCost(cost).ok) return false;
+    S.coins -= cost.coins;
+    for (const [mid, n] of Object.entries(cost.mats || {})) takeItem(mid, n);
+    return true;
+  }
+
+  /** Pay for the next tier; instant tiers finish now, timed tiers
+      occupy the (single) crew. Returns "done" | "building" | false. */
+  function startProject(id) {
+    const tier = nextProjectTier(id);
+    if (!tier || S.building) return false;
+    if (!payCost(tier)) return false;
+    if (tier.buildMin > 0) {
+      S.building = { id, tier: projectTier(id) + 1, readyAt: Date.now() + tier.buildMin * 60000 };
+      save();
+      return "building";
+    }
+    S.projects[id] = projectTier(id) + 1;
+    onProjectDone(id, S.projects[id]);
+    save();
+    return "done";
+  }
+
+  /** Finish S.building if its time has come; returns {id, tier} once. */
+  function completeBuilding(now) {
+    if (!S.building || (now || Date.now()) < S.building.readyAt) return null;
+    const b = S.building;
+    S.building = null;
+    S.projects[b.id] = b.tier;
+    onProjectDone(b.id, b.tier);
+    save();
+    return b;
+  }
+
+  function onProjectDone(id, tier) {
+    if (id === "dock" && tier === 3) S.ferryNextAt = Date.now() + C.FERRY.firstWaitSec * 1000;
+  }
+
+  function buyDeco(id) {
+    const d = C.DECO.find((x) => x.id === id);
+    if (!d || S.deco[id] || S.coins < d.cost) return false;
+    S.coins -= d.cost;
+    S.deco[id] = true;
+    save();
+    return true;
+  }
+
+  function offlineCapHours() {
+    return C.OFFLINE.capHours + [0, 2, 4, 8][projectTier("house")];
+  }
+
+  /** Gather-speed multiplier from the rested boost (house). */
+  function restedMult() {
+    if (projectTier("house") < 1 || Date.now() >= S.restedUntil) return 1;
+    return projectTier("house") >= 2 ? 2 : 1.5;
+  }
+
   /* ─────────────── derived ─────────────── */
 
   function toolMult(which) { return C.TOOLS[S.tools[which]].mult; }
 
-  function fishTime() { return C.GATHER.fishBaseSec / toolMult("rod"); }
-  function chopTime() { return C.GATHER.chopBaseSec / toolMult("axe"); }
+  function fishTime() { return C.GATHER.fishBaseSec / (toolMult("rod") * restedMult()); }
+  function chopTime() { return C.GATHER.chopBaseSec / (toolMult("axe") * restedMult()); }
 
   function unlockedFish() {
     return C.FISH.filter((f) => f.lvl <= S.skills.fishing.level);
@@ -142,12 +227,14 @@
     for (const [lvl, size] of C.STALL.queueLevels) {
       if (S.skills.trading.level >= lvl) q = size;
     }
+    if (projectTier("dock") >= 1) q += 1;
     return q;
   }
 
   function priceMult() {
     let m = 1 + S.skills.trading.level * C.STALL.priceLvlBonus;
     if (S.stallUpgrades.cart) m *= 1.15;
+    if (projectTier("dock") >= 2) m *= 1.15;
     return m;
   }
 
@@ -165,5 +252,8 @@
     item, invCount, addItem, takeItem,
     toolMult, fishTime, chopTime, unlockedFish,
     queueSize, priceMult, orderValue,
+    projectTier, nextProjectTier, checkCost, payCost,
+    startProject, completeBuilding, buyDeco,
+    offlineCapHours, restedMult,
   };
 })();
