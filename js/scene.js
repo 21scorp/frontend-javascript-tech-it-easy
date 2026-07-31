@@ -932,6 +932,12 @@
       else xn = 0.42 + ((k - 0.68) / 0.32) * 0.55;
       return { x: xn * width, y: hillY(2, xn) + 2, k, age, dir: 1, sitting };
     }
+    if (v.type.id === "balloon") {
+      // drifts up from behind the hills, swaying, and leaves at the top
+      const xn = 0.68 + Math.sin(age * 0.4) * 0.05;
+      const y = height * (0.8 - k * 0.85);
+      return { x: xn * width, y, k, age, dir: 1 };
+    }
     // cloudsheep
     const xn = 0.05 + k * 0.9;
     return { x: xn * width, y: height * 0.34 + Math.sin(age * 0.8) * 10, k, age, dir: 1 };
@@ -1064,6 +1070,40 @@
       if (Math.random() < 0.06) {
         W.particles.spawn({ x: p.x - 8, y: p.y - 10, vx: -10, vy: -6, life: 1.6, size: 2.2, hue: 230, sat: 25, lum: 75, alpha: 0.35 });
       }
+    } else if (v.type.id === "balloon") {
+      const sway = Math.sin(p.age * 1.3) * 0.12;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(sway);
+      // string, trailing
+      ctx.strokeStyle = "rgba(220,225,245,0.55)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(0, 14);
+      ctx.quadraticCurveTo(4 + sway * 20, 30, -2 + sway * 30, 46);
+      ctx.stroke();
+      // body
+      const g = ctx.createRadialGradient(-4, -6, 2, 0, 0, 15);
+      g.addColorStop(0, "#ffb3c0");
+      g.addColorStop(0.65, "#ff6f8a");
+      g.addColorStop(1, "#d94f6c");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 12, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // knot
+      ctx.beginPath();
+      ctx.moveTo(-3, 13);
+      ctx.lineTo(3, 13);
+      ctx.lineTo(0, 17);
+      ctx.closePath();
+      ctx.fill();
+      // shine
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.beginPath();
+      ctx.ellipse(-5, -6, 2.6, 4, -0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     } else if (v.type.id === "cloudsheep") {
       // fluffy body
       for (let i = 0; i < 4; i++) {

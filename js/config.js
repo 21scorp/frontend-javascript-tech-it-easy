@@ -321,6 +321,9 @@
     { id: "smokefox", dur: 45, name: "a fox made of smoke",
       greet: "The smoke-fox bows its head, then remembers it has somewhere to be.",
       lines: ["it sat and watched me for a whole minute…", "foxes made of smoke still wag their tails. noted."] },
+    { id: "balloon", dur: 42, name: "a balloon that slipped away",
+      greet: "You caught the string for a moment. The balloon seemed relieved.",
+      lines: ["where did it escape from?", "someone, somewhere, is still looking up for it."] },
   ];
   const VISITOR_GAP = [420, 900]; // seconds between visits
 
