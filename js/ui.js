@@ -776,6 +776,55 @@
     );
   }
 
+  /* ─────────────── living favicon ───────────────
+     The tab icon is your wisp, in its current stage colour. */
+
+  let faviconHue = null;
+
+  function updateFavicon() {
+    const S = W.state.S;
+    const hue = W.state.stageFor(S.level).hue;
+    if (hue === faviconHue) return;
+    faviconHue = hue;
+    const c = document.createElement("canvas");
+    c.width = 64; c.height = 64;
+    const x = c.getContext("2d");
+    const glow = x.createRadialGradient(32, 32, 4, 32, 32, 32);
+    glow.addColorStop(0, `hsla(${hue}, 100%, 82%, 0.9)`);
+    glow.addColorStop(1, `hsla(${hue}, 100%, 70%, 0)`);
+    x.fillStyle = glow;
+    x.fillRect(0, 0, 64, 64);
+    const body = x.createRadialGradient(28, 24, 3, 32, 32, 20);
+    body.addColorStop(0, "#fffdf4");
+    body.addColorStop(0.6, `hsl(${hue}, 100%, 86%)`);
+    body.addColorStop(1, `hsl(${hue}, 96%, 72%)`);
+    x.fillStyle = body;
+    x.beginPath();
+    x.arc(32, 32, 20, 0, Math.PI * 2);
+    x.fill();
+    x.fillStyle = "#2e2a4a";
+    x.beginPath();
+    x.ellipse(25, 30, 2.6, 3.2, 0, 0, Math.PI * 2);
+    x.ellipse(39, 30, 2.6, 3.2, 0, 0, Math.PI * 2);
+    x.fill();
+    x.strokeStyle = "#2e2a4a";
+    x.lineWidth = 1.8;
+    x.lineCap = "round";
+    x.beginPath();
+    x.arc(32, 37, 3.5, Math.PI * 0.2, Math.PI * 0.8);
+    x.stroke();
+    let link = document.querySelector('link[rel="icon"]');
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "icon";
+      document.head.appendChild(link);
+    }
+    link.href = c.toDataURL("image/png");
+  }
+
+  setInterval(updateFavicon, 30000);
+  setTimeout(updateFavicon, 3000);
+
   W.ui = {
     init, updateCounters,
     renderBuildTab, updateShop,
