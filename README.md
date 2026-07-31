@@ -38,7 +38,7 @@ It keeps gathering light while you're away. It notices when you come back.
 | Grow | hours | 13 evolution stages, from Mote to Dawn |
 | Events | surprise | golden dewdrops (×7 frenzy), starfall showers, comet wishes, attention moments, star blessings, drifting petals, 4 kinds of visitors |
 | Return | daily | gift + streak + ×2 warmth + a new owl tale (30 tales) + weekly Moon Letters |
-| Ascend | days | wisp → permanent star, stardust +10% each, rebirth ceremony, name your constellation |
+| Ascend | days | wisp → permanent star (you choose its place in the sky), stardust +10% each, rebirth ceremony, name your constellation |
 | Collect | always | 49 memories (each +1% forever), 11 accessories — all earned, never bought |
 
 ## Features

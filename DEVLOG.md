@@ -95,6 +95,13 @@ weather.js · shower.js · share.js (postcard/export/SW) · sim.js [hours]
   announcement, fmt() unit-tested to 1e36, more flavour lines.
 - 18/18 e2e suite green incl. after the UTC midnight rollover.
 
+## Round 20 — ~02:20 CEST
+- Sky placement: after confirming ascension you touch the sky to
+  choose where the star lives (12s fallback). Boost-tab teaser row,
+  release-check.sh, clean-clone verification, veteran save = 4.8KB,
+  package.sh excludes marketing assets, combo giggles, ascension GIF.
+- 18/18 suite green with the new placement flow.
+
 ## Decisions
 - English-only for launch (viral reach); NL translation is a possible
   later pass — all strings live in config.js + ui.js templates.
