@@ -7,5 +7,5 @@ rm -f "$OUT"
 zip -qr "$OUT" \
   index.html manifest.webmanifest sw.js \
   css js assets \
-  -x "*.DS_Store"
+  -x "*.DS_Store" -x "assets/screens/*" -x "assets/SPRITE-GUIDE.md"
 echo "wrote $OUT ($(du -h "$OUT" | cut -f1))"
