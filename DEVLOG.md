@@ -102,6 +102,14 @@ weather.js · shower.js · share.js (postcard/export/SW) · sim.js [hours]
   package.sh excludes marketing assets, combo giggles, ascension GIF.
 - 18/18 suite green with the new placement flow.
 
+## Round 21 — ~02:40 CEST · verification wave
+- 25-min realistic longplay: fresh player reached Lv 49 Luminous,
+  112 buildings, bond 5, 22 memories — 0 errors, DOM 320 nodes,
+  heap 7MB (no leaks). Suite now 19 tests, all green.
+- Seed variation check (1/999/31337/777777): all generated meadows
+  compose well. Balloon visitor added; sky-glow placement hint;
+  event spawns paused while placing a star.
+
 ## Decisions
 - English-only for launch (viral reach); NL translation is a possible
   later pass — all strings live in config.js + ui.js templates.
