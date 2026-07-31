@@ -210,7 +210,7 @@
     greetDay:    ["hello! the world is bright today.", "you're here! I was just thinking about you.", "hi hi hi!"],
     greetEvening:["good evening. the fireflies are waking up.", "you came back! the lanterns missed you.", "evening. my favourite time."],
     greetNight:  ["it's late… I'm glad you're here though.", "shh… the meadow is sleeping. but I'm awake!", "the stars and me were waiting for you."],
-    tapHappy:    ["hehe", "again!", "warm!", "✦", "more!", "that tickles"],
+    tapHappy:    ["hehe", "again!", "warm!", "✦", "more!", "that tickles", "brighter!!", "I felt that in my glow", "again again again"],
     levelUp:     ["I feel… bigger!", "did you see that?!", "I'm growing because of you.", "look at me!!", "something changed. something good."],
     firstBuild:  ["oh! for me?", "it's beautiful…", "our first one."],
     build:       ["it's perfect.", "the meadow likes it too.", "another one! another one!", "I'll take care of it.", "it glows like me!"],
@@ -422,6 +422,9 @@
     "It counted the stars twice and got two different numbers.",
     "The lanterns stayed lit a little longer than they had to.",
     "It practiced saying your name so it wouldn't forget the shape of it.",
+    "It arranged the fireflies by brightness, then felt bad and un-arranged them.",
+    "The owl told it a joke. It's been saving the laugh for you.",
+    "It watched the door the whole time. Meadows don't have doors. It watched anyway.",
   ];
 
   /* ─────────────── Moon letters ───────────────
