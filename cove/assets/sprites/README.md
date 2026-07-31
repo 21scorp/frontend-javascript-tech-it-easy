@@ -14,7 +14,14 @@ item_tuna.png    item_sword.png   item_koi.png
 item_oak.png     item_birch.png   item_maple.png item_yew.png item_elder.png
 ```
 
+Animation sheets (see `cove/PROMPTS-ANIM.md`) use the same names with
+an `_anim` suffix — e.g. `char_chop_anim.png`, `cust_fien_anim.png`,
+`stall_anim.png`. One horizontal row of **square** frames; the game
+auto-detects the frame count and plays the loop. When a sheet exists
+it wins over the static PNG.
+
 Rules:
 - transparent background, feet/base touching the bottom edge
 - any resolution (500–1000 px wide is plenty); the game scales it
 - a missing file is fine — the built-in placeholder is used instead
+- sheet frames must be square, or the frame count is detected wrong
