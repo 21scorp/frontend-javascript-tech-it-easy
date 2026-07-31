@@ -778,6 +778,20 @@
       }
     }
 
+    // the first time ascension comes within reach, say so
+    if (!S.flags.ascendHinted && S.level >= C.PRESTIGE.unlockLevel) {
+      if (W.state.stardustGain() >= 1) {
+        S.flags.ascendHinted = true;
+        W.ui.toast("🌠 " + (S.wispName || "Your wisp") + " is bright enough to ascend", "A place in the sky waits — see the Wisp tab");
+        W.ui.bubble(U.pick([
+          "I feel… lighter. like the sky is asking about me.",
+          "something up there knows my name now.",
+        ]), 4600);
+        W.audio.play("achievement");
+        W.state.save();
+      }
+    }
+
     // star blessings — an ancestor sometimes calls
     if (blessing) {
       if (Date.now() > blessing.until) blessing = null;
