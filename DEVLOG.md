@@ -86,6 +86,15 @@ weather.js · shower.js · share.js (postcard/export/SW) · sim.js [hours]
 - Verified: mobile ascension e2e, idle-only pacing (1h21), gen-2
   loop (~70m), pricing math vs brute force, 17/17 suite green.
 
+## Rounds 17-19 — ~02:00–02:15 CEST · shipped & tested → v0.6.0
+- Streak shield (miss one night, moon covers once/week), togetherness
+  anniversaries (day 7/30/100), drowsy meadow 0-6h, ground light-pool,
+  living favicon (stage colour), ?debug=1 panel, animated README GIF
+  (Playwright recording + gifenc), stage-coloured HUD tag, panel
+  locked during ascension, earn() NaN guard, ascension-ready
+  announcement, fmt() unit-tested to 1e36, more flavour lines.
+- 18/18 e2e suite green incl. after the UTC midnight rollover.
+
 ## Decisions
 - English-only for launch (viral reach); NL translation is a possible
   later pass — all strings live in config.js + ui.js templates.

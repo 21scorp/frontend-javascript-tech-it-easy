@@ -150,7 +150,9 @@
     // the tab remembers too
     document.title = (S.wispName ? S.wispName + " · " : "") + U.fmt(S.light) + " ✦ WISP";
     els["wisp-name-tag"].textContent = S.wispName || "…";
-    els["wisp-stage-tag"].textContent = W.state.stageFor(S.level).name;
+    const stage = W.state.stageFor(S.level);
+    els["wisp-stage-tag"].textContent = stage.name;
+    els["wisp-stage-tag"].style.color = `hsl(${stage.hue}, 85%, 75%)`;
     els["wisp-level-tag"].textContent = "Lv " + S.level;
     const need = W.state.xpForLevel(S.level);
     els.xpfill.style.width = Math.min(100, (S.xp / need) * 100) + "%";
