@@ -10,6 +10,8 @@ It keeps gathering light while you're away. It notices when you come back.
 
 ![Lumi the wisp, wearing a flower crown, above a living meadow under the constellation The Three Sisters](assets/screens/meadow.png)
 
+<p align="center"><img src="assets/screens/wisp.gif" width="480" alt="Seven seconds of WISP: a starfall shower, rhythm taps, and petting the wisp"></p>
+
 <p align="center"><img src="assets/screens/postcard.png" width="320" alt="A shareable postcard: Lumi, Flare, level 21, 4 days together, watched over by Pip"> <img src="assets/screens/intro.png" width="410" alt="The intro: a tiny light falling through the dark"></p>
 
 ---
