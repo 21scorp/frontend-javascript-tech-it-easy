@@ -261,6 +261,8 @@
     if (petting) {
       W.wisp.setPetting(false);
       petting = false;
+    } else if (W.game.pendingAscension && e.clientY < window.innerHeight * 0.42) {
+      W.game.placeAscension(e.clientX / window.innerWidth, e.clientY / window.innerHeight);
     } else if (W.scene.dewHit(e.clientX, e.clientY, lastT)) {
       W.game.catchDew(e.clientX, e.clientY);
     } else if (W.scene.visitorHit(e.clientX, e.clientY, lastT)) {

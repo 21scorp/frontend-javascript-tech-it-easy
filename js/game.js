@@ -401,6 +401,8 @@
 
   /* ─────────────── ascension ─────────────── */
 
+  let pendingAscension = null; // {gain, until} while the player picks a sky spot
+
   function tryAscend() {
     const S = W.state.S;
     const gain = W.state.stardustGain();
@@ -416,21 +418,48 @@
        The meadow starts over. Your memories — and your stars — stay.</p>`,
       [
         { label: "Not yet", cls: "btn-ghost" },
-        { label: "Let it shine", cls: "btn-primary", fn: () => startCeremony(gain) },
+        { label: "Let it shine", cls: "btn-primary", fn: beginPlacing },
       ]
     );
   }
 
-  function startCeremony(gain) {
+  function beginPlacing() {
+    const gain = W.state.stardustGain();
+    pendingAscension = { gain, until: Date.now() + 12000 };
+    W.ui.setPanelLocked(true);
+    W.ui.toast("🌌 Touch the sky", "Choose where " + (W.state.S.wispName || "your wisp") + " will live — or wait, and it will choose.");
+    W.ui.bubble("point somewhere nice…", 4000);
+    W.audio.play("chirp");
+  }
+
+  /** Player tapped the sky while an ascension is pending. */
+  function placeAscension(xn, yn) {
+    if (!pendingAscension) return false;
+    const gain = pendingAscension.gain;
+    pendingAscension = null;
+    // keep it in the sky band, off the moon
+    let x = U.clamp(xn, 0.05, 0.9);
+    let y = U.clamp(yn, 0.05, 0.3);
+    if (x > 0.72 && y < 0.28) x = 0.7;
+    startCeremony(gain, { x, y });
+    return true;
+  }
+
+  function startCeremony(gain, pos) {
     const S = W.state.S;
     W.wisp.setPetting(false);
-    // Pick a free spot in the sky, away from the moon (top-right).
-    let x, y, tries = 0;
-    do {
-      x = U.rand(0.08, 0.68);
-      y = U.rand(0.06, 0.26);
-      tries++;
-    } while (tries < 20 && S.stars.some((s) => Math.hypot(s.x - x, s.y - y) < 0.07));
+    let x, y;
+    if (pos) {
+      ({ x, y } = pos);
+    } else {
+      // Pick a free spot in the sky, away from the moon (top-right).
+      let tries = 0;
+      do {
+        x = U.rand(0.08, 0.68);
+        y = U.rand(0.06, 0.26);
+        tries++;
+      } while (tries < 20 && S.stars.some((s) => Math.hypot(s.x - x, s.y - y) < 0.07));
+    }
     ceremony = { t: 0, dur: C.PRESTIGE.ceremonySec, to: { x, y }, gain };
     W.ui.setPanelLocked(true);
     W.ui.bubble(U.pick(["watch me.", "I'll be right here. every night.", "don't be sad — look up."]), 3000);
@@ -732,6 +761,13 @@
       if (ceremony.t >= ceremony.dur) finishCeremony();
     }
 
+    // if the player doesn't choose a sky spot in time, the wisp chooses
+    if (pendingAscension && Date.now() > pendingAscension.until) {
+      const gain = pendingAscension.gain;
+      pendingAscension = null;
+      startCeremony(gain);
+    }
+
     achTimer += dt;
     if (achTimer >= 2) { achTimer = 0; checkAchievements(); }
 
@@ -867,7 +903,8 @@
     buyBuilding, buyUpgrade,
     computeOffline, applyOffline,
     checkAchievements, greet,
-    tryAscend, starTouched, cometWish, catchDew, spawnDew,
+    tryAscend, placeAscension, starTouched, cometWish, catchDew, spawnDew,
+    get pendingAscension() { return pendingAscension; },
     maybeDailyGift, greetVisitor, claimWish, ensureWishes, petalArrived, owlTouched, moonTouched,
     spawnVisitor(id) { const t = C.VISITORS.find((v) => v.id === id); if (t) visitor = { type: t, born: Date.now(), greeted: false }; },
     get ceremony() { return ceremony; },
