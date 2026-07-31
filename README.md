@@ -89,6 +89,10 @@ The game is a static folder — publishing is trivial:
 
 Virality is designed in: the 📷 postcard (share image with your wisp's name and guardians), the emotional ascension moments people want to talk about, and save codes that make it safe to fall in love with a browser game.
 
+Ready-made social material lives in `assets/screens/` (gameplay GIF, the ascension GIF below, postcard, stills) and `docs/ITCH-PAGE.md` is paste-ready store copy.
+
+<p align="center"><img src="assets/screens/ascension.gif" width="420" alt="An ascension: the wisp says 'don't be sad — look up' and rises to become a star"></p>
+
 ## Roadmap
 
 - Weekly Moon Letters (personalized recap from the moon)

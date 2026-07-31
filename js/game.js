@@ -108,6 +108,8 @@
     W.ui.floater(x, y - 20, "+" + U.fmt(v) + comboTag, crit);
     W.particles.burst(x, y, crit ? 26 : 8, crit ? { speed: 240 } : {});
     if (crit) W.ui.toast("✦ Sparkle burst! ✦", "+" + U.fmt(v) + " light");
+    else if (combo === 25) W.ui.bubble("hihi—wait—hihihi—", 1400);
+    else if (combo === 50) W.ui.bubble("I'M SO WARM RIGHT NOW", 1800);
     else if (Math.random() < 0.06) W.ui.bubble(U.pick(C.VOICE.tapHappy), 1200);
   }
 
