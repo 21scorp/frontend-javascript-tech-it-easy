@@ -110,6 +110,14 @@ weather.js · shower.js · share.js (postcard/export/SW) · sim.js [hours]
   compose well. Balloon visitor added; sky-glow placement hint;
   event spawns paused while placing a star.
 
+## Round 22 — ~03:25 CEST · full-cycle proof
+- 35-min organic longplay played the COMPLETE loop untouched:
+  fresh intro → named "Eerste" → grew to ascension (~15m) → player
+  chose a sky spot → ceremony → rebirth named "Tweede" → gen 2 to
+  Lv 63 under Eerste's star. 0 errors, heap 6MB.
+- All 11 accessories visually verified (contact sheet).
+- docs/BALANCE.md: curves, measured pacing, tuning levers.
+
 ## Decisions
 - English-only for launch (viral reach); NL translation is a possible
   later pass — all strings live in config.js + ui.js templates.
