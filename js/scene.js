@@ -1277,6 +1277,16 @@
       ctx.fillRect(0, 0, width, height);
     }
 
+    // while choosing a star's resting place, the sky leans closer
+    if (W.game && W.game.pendingAscension) {
+      const a = 0.05 + 0.035 * Math.sin(t * 3);
+      const g = ctx.createLinearGradient(0, 0, 0, height * 0.4);
+      g.addColorStop(0, `rgba(185,205,255,${a * 1.5})`);
+      g.addColorStop(1, "rgba(185,205,255,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, width, height * 0.4);
+    }
+
     // one-shot celebration flash (evolutions, ascensions)
     if (flashA > 0.004) {
       ctx.fillStyle = `rgba(255,240,205,${flashA})`;
