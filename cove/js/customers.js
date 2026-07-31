@@ -151,7 +151,7 @@
       order.items.forEach((it, k) => {
         const spec = W.state.item(it.id);
         const ix = bx - bw / 2 + 40 + k * 66;
-        W.sprites.drawItemDot(ctx, ix - 10, by - 12, spec.hue, spec.kind);
+        W.sprites.drawItemDot(ctx, ix - 10, by - 12, spec.hue, spec.kind, it.id);
         const have = W.state.invCount(it.id);
         ctx.font = "700 15px system-ui, sans-serif";
         ctx.textAlign = "left";

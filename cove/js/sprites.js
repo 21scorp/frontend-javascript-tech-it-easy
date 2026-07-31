@@ -11,6 +11,53 @@
 
   const U = W.util;
 
+  /* ─────────────── real art loader ───────────────
+     Drop PNGs into assets/sprites/<key>.png (transparent, feet at
+     the bottom edge) and they replace the placeholder painters
+     automatically. `w` is the on-screen width in world units.       */
+
+  const DEFS = {
+    char_idle: { w: 95 },  char_fish: { w: 130 }, char_chop: { w: 130 },
+    stall: { w: 230 },     mine: { w: 300 },
+    tree_oak: { w: 150 },  tree_birch: { w: 130 }, tree_maple: { w: 160 },
+    tree_yew: { w: 175 },  tree_elder: { w: 190 },
+    cust_fien: { w: 78 },  cust_bram: { w: 78 },  cust_saar: { w: 78 },
+    cust_milo: { w: 78 },  cust_vera: { w: 78 },  cust_ted: { w: 78 },
+    cust_noor: { w: 78 },  cust_kas: { w: 78 },
+    item_sardine: { w: 34 }, item_herring: { w: 34 }, item_trout: { w: 34 },
+    item_salmon: { w: 34 },  item_tuna: { w: 34 },    item_sword: { w: 34 },
+    item_koi: { w: 34 },
+    item_oak: { w: 34 }, item_birch: { w: 34 }, item_maple: { w: 34 },
+    item_yew: { w: 34 }, item_elder: { w: 34 },
+  };
+
+  const IMG = {};   // key -> HTMLImageElement (only when loaded OK)
+
+  (function loadArt() {
+    for (const key of Object.keys(DEFS)) {
+      const img = new Image();
+      img.onload = () => { IMG[key] = img; };
+      img.onerror = () => {};   // no file → placeholder stays
+      img.src = "assets/sprites/" + key + ".png";
+    }
+  })();
+
+  /** Draw a loaded sprite anchored at its feet; true if drawn. */
+  function art(ctx, key, x, y, opts) {
+    const img = IMG[key];
+    if (!img) return false;
+    const o = opts || {};
+    const w = DEFS[key].w * (o.scale || 1);
+    const h = w * (img.height / img.width);
+    ctx.save();
+    ctx.translate(x, y);
+    if (o.flip) ctx.scale(-1, 1);
+    if (o.rot) ctx.rotate(o.rot);
+    ctx.drawImage(img, -w / 2, -h, w, h);
+    ctx.restore();
+    return true;
+  }
+
   /* small helpers */
   function shadow(ctx, x, y, rx, ry) {
     ctx.fillStyle = "rgba(60, 80, 40, 0.18)";
@@ -29,6 +76,12 @@
               : Math.sin(t * 2.2) * 2;
 
     shadow(ctx, x, y, 24, 8);
+
+    // real art? pose sprite + procedural motion on top of it
+    const poseKey = state === "fish" ? "char_fish" : state === "chop" ? "char_chop" : "char_idle";
+    const rot = state === "chop" ? Math.sin(t * 6) * 0.09
+              : state === "walk" ? Math.sin(t * 9) * 0.05 : 0;
+    if (art(ctx, IMG[poseKey] ? poseKey : "char_idle", x, y - bob, { flip: o.flip, rot })) return;
     ctx.save();
     ctx.translate(x, y - bob);
     ctx.scale(flip, 1);
@@ -123,6 +176,7 @@
     const t = o.t || 0;
     const bob = Math.sin(t * 1.8 + (o.seed || 0)) * 2;
     shadow(ctx, x, y, 20, 7);
+    if (art(ctx, "cust_" + c.id, x, y - bob, {})) return;
     ctx.save();
     ctx.translate(x, y - bob);
 
@@ -205,6 +259,7 @@
   function drawStall(ctx, x, y, o) {
     const t = o.t || 0;
     shadow(ctx, x, y + 4, 95, 16);
+    if (art(ctx, "stall", x, y, {})) return;
     ctx.save();
     ctx.translate(x, y);
 
@@ -263,6 +318,7 @@
     const sway = Math.sin(t * 0.9 + x) * 2;
     const r = spec.canopy * 0.42;
     shadow(ctx, x, y, r * 0.9, 12);
+    if (art(ctx, "tree_" + spec.id, x + shake, y, { rot: sway * 0.01 + shake * 0.008 })) return;
     ctx.save();
     ctx.translate(x + shake, y);
     // trunk
@@ -298,6 +354,7 @@
   /* ─────────────── boarded mine ─────────────── */
 
   function drawMine(ctx, x, y, o) {
+    if (art(ctx, "mine", x, y, {})) return;
     ctx.save();
     ctx.translate(x, y);
     // cliff face
@@ -338,7 +395,8 @@
 
   /* ─────────────── item glyphs (for bubbles/chips) ─────────────── */
 
-  function drawItemDot(ctx, x, y, hue, kind) {
+  function drawItemDot(ctx, x, y, hue, kind, id) {
+    if (id && art(ctx, "item_" + id, x, y + 15, {})) return;
     if (kind === "fish") {
       ctx.fillStyle = `hsl(${hue}, 60%, 55%)`;
       ctx.beginPath();
@@ -365,5 +423,7 @@
     }
   }
 
-  W.sprites = { drawChar, drawCustomer, drawStall, drawTree, drawMine, drawItemDot, shadow };
+  function hasArt(key) { return !!IMG[key]; }
+
+  W.sprites = { drawChar, drawCustomer, drawStall, drawTree, drawMine, drawItemDot, shadow, hasArt };
 })();
