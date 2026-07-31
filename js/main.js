@@ -138,6 +138,7 @@
   function celebrateNaming(name) {
     W.audio.unlock();
     W.audio.play("levelUp");
+    W.ui.setPanelLocked(false);
     W.ui.show();
     W.ui.updateCounters();
     const p = W.scene.wispPos();

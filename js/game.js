@@ -428,6 +428,7 @@
       tries++;
     } while (tries < 20 && S.stars.some((s) => Math.hypot(s.x - x, s.y - y) < 0.07));
     ceremony = { t: 0, dur: C.PRESTIGE.ceremonySec, to: { x, y }, gain };
+    W.ui.setPanelLocked(true);
     W.ui.bubble(U.pick(["watch me.", "I'll be right here. every night.", "don't be sad — look up."]), 3000);
     W.audio.play("levelUp");
   }

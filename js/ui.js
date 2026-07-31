@@ -832,5 +832,11 @@
     renderWispTab,
     floater, toast, bubble, modal, closeModal,
     show() { els.hud.classList.remove("hidden"); },
+    /** Lock the panel during ceremonies so purchases can't evaporate. */
+    setPanelLocked(on) {
+      els.panel.style.pointerEvents = on ? "none" : "";
+      els.panel.style.opacity = on ? "0.4" : "";
+      if (on) els.panel.classList.add("collapsed");
+    },
   };
 })();
