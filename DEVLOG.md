@@ -118,6 +118,15 @@ weather.js · shower.js · share.js (postcard/export/SW) · sim.js [hours]
 - All 11 accessories visually verified (contact sheet).
 - docs/BALANCE.md: curves, measured pacing, tuning levers.
 
+## Round 23 — ~03:30–07:45 CEST · night watch → v1.0.0
+- Container restart survived cleanly (everything was pushed; env
+  rebuilt, suite re-verified 19/19 post-restart and post-midnight).
+- Weather-aware idle voice; docs/ARCHITECTURE.md; mobile deep-check
+  of the grown Wisp tab (wishes/wardrobe/journal/family) — clean.
+- **4-hour idle soak: 0 errors, DOM 335→343, heap flat at 4-5MB.**
+  A tab left open all night is safe. Final suite: 19/19.
+- Version 1.0.0 — the overnight build is release-ready.
+
 ## Decisions
 - English-only for launch (viral reach); NL translation is a possible
   later pass — all strings live in config.js + ui.js templates.
