@@ -289,7 +289,7 @@
   };
 
   W.config = {
-    BUILD: "0.4.0",
+    BUILD: "0.4.1",
     SAVE_KEY: "cove.save.v1",
     SKILLS, FISH, TREES, GATHER, TOOLS,
     STALL, STALL_UPGRADES, CUSTOMERS, AFFINITY, OFFLINE, WORLD,
