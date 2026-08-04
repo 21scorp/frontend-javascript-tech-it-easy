@@ -6,12 +6,15 @@ flat code-drawn ground and the game draws every sprite on top of it.
 
 ## THE big one — `bg_island.png` (the whole ground, no objects!)
 
-Portrait, roughly 2:3 (e.g. 1024×1536). NOT transparent — a full
-painted image. Crucial: it's ONLY terrain. No trees, no buildings,
-no people, no animals, no boats — the game places those.
+Portrait, roughly 2:3 — and generate at the HIGHEST resolution your
+tool offers (2048×3072 if possible; 1024×1536 minimum). The camera
+zooms in now, so extra pixels directly become extra beauty. NOT
+transparent — a full painted image. Crucial: it's ONLY terrain. No
+trees, no buildings, no people, no animals, no boats — the game
+places those.
 
 ```
-hand-painted cartoon game art, soft painterly shading, warm saturated colors, subtle dark outline, cozy farming game style, gentle highlights, a top-down 3/4 view game background map of a small green island cove, layout exactly as follows: a band of grey-brown rocky cliffs across the top tenth of the image, below it a big warm green grass meadow with soft texture, tiny flowers and small pebbles, an oval blue pond with sandy banks on the middle-left of the meadow about one third of the image wide, a winding sandy path from the top-center of the meadow down to the bottom-center, a light sandy beach strip along the bottom edge of the meadow, and calm turquoise sea just visible at the very bottom edge, the right half of the meadow is open grass, ONLY terrain: no trees, no buildings, no people, no animals, no objects, no text, no watermark, consistent soft lighting from top-left, portrait orientation, 1024x1536
+hand-painted cartoon game art, soft painterly shading, warm saturated colors, subtle dark outline, cozy farming game style, gentle highlights, a top-down 3/4 view game background map of a small lush green island cove, layout exactly as follows: a band of grey-brown rocky cliffs with painterly cracks across the top tenth of the image, below it a big warm green grass meadow with rich hand-painted texture, subtle light and dark grass patches, scattered tiny wildflowers in pink yellow and white, small clover patches and little pebbles, an oval blue pond with soft sandy banks and a few lily pads at its edge on the middle-left of the meadow about one third of the image wide, gentle darker blue depth in the pond center, a winding worn sandy path with rounded edges from the top-center of the meadow down to the bottom-center, slightly wider and more trampled near the bottom, a light sandy beach strip with a few shells and a piece of driftwood along the bottom edge, and calm turquoise sea with soft foam lines just visible at the very bottom edge, the right half of the meadow is open grass with only subtle texture variation, seamless painterly detail everywhere, no repeating patterns, ONLY terrain: no trees, no buildings, no people, no animals, no boats, no objects, no text, no watermark, consistent soft lighting from top-left, portrait orientation 2:3
 ```
 
 Save as `cove/assets/sprites/bg_island.png` — the game detects it and

@@ -84,15 +84,66 @@
   const canvas = $("world");
   canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 
-  // the deep-water duel wants press & release, not taps
-  canvas.addEventListener("pointerdown", () => {
+  /* ── camera gestures: drag pans, pinch zooms, a tap acts ── */
+  const pointers = new Map();   // pointerId -> {x, y}
+  let tapCandidate = null;      // {x, y} while a press might be a tap
+  let pinch0 = null;            // {d, zoom} at pinch start
+
+  const pDist = () => {
+    const [a, b] = [...pointers.values()];
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  };
+  const pMid = () => {
+    const [a, b] = [...pointers.values()];
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  };
+
+  canvas.addEventListener("pointerdown", (e) => {
     W.audio.unlock();
-    if (W.boss.active) W.boss.pointerDown();
+    if (W.boss.active) { W.boss.pointerDown(); return; }
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 1) {
+      tapCandidate = { x: e.clientX, y: e.clientY };
+    } else if (pointers.size === 2) {
+      tapCandidate = null;
+      pinch0 = { d: pDist(), zoom: W.scene.zoom };
+    }
   });
+
+  canvas.addEventListener("pointermove", (e) => {
+    if (W.boss.active || !pointers.has(e.pointerId)) return;
+    const prev = pointers.get(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 2 && pinch0) {
+      const mid = pMid();
+      W.scene.zoomTo(pinch0.zoom * (pDist() / pinch0.d), mid.x, mid.y);
+    } else if (pointers.size === 1) {
+      if (tapCandidate &&
+          Math.hypot(e.clientX - tapCandidate.x, e.clientY - tapCandidate.y) > 9) {
+        tapCandidate = null;   // it's a drag now
+      }
+      if (!tapCandidate) W.scene.panBy(e.clientX - prev.x, e.clientY - prev.y);
+    }
+  });
+
+  const endPointer = (e) => {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinch0 = null;
+  };
+  canvas.addEventListener("pointercancel", endPointer);
+
+  canvas.addEventListener("wheel", (e) => {
+    W.scene.zoomTo(W.scene.zoom * (e.deltaY < 0 ? 1.12 : 0.9), e.clientX, e.clientY);
+  }, { passive: true });
 
   canvas.addEventListener("pointerup", (e) => {
     W.audio.unlock();
     if (W.boss.active) { W.boss.pointerUp(); return; }
+    const wasTap = !!tapCandidate;
+    endPointer(e);
+    if (!wasTap) return;
+    tapCandidate = null;
     if (!W.state.S.flags.introDone) return;
     const wpt = W.scene.toWorld(e.clientX, e.clientY);
     const wx = wpt.x, wy = wpt.y;

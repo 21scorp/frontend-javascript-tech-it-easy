@@ -281,7 +281,7 @@
       { x: 320, y: 1160 }, { x: 205, y: 1200 }, { x: 95, y: 1240 }, { x: 20, y: 1290 },
       { x: 60, y: 1345 },
     ],
-    home:  { x: 560, y: 1000 },  // where the character idles
+    home:  { x: 625, y: 1135 },  // idles beside the stall, in view — not behind it
     dock:  { x: 250, y: 1390 },  // pier off the beach, bottom-left
     house: { x: 130, y: 890 },   // your place, below the pond
     boat:  { x: 810, y: 1365 },  // row boat on the beach, bottom-right

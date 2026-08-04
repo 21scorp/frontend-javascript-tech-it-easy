@@ -16,8 +16,49 @@
   let scale = 1, offX = 0, offY = 0;
   let shake = 0;
 
+  /* ─────────────── camera ───────────────
+     Zoomed in by default and glued to the character; drag to look
+     around (follow pauses briefly), pinch or scroll to zoom.       */
+  const ZOOM_MIN = 1, ZOOM_MAX = 2.6, ZOOM_DEFAULT = 1.6;
+  const MARGIN = 40;
+  let fitScale = 1;
+  let zoom = ZOOM_DEFAULT;
+  let camX = WD.home.x, camY = WD.home.y;
+  let following = true;
+  let freeUntil = 0;      // while exploring, the follow pauses
+
   /** Screen shake — a little thump on impacts. */
   function kick(mag) { shake = Math.min(8, Math.max(shake, mag)); }
+
+  function applyCamera() {
+    scale = fitScale * zoom;
+    const visW = vw / scale, visH = vh / scale;
+    camX = visW >= WD.w + MARGIN * 2 ? WD.w / 2
+      : U.clamp(camX, visW / 2 - MARGIN, WD.w + MARGIN - visW / 2);
+    camY = visH >= WD.h + MARGIN * 2 ? WD.h / 2
+      : U.clamp(camY, visH / 2 - MARGIN, WD.h + MARGIN - visH / 2);
+    offX = vw / 2 - camX * scale;
+    offY = vh / 2 - camY * scale;
+  }
+
+  function panBy(dxPx, dyPx) {
+    camX -= dxPx / scale;
+    camY -= dyPx / scale;
+    freeUntil = Date.now() + 3500;
+    applyCamera();
+  }
+
+  /** Absolute zoom anchored at a screen point (pinch/wheel). */
+  function zoomTo(z, sx, sy) {
+    const before = toWorld(sx, sy);
+    zoom = U.clamp(z, ZOOM_MIN, ZOOM_MAX);
+    applyCamera();
+    const after = toWorld(sx, sy);
+    camX += before.x - after.x;
+    camY += before.y - after.y;
+    freeUntil = Date.now() + 3500;
+    applyCamera();
+  }
 
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -27,10 +68,9 @@
     canvas.height = Math.round(vh * dpr);
     canvas.style.width = vw + "px";
     canvas.style.height = vh + "px";
-    scale = Math.min(vw / WD.w, vh / WD.h);
-    offX = (vw - WD.w * scale) / 2;
-    offY = (vh - WD.h * scale) / 2;
+    fitScale = Math.min(vw / WD.w, vh / WD.h);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    applyCamera();
   }
 
   const toScreen = (x, y) => ({ x: offX + x * scale, y: offY + y * scale });
@@ -125,6 +165,14 @@
   /* ─────────────── frame ─────────────── */
 
   function draw(t, dt) {
+    // soft-follow the character unless the player is looking around
+    if (following && Date.now() > freeUntil) {
+      const k = 1 - Math.pow(0.002, dt);
+      camX += (W.actor.x - camX) * k;
+      camY += (W.actor.y - 50 - camY) * k;
+    }
+    applyCamera();
+
     // decay the shake, jitter the camera
     let shx = 0, shy = 0;
     if (shake > 0.05) {
@@ -206,6 +254,11 @@
       window.addEventListener("resize", resize);
     },
     draw, toScreen, toWorld, kick,
+    panBy, zoomTo,
+    setZoom(z) { zoom = U.clamp(z, ZOOM_MIN, ZOOM_MAX); applyCamera(); },
+    centerOn(x, y) { camX = x; camY = y; applyCamera(); },
+    setFollow(on) { following = on; freeUntil = 0; },
+    get zoom() { return zoom; },
     get scale() { return scale; },
   };
 })();
