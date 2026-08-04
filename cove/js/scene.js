@@ -19,8 +19,7 @@
   /* ─────────────── camera ───────────────
      Zoomed in by default and glued to the character; drag to look
      around (follow pauses briefly), pinch or scroll to zoom.       */
-  const ZOOM_MIN = 1, ZOOM_MAX = 2.6, ZOOM_DEFAULT = 1.6;
-  const MARGIN = 40;
+  const ZOOM_MAX = 2.6, ZOOM_DEFAULT = 1.6;
   let fitScale = 1;
   let zoom = ZOOM_DEFAULT;
   let camX = WD.home.x, camY = WD.home.y;
@@ -30,13 +29,25 @@
   /** Screen shake — a little thump on impacts. */
   function kick(mag) { shake = Math.min(8, Math.max(shake, mag)); }
 
+  /** You can never zoom out past "the map fills the screen" —
+      no letterbox bars, the map edge is the hard limit.           */
+  function zoomMin() {
+    return Math.max(vw / (WD.w * fitScale), vh / (WD.h * fitScale));
+  }
+  function zoomMax() { return Math.max(ZOOM_MAX, zoomMin()); }
+
+  /* The HUD panel covers the bottom strip of the screen; the camera
+     may slide that far past the map's south edge (drawn as open sea)
+     so the beach and boats can rise above the panel.                */
+  const PANEL_PAD = 88;
+
   function applyCamera() {
+    zoom = U.clamp(zoom, zoomMin(), zoomMax());
     scale = fitScale * zoom;
     const visW = vw / scale, visH = vh / scale;
-    camX = visW >= WD.w + MARGIN * 2 ? WD.w / 2
-      : U.clamp(camX, visW / 2 - MARGIN, WD.w + MARGIN - visW / 2);
-    camY = visH >= WD.h + MARGIN * 2 ? WD.h / 2
-      : U.clamp(camY, visH / 2 - MARGIN, WD.h + MARGIN - visH / 2);
+    const padY = PANEL_PAD / scale;
+    camX = visW >= WD.w ? WD.w / 2 : U.clamp(camX, visW / 2, WD.w - visW / 2);
+    camY = U.clamp(camY, Math.min(visH / 2, WD.h / 2), WD.h + padY - visH / 2);
     offX = vw / 2 - camX * scale;
     offY = vh / 2 - camY * scale;
   }
@@ -51,7 +62,7 @@
   /** Absolute zoom anchored at a screen point (pinch/wheel). */
   function zoomTo(z, sx, sy) {
     const before = toWorld(sx, sy);
-    zoom = U.clamp(z, ZOOM_MIN, ZOOM_MAX);
+    zoom = U.clamp(z, zoomMin(), zoomMax());
     applyCamera();
     const after = toWorld(sx, sy);
     camX += before.x - after.x;
@@ -89,6 +100,22 @@
 
     // a painted island replaces everything below when present
     if (W.sprites.drawBackground(ctx)) {
+      // past the south edge: open sea continuing the painted shore
+      const seaG = ctx.createLinearGradient(0, WD.h, 0, WD.h + 240);
+      seaG.addColorStop(0, "#46aa9b");
+      seaG.addColorStop(1, "#2e8a88");
+      ctx.fillStyle = seaG;
+      ctx.fillRect(-80, WD.h, WD.w + 160, 360);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
+      ctx.lineWidth = 5;
+      for (let i = 0; i < 2; i++) {
+        ctx.beginPath();
+        for (let x = -80; x <= WD.w + 80; x += 40) {
+          const y = WD.h + 60 + i * 90 + Math.sin(x * 0.015 + t * 1.2 + i * 2) * 12;
+          x === -80 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
       ctx.restore();
       return;
     }
@@ -255,7 +282,7 @@
     },
     draw, toScreen, toWorld, kick,
     panBy, zoomTo,
-    setZoom(z) { zoom = U.clamp(z, ZOOM_MIN, ZOOM_MAX); applyCamera(); },
+    setZoom(z) { zoom = z; applyCamera(); },   // applyCamera clamps to [cover, max]
     centerOn(x, y) { camX = x; camY = y; applyCamera(); },
     setFollow(on) { following = on; freeUntil = 0; },
     get zoom() { return zoom; },

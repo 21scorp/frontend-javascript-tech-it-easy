@@ -848,7 +848,7 @@
     const k = Math.max(C.WORLD.w / img.width, C.WORLD.h / img.height);
     const sw = C.WORLD.w / k, sh = C.WORLD.h / k;
     const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
-    ctx.drawImage(img, sx, sy, sw, sh, -40, 0, C.WORLD.w + 80, C.WORLD.h);
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, C.WORLD.w, C.WORLD.h);
     return true;
   }
 
