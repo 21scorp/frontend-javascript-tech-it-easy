@@ -251,6 +251,80 @@ button.row:not(.disabled):active { transform: scale(0.985); }
   100% { opacity: 0; transform: translate(-50%, -70px) scale(0.95); }
 }
 
+/* ═══════════════ QUEST CHIP ═══════════════ */
+
+#quest-chip {
+  position: absolute;
+  top: max(64px, calc(env(safe-area-inset-top) + 56px));
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--cream);
+  border: 1px solid var(--cream-edge);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 7px 12px;
+  font-family: inherit;
+  color: var(--ink);
+  cursor: pointer;
+  max-width: 62vw;
+  text-align: left;
+}
+#quest-chip:active { transform: scale(0.97); }
+#quest-chip.done { animation: quest-glow 1.2s ease-in-out infinite; }
+@keyframes quest-glow {
+  0%, 100% { box-shadow: var(--shadow); }
+  50% { box-shadow: 0 0 18px rgba(232, 178, 63, 0.85); }
+}
+#quest-ico { font-size: 1.05rem; }
+#quest-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+#quest-text {
+  font-weight: 800;
+  font-size: 0.74rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#quest-bar {
+  display: block;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(74, 56, 38, 0.15);
+  overflow: hidden;
+}
+#quest-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #e8b23f, #f3d54a);
+  transition: width 0.3s ease;
+}
+#quest-reward {
+  font-weight: 800;
+  font-size: 0.78rem;
+  color: var(--coin);
+  white-space: nowrap;
+}
+
+/* coins that fly to the counter */
+.coin-fly {
+  position: absolute;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffe9a0, #e8b23f 65%, #c89020);
+  box-shadow: 0 1px 4px rgba(70, 45, 20, 0.4);
+  pointer-events: none;
+  transition: transform 0.55s cubic-bezier(0.35, -0.25, 0.55, 1), opacity 0.55s ease;
+}
+#coin-plate.pop { animation: coin-pop 0.3s ease; }
+@keyframes coin-pop {
+  40% { transform: scale(1.14); }
+}
+.skill-chip.pulse .skill-fill { filter: brightness(1.7); }
+.skill-chip.pulse { transform: scale(1.06); transition: transform 0.12s; }
+
 #toasts {
   position: fixed;
   top: max(78px, calc(env(safe-area-inset-top) + 66px));

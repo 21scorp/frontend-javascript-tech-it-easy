@@ -14,6 +14,8 @@
 
   W.state.load();
   W.audio.setEnabled(W.state.S.settings.sound);
+  // older saves join the quest ladder from zero, not mid-way
+  if (Object.keys(W.state.S.quest.start).length === 0) W.quests.rebase();
   W.ui.init();
   W.scene.init($("world"));
   W.ui.updateHud();
@@ -50,6 +52,10 @@
     } else if (!W.state.S.activity) {
       setTimeout(() => W.ui.toast("☀️ A calm morning at the cove", "Tap the pond to fish, or a tree to chop."), 900);
     }
+
+    // customer of the day
+    const star = C.CUSTOMERS.find((c) => c.id === W.game.cotdId());
+    setTimeout(() => W.ui.toast("⭐ " + star.name + " pays double today", "Serve them fast for the tip on top."), 4200);
   }
 
   if (!W.state.S.flags.introDone) {
@@ -96,6 +102,8 @@
       W.game.tryBiteTap();
       return;
     }
+    // 1b. the supply boat's daily gift
+    if (W.game.tryGiftTap(wx, wy)) return;
     // 2. serve a customer
     const order = W.customers.hitTest(wx, wy);
     if (order) {

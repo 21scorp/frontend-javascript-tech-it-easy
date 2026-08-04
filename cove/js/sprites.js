@@ -10,6 +10,7 @@
   "use strict";
 
   const U = W.util;
+  const C = W.config;
 
   /* ─────────────── real art loader ───────────────
      Drop PNGs into assets/sprites/<key>.png (transparent, feet at
@@ -35,6 +36,8 @@
     cat: { h: 38 },
     boat: { w: 150 },
     trophy_koi: { h: 112 }, trophy_pike: { h: 112 },
+    supply_boat: { w: 170 },
+    bg_island: { w: 1000 },   // painted ground; drawn via drawBackground
     cust_fien: { h: 96 },  cust_bram: { h: 98 },  cust_saar: { h: 80 },
     cust_milo: { h: 78 },  cust_vera: { h: 96 },  cust_ted: { h: 96 },
     cust_noor: { h: 96 },  cust_kas: { h: 98 },
@@ -800,6 +803,55 @@
     ctx.restore();
   }
 
+  /* ─────────────── the daily supply boat ─────────────── */
+
+  function drawSupplyBoat(ctx, x, y, o) {
+    const t = o.t || 0;
+    const bob = Math.sin(t * 1.4) * 3;
+    if (art(ctx, "supply_boat", x, y - bob, { t, flip: o.flip })) return;
+    ctx.save();
+    ctx.translate(x, y - bob);
+    if (o.flip) ctx.scale(-1, 1);
+    // hull
+    ctx.fillStyle = "#8a5a34";
+    ctx.beginPath();
+    ctx.moveTo(-62, -18);
+    ctx.quadraticCurveTo(0, 6, 62, -18);
+    ctx.lineTo(44, 6);
+    ctx.quadraticCurveTo(0, 20, -44, 6);
+    ctx.closePath();
+    ctx.fill();
+    // crates on deck
+    ctx.fillStyle = "#b08a5a";
+    ctx.fillRect(18, -34, 20, 16);
+    ctx.fillRect(34, -30, 16, 12);
+    // mast + sail
+    ctx.fillStyle = "#5a4630";
+    ctx.fillRect(-6, -84, 6, 66);
+    ctx.fillStyle = "#fff3da";
+    ctx.beginPath();
+    ctx.moveTo(-4, -82);
+    ctx.quadraticCurveTo(-48 + Math.sin(t * 2) * 3, -56, -6, -26);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /* ─────────────── painted world background ───────────────
+     bg_island.png (opaque, portrait) replaces the code ground.
+     Cover-fit over the world rect; true when drawn.              */
+
+  function drawBackground(ctx) {
+    const rec = IMG.bg_island;
+    if (!rec) return false;
+    const img = rec.img;
+    const k = Math.max(C.WORLD.w / img.width, C.WORLD.h / img.height);
+    const sw = C.WORLD.w / k, sh = C.WORLD.h / k;
+    const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
+    ctx.drawImage(img, sx, sy, sw, sh, -40, 0, C.WORLD.w + 80, C.WORLD.h);
+    return true;
+  }
+
   /* ─────────────── a build in progress ─────────────── */
 
   function drawBuildSite(ctx, x, y, o) {
@@ -863,6 +915,6 @@
 
   W.sprites = { drawChar, drawCustomer, drawStall, drawTree, drawMine,
     drawDock, drawHouse, drawDeco, drawCat, drawBuildSite,
-    drawBoat, drawTrophy,
+    drawBoat, drawTrophy, drawSupplyBoat, drawBackground,
     drawItemDot, shadow, hasArt };
 })();

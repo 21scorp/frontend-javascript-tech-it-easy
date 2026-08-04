@@ -24,7 +24,7 @@
       tools: { rod: 0, axe: 0 },     // index into TOOLS
       stallUpgrades: {},             // id -> true
       affinity: {},                  // customerId -> serves count
-      totals: { catches: 0, chops: 0, served: 0, earned: 0 },
+      totals: { catches: 0, chops: 0, served: 0, earned: 0, shinies: 0, bestCombo: 0 },
       activity: null,                // {type:"fish"} | {type:"chop", tree:"oak"} | null
       orders: [],                    // live queue (serialized)
       nextSpawnAt: 0,
@@ -35,6 +35,10 @@
       ferryNextAt: 0,
       trophies: {},                  // bossId -> true (mounted at the stall)
       bossCooldowns: {},             // bossId -> next catch timestamp
+      album: {},                     // itemId -> times caught
+      albumShiny: {},                // itemId -> golden finds
+      quest: { idx: 0, start: {} },  // the goal ladder
+      daily: { lastClaim: "", streak: 0 },
       settings: { sound: true },
       flags: { introDone: false },
       seed: Math.floor(Math.random() * 1e9),
@@ -92,6 +96,10 @@
       S.building = data.building || null;
       S.trophies = data.trophies || {};
       S.bossCooldowns = data.bossCooldowns || {};
+      S.album = data.album || {};
+      S.albumShiny = data.albumShiny || {};
+      S.quest = Object.assign({ idx: 0, start: {} }, data.quest);
+      S.daily = Object.assign({ lastClaim: "", streak: 0 }, data.daily);
       if (S.playerName) S.playerName = W.util.sanitizeName(S.playerName) || "Keeper";
       return true;
     } catch (e) {
@@ -273,6 +281,19 @@
     return (S.bossCooldowns[boss.id] || 0) <= Date.now();
   }
 
+  /* ─────────────── the album ─────────────── */
+
+  function albumSpecies() { return C.FISH.length + C.TREES.length; }
+  function albumCount() { return Object.keys(S.album).length; }
+
+  /** Register a catch; returns true when it's a first discovery. */
+  function albumAdd(id, shiny) {
+    const first = !S.album[id];
+    S.album[id] = (S.album[id] || 0) + 1;
+    if (shiny) S.albumShiny[id] = (S.albumShiny[id] || 0) + 1;
+    return first;
+  }
+
   W.state = {
     get S() { return S; },
     get restoredFromBackup() { return restoredFromBackup; },
@@ -285,5 +306,6 @@
     startProject, completeBuilding, buyDeco,
     offlineCapHours, restedMult,
     baitCheck, takeBait, bossReady,
+    albumSpecies, albumCount, albumAdd,
   };
 })();

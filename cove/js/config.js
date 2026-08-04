@@ -42,15 +42,71 @@
     // catches skew to the highest unlocked tier but keep the tail
     // alive so old orders stay fillable
     topWeight: 0.7,
-    biteGapMin: 7, biteGapMax: 16,   // seconds between "!" moments
+    biteGapMin: 6, biteGapMax: 13,   // seconds between "!" moments
     biteWindow: 1.5,                 // seconds to tap it
     biteBonusXp: 2,                  // xp multiplier on the bonus item
+  };
+
+  /* Rare golden catches — every cast a tiny lottery. */
+  const SHINY = {
+    chance: 0.025,
+    coinMult: 6,          // instant bonus: base price × this
+    comboStep: 0.2,       // bite-combo: +20% bonus per streak step
+    comboCap: 10,
+  };
+
+  /* The quest ladder: always one goal almost within reach.
+     type: catch|chop|serve|earn|level|tool|project|shiny|combo     */
+  const QUESTS = [
+    { t: "catch", n: 5,    r: 75,   d: "Catch 5 fish" },
+    { t: "chop",  n: 5,    r: 75,   d: "Chop 5 logs" },
+    { t: "serve", n: 2,    r: 120,  d: "Serve 2 customers" },
+    { t: "earn",  n: 300,  r: 100,  d: "Earn 300 coins" },
+    { t: "catch", n: 15,   r: 150,  d: "Catch 15 fish" },
+    { t: "level", skill: "fishing", lvl: 3, r: 150, d: "Reach Fishing 3" },
+    { t: "chop",  n: 15,   r: 150,  d: "Chop 15 logs" },
+    { t: "tool",  which: "rod", idx: 1, r: 250, d: "Buy the bronze rod" },
+    { t: "serve", n: 5,    r: 250,  d: "Serve 5 customers" },
+    { t: "level", skill: "woodcutting", lvl: 5, r: 250, d: "Reach Woodcutting 5" },
+    { t: "earn",  n: 1500, r: 300,  d: "Earn 1,500 coins" },
+    { t: "tool",  which: "axe", idx: 1, r: 300, d: "Buy the bronze axe" },
+    { t: "catch", n: 40,   r: 400,  d: "Catch 40 fish" },
+    { t: "serve", n: 12,   r: 500,  d: "Serve 12 customers" },
+    { t: "project", id: "dock", tier: 1, r: 800, d: "Repair the dock" },
+    { t: "level", skill: "trading", lvl: 8, r: 600, d: "Reach Trading 8" },
+    { t: "chop",  n: 60,   r: 700,  d: "Chop 60 logs" },
+    { t: "shiny", n: 1,    r: 750,  d: "Catch something golden" },
+    { t: "earn",  n: 8000, r: 1000, d: "Earn 8,000 coins" },
+    { t: "project", id: "house", tier: 1, r: 1200, d: "Build your cabin" },
+    { t: "combo", n: 5,    r: 900,  d: "Hit a 5× bite combo" },
+    { t: "level", skill: "fishing", lvl: 15, r: 1200, d: "Reach Fishing 15" },
+    { t: "project", id: "boat", tier: 1, r: 1500, d: "Build the row boat" },
+    { t: "trophy", id: "koi", r: 3000, d: "Catch De Oude Koi" },
+  ];
+  /* After the ladder: an endless rotation, rewards scale up. */
+  const QUEST_LOOP = [
+    { t: "catch", n: 100, r: 900,  d: "Catch 100 fish" },
+    { t: "serve", n: 25,  r: 1200, d: "Serve 25 customers" },
+    { t: "chop",  n: 100, r: 900,  d: "Chop 100 logs" },
+    { t: "earn",  n: 25000, r: 1500, d: "Earn 25,000 coins" },
+    { t: "shiny", n: 3,   r: 1800, d: "Catch 3 golden finds" },
+  ];
+  const QUEST_LOOP_SCALE = 1.18;   // reward growth per completed lap
+
+  /* Album — first catch of each species pays a discovery bonus. */
+  const ALBUM = { firstMult: 3 };
+
+  /* The daily supply boat + streaks, and the customer of the day. */
+  const DAILY = {
+    baseCoins: 150,
+    streakCap: 7,          // coins = base × min(streak, cap)
+    cotdMult: 2,           // customer of the day pays double
   };
 
   /* ─────────────── Tools (gear shop) ─────────────── */
   const TOOLS = [
     { id: "wood",   name: "Worn",    mult: 1.0,  cost: 0 },
-    { id: "bronze", name: "Bronze",  mult: 1.25, cost: 400 },
+    { id: "bronze", name: "Bronze",  mult: 1.25, cost: 300 },
     { id: "silver", name: "Silver",  mult: 1.55, cost: 4500 },
     { id: "gold",   name: "Gold",    mult: 1.9,  cost: 38000 },
     { id: "star",   name: "Starmetal", mult: 2.4, cost: 260000 },
@@ -229,13 +285,15 @@
     dock:  { x: 250, y: 1390 },  // pier off the beach, bottom-left
     house: { x: 130, y: 890 },   // your place, below the pond
     boat:  { x: 810, y: 1365 },  // row boat on the beach, bottom-right
+    giftSpot: { x: 470, y: 1385 },  // where the supply boat moors
   };
 
   W.config = {
-    BUILD: "0.3.0",
+    BUILD: "0.4.0",
     SAVE_KEY: "cove.save.v1",
     SKILLS, FISH, TREES, GATHER, TOOLS,
     STALL, STALL_UPGRADES, CUSTOMERS, AFFINITY, OFFLINE, WORLD,
     PROJECTS, DECO, FERRY, RESTED, BOSSES, BOSSFIGHT,
+    SHINY, QUESTS, QUEST_LOOP, QUEST_LOOP_SCALE, ALBUM, DAILY,
   };
 })();

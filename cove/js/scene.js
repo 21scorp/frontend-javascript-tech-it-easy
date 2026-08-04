@@ -14,6 +14,10 @@
   let canvas, ctx;
   let vw = 0, vh = 0, dpr = 1;
   let scale = 1, offX = 0, offY = 0;
+  let shake = 0;
+
+  /** Screen shake — a little thump on impacts. */
+  function kick(mag) { shake = Math.min(8, Math.max(shake, mag)); }
 
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -42,6 +46,12 @@
     ctx.save();
     ctx.translate(offX, offY);
     ctx.scale(scale, scale);
+
+    // a painted island replaces everything below when present
+    if (W.sprites.drawBackground(ctx)) {
+      ctx.restore();
+      return;
+    }
 
     // island of grass
     ctx.fillStyle = "#9ed08a";
@@ -115,6 +125,16 @@
   /* ─────────────── frame ─────────────── */
 
   function draw(t, dt) {
+    // decay the shake, jitter the camera
+    let shx = 0, shy = 0;
+    if (shake > 0.05) {
+      shx = (Math.random() - 0.5) * shake * 2;
+      shy = (Math.random() - 0.5) * shake * 2;
+      shake *= Math.pow(0.0016, dt);   // fast decay
+    } else shake = 0;
+    ctx.save();
+    ctx.translate(shx, shy);
+
     drawGround(t);
 
     ctx.save();
@@ -152,6 +172,10 @@
       const at = S.building.id === "dock" ? { x: WD.dock.x, y: WD.dock.y - 90 } : WD.house;
       items.push({ y: at.y + 1, fn: () => W.sprites.drawBuildSite(ctx, at.x + 70, at.y, { t }) });
     }
+    const boat = W.game.giftBoat;
+    if (boat) {
+      items.push({ y: WD.giftSpot.y, fn: () => W.sprites.drawSupplyBoat(ctx, boat.x, WD.giftSpot.y, { t, flip: boat.flip }) });
+    }
 
     items.push({ y: W.actor.y, fn: () => W.actor.draw(ctx, t) });
     W.customers.collectDrawables(items, t, ctx);
@@ -159,11 +183,16 @@
     items.sort((a, b) => a.y - b.y);
     for (const it of items) it.fn();
 
+    // juice + ambient life above the world
+    W.particles.update(dt, t);
+    W.particles.draw(ctx, t);
+
     // top layer: order bubbles, gather progress, bite indicator
     W.customers.drawBubbles(ctx, t);
     W.game.drawOverlays(ctx, t);
 
     ctx.restore();
+    ctx.restore();   // shake
 
     // the deep-water duel covers everything (screen space)
     if (W.boss.active) W.boss.draw(ctx, vw, vh, t);
@@ -176,7 +205,7 @@
       resize();
       window.addEventListener("resize", resize);
     },
-    draw, toScreen, toWorld,
+    draw, toScreen, toWorld, kick,
     get scale() { return scale; },
   };
 })();

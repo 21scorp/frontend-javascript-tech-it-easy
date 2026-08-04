@@ -49,7 +49,9 @@
     const items = pickItems(cust);
     let value = W.state.orderValue(items);
     if (ferry) value = Math.round(value * C.FERRY.valueMult);
-    ordersLive().push({ cid: cust.id, items, value, createdAt: now, ferry: !!ferry });
+    const star = cust.id === W.game.cotdId();   // customer of the day pays double
+    if (star) value *= C.DAILY.cotdMult;
+    ordersLive().push({ cid: cust.id, items, value, createdAt: now, ferry: !!ferry, star });
     return cust;
   }
 
@@ -129,10 +131,11 @@
     const idx = ordersLive().indexOf(order);
     if (idx >= 0) ordersLive().splice(idx, 1);
 
-    const spot = spotFor(0);
-    const sp = { x: C.WORLD.stall.x - 120, y: C.WORLD.stall.y + 60 };
-    W.ui.worldFloater(sp.x, sp.y - 90, "+" + U.fmt(value), "coin");
-    if (tipped) W.ui.worldFloater(sp.x + 60, sp.y - 60, "tip!", "coin");
+    const sp = spotFor(idx >= 0 ? idx : 0);
+    W.particles.hearts(sp.x, sp.y, 4);
+    W.ui.coinFly(sp.x, sp.y - 80, value);
+    W.scene.kick(2.5);
+    if (tipped) W.ui.worldFloater(sp.x + 50, sp.y - 130, "tip!", "coin");
     W.audio.play("sell");
     W.state.save();
     return true;
@@ -192,6 +195,26 @@
       ctx.textAlign = "center";
       ctx.fillStyle = "#c89020";
       ctx.fillText(U.fmt(order.value) + " ●", bx, by + 17);
+
+      // customer of the day: a golden star on the bubble
+      if (order.star) {
+        ctx.save();
+        ctx.translate(bx + bw / 2 - 4, by - 30);
+        ctx.rotate(Math.sin(t * 3) * 0.15);
+        ctx.fillStyle = "#f3c54a";
+        ctx.strokeStyle = "#c89020";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let p = 0; p < 10; p++) {
+          const r = p % 2 === 0 ? 12 : 5.5;
+          const a = (p / 10) * Math.PI * 2 - Math.PI / 2;
+          ctx[p === 0 ? "moveTo" : "lineTo"](Math.cos(a) * r, Math.sin(a) * r);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
 
       // ready glow
       if (canServe(order)) {

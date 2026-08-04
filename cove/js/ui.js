@@ -30,6 +30,66 @@
       chip.addEventListener("click", () => showSkill(chip.dataset.skill));
     });
     $("btn-settings").addEventListener("click", showSettings);
+    $("quest-chip").addEventListener("click", () => {
+      if (W.quests.ready()) W.quests.claim();
+      else {
+        const q = W.quests.current();
+        const p = W.quests.progress();
+        toast("🏅 " + q.d, p.have + " / " + p.need + " · reward: " + U.fmt(q.r) + " coins");
+      }
+    });
+  }
+
+  /* ─────────────── quest chip ─────────────── */
+
+  function updateQuestChip() {
+    const chip = $("quest-chip");
+    if (!W.state.S.flags.introDone) { chip.classList.add("hidden"); return; }
+    chip.classList.remove("hidden");
+    const q = W.quests.current();
+    const p = W.quests.progress();
+    const done = p.have >= p.need;
+    $("quest-text").textContent = q.d;
+    $("quest-fill").style.width = Math.min(100, (p.have / p.need) * 100) + "%";
+    $("quest-reward").textContent = done ? "CLAIM!" : U.fmt(q.r) + " ●";
+    chip.classList.toggle("done", done);
+  }
+
+  /* ─────────────── juice helpers ─────────────── */
+
+  /** Coins arc from a world point into the coin plate. */
+  function coinFly(wx, wy, amount) {
+    const from = W.scene.toScreen(wx, wy);
+    const plate = $("coin-plate").getBoundingClientRect();
+    const tx = plate.left + plate.width / 2, ty = plate.top + plate.height / 2;
+    const n = U.clamp(4 + Math.floor(amount / 40), 4, 10);
+    for (let i = 0; i < n; i++) {
+      const el = document.createElement("div");
+      el.className = "coin-fly";
+      const sx = from.x + U.rand(-22, 22), sy = from.y + U.rand(-16, 16);
+      el.style.left = sx + "px";
+      el.style.top = sy + "px";
+      $("floaters").appendChild(el);
+      setTimeout(() => {
+        el.style.transform = `translate(${tx - sx}px, ${ty - sy}px) scale(0.55)`;
+        el.style.opacity = "0.15";
+      }, 30 + i * 55);
+      setTimeout(() => {
+        el.remove();
+        const cp = $("coin-plate");
+        cp.classList.remove("pop");
+        void cp.offsetWidth;   // restart the animation
+        cp.classList.add("pop");
+      }, 620 + i * 55);
+    }
+    worldFloater(wx, wy - 30, "+" + U.fmt(amount), "coin");
+  }
+
+  function skillPulse(skillId) {
+    const chip = document.querySelector(`.skill-chip[data-skill="${skillId}"]`);
+    if (!chip) return;
+    chip.classList.add("pulse");
+    setTimeout(() => chip.classList.remove("pulse"), 160);
   }
 
   /* ─────────────── HUD ─────────────── */
@@ -43,6 +103,7 @@
       const need = W.state.xpForLevel(sk.level);
       $("fill-" + id).style.width = Math.min(100, (sk.xp / need) * 100) + "%";
     }
+    updateQuestChip();
     if (bagDirty && $("tab-bag").classList.contains("active")) renderBag();
     if ($("tab-build").classList.contains("active")) {
       buildClock += 0.15;
@@ -57,16 +118,20 @@
     bagDirty = false;
     const S = W.state.S;
     const ids = Object.keys(S.inv);
-    let html = "";
+    let html = `<button class="row" id="btn-album">
+      <div class="row-glyph">📖</div>
+      <div class="row-info"><div class="row-name">Album · ${W.state.albumCount()} / ${W.state.albumSpecies()}</div>
+      <div class="row-sub">Every species you've ever caught — golden finds included.</div></div>
+    </button>`;
     if (!ids.length) {
-      html = `<p class="row-sub" style="text-align:center;padding:18px 8px">Your bag is empty.
+      html += `<p class="row-sub" style="text-align:center;padding:18px 8px">Your bag is empty.
         Tap the pond to fish, or a tree to chop — the queue will want both.</p>`;
     } else {
       const chips = ids.map((id) => {
         const spec = W.state.item(id);
         return `<span class="bag-chip"><span style="color:hsl(${spec.hue},60%,45%)">${spec.kind === "fish" ? "🐟" : "🪵"}</span>${spec.name} × ${S.inv[id]}</span>`;
       }).join("");
-      html = `<div class="bag-grid">${chips}</div>
+      html += `<div class="bag-grid">${chips}</div>
         <div class="section-label">Surplus</div>
         <button class="row" id="btn-surplus">
           <div class="row-glyph">💰</div>
@@ -77,6 +142,29 @@
     $("tab-bag").innerHTML = html;
     const btn = $("btn-surplus");
     if (btn) btn.addEventListener("click", sellSurplus);
+    $("btn-album").addEventListener("click", showAlbum);
+  }
+
+  /* ─────────────── the album ─────────────── */
+
+  function showAlbum() {
+    const S = W.state.S;
+    const rows = C.FISH.concat(C.TREES).map((spec) => {
+      const n = S.album[spec.id] || 0;
+      const g = S.albumShiny[spec.id] || 0;
+      if (!n) {
+        return `<div class="setting-row"><span style="opacity:0.45">❓ ???</span>
+          <b style="opacity:0.45">not yet found</b></div>`;
+      }
+      return `<div class="setting-row">
+        <span><span style="color:hsl(${spec.hue},60%,45%)">${spec.kind === "fish" ? "🐟" : "🪵"}</span>
+        <b>${spec.name}</b>${g ? ' <span style="color:#c89020">✨×' + g + "</span>" : ""}</span>
+        <b>${U.fmtInt(n)}</b></div>`;
+    }).join("");
+    modal("📖 Album · " + W.state.albumCount() + " / " + W.state.albumSpecies(),
+      `<p class="muted">Roughly 1 in 40 finds is golden — worth 6× its price on the spot.</p>
+       <div style="margin-top:8px;text-align:left">${rows}</div>`,
+      [{ label: "Close", cls: "btn-primary" }]);
   }
 
   function sellSurplus() {
@@ -322,6 +410,8 @@
     const S = W.state.S;
     const names = { fishing: "Fishing", woodcutting: "Woodcutting", trading: "Trading" };
     W.audio.play("level");
+    W.particles.confetti(W.actor.x, W.actor.y, 26);
+    W.scene.kick(4);
     toast("⬆ " + names[skillId] + " level " + S.skills[skillId].level + "!",
       skillId === "trading" ? "Better prices — and busier queues." : "New catches come within reach.");
   }
@@ -443,6 +533,7 @@
   W.ui = {
     init, updateHud, renderBag, renderGear, renderBuild, renderFriends,
     worldFloater, toast, modal, closeModal, skillUp,
+    coinFly, skillPulse, showAlbum,
     markBagDirty() { bagDirty = true; },
     markBuildDirty() { buildDirty = true; },
     show() { $("hud").classList.remove("hidden"); },
