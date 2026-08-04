@@ -267,7 +267,7 @@
      Portrait world; camera letterboxes on other shapes.           */
   const WORLD = {
     w: 1000, h: 1400,
-    pond:  { x: 230, y: 640, rx: 175, ry: 95 },
+    pond:  { x: 205, y: 592, rx: 185, ry: 125 },   // matches the painted island
     treeSpots: [
       { x: 700, y: 430, tree: "oak" },
       { x: 870, y: 560, tree: "birch" },
