@@ -27,3 +27,11 @@ jobs:
         run: npx vite build
       - name: Balance simulation self-checks
         run: npm run sim
+
+      # The checks above never render a frame. This one opens the built
+      # bundle in a real browser, which is the only way to catch things
+      # like a render pipe that registers too late to be picked up.
+      - name: Install Chromium for the smoke test
+        run: npx playwright install --with-deps chromium
+      - name: Smoke test the production build
+        run: npm run test:smoke

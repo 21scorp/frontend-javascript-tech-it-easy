@@ -4,6 +4,8 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import "./style.css";
+// MUST come before the renderer is created — see the file for why.
+import "./core/pixi-pipes";
 import { Application, Assets } from "pixi.js";
 import { Viewport, DESIGN_W } from "./core/viewport";
 

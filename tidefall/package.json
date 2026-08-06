@@ -12,7 +12,8 @@
     "sim": "tsx src/progression/sim.ts",
     "build:single": "SINGLE=1 vite build",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
     "howler": "^2.2.4",
