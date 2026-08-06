@@ -1,0 +1,789 @@
+/* ═══════════════════════════════════════════════════════════════
+   TIDEFALL — ui/ui.css
+   Shell, primitives, HUD, nav, sheet, feedback, transitions.
+
+   WHY it reads as a game and not a web app:
+   1. No flat fills. Every surface is gradient + inner bevel + drop.
+   2. Buttons are extruded — a solid colour block under the face that
+      collapses on press. That "physical" 3px is the whole trick.
+   3. Type is stamped (dark 1px baseline shadow), never floating.
+   4. A grain layer over big panels breaks up the CSS smoothness.
+   5. Gold is rationed. It means "value" and nothing else.
+   ═══════════════════════════════════════════════════════════════ */
+
+@import "./tokens.css";
+
+/* ── root ───────────────────────────────────────────────────────
+   The shell gives every direct child of #ui-root pointer-events;
+   we take that back so the world stays tappable, then re-arm the
+   pieces that are actually chrome. */
+.tf-ui,
+#ui-root > .tf-ui {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font-family: var(--f-ui);
+  color: var(--c-ink);
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+  contain: layout style;
+}
+
+.tf-ui *,
+.tf-ui *::before,
+.tf-ui *::after { box-sizing: border-box; }
+
+.tf-ui button,
+.tf-ui [role="button"],
+.tf-ui [role="tab"] {
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+/* Keyboard focus must be loud — this UI is high-contrast already. */
+.tf-ui :focus { outline: none; }
+.tf-ui :focus-visible {
+  outline: calc(3 * var(--tf-u)) solid var(--c-aqua-400);
+  outline-offset: calc(2 * var(--tf-u));
+  border-radius: var(--r-2);
+  z-index: 1;
+}
+
+.tf-sr {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+/* ── icons ──────────────────────────────────────────────────────
+   Two extra passes give a flat silhouette volume: .ic-hi is a
+   white lift on the light-facing planes, .ic-lo a punched shadow.
+   Both are relative to whatever currentColor the parent sets, so a
+   gold nav tab and a muted locked skill use the same markup. */
+.tf-ic { display: block; flex: 0 0 auto; }
+.tf-ic .ic-hi { fill: #fff; opacity: .34; }
+.tf-ic .ic-lo { fill: #000; opacity: .30; }
+.tf-medal { display: block; flex: 0 0 auto; }
+
+/* ══ primitives ═══════════════════════════════════════════════ */
+
+.tf-panel {
+  position: relative;
+  background: var(--s-panel);
+  border-radius: var(--r-5);
+  box-shadow: var(--e-3);
+  isolation: isolate;
+}
+/* grain + top sheen: the two cheapest "not-CSS-flat" signals */
+.tf-panel::after,
+.tf-sheet::after {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background-image: var(--tex-grain);
+  background-size: calc(140 * var(--tf-u)) calc(140 * var(--tf-u));
+  opacity: .045;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.tf-sunk {
+  background: var(--s-panel-sunk);
+  box-shadow: var(--e-sunk);
+  border-radius: var(--r-3);
+}
+
+/* ── button ─────────────────────────────────────────────────── */
+.tf-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--hit);
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-radius: var(--r-3);
+  font-size: var(--t-body);
+  font-weight: var(--w-bold);
+  line-height: 1;
+  letter-spacing: .01em;
+  color: var(--c-ink);
+  background: var(--s-card);
+  text-shadow: var(--ts-stamp);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    inset 0 0 0 1px rgba(120,180,235,.12),
+    0 calc(4 * var(--tf-u)) 0 rgba(4,10,18,.72),
+    0 calc(9 * var(--tf-u)) calc(16 * var(--tf-u)) calc(-6 * var(--tf-u)) rgba(0,0,0,.75);
+  transform: translateZ(0);
+  transition:
+    transform var(--d-instant) var(--ease-out),
+    box-shadow var(--d-instant) var(--ease-out),
+    filter var(--d-fast) var(--ease-out);
+}
+.tf-btn:active:not(:disabled) {
+  transform: translateY(calc(3 * var(--tf-u)));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.14),
+    inset 0 0 0 1px rgba(120,180,235,.12),
+    0 calc(1 * var(--tf-u)) 0 rgba(4,10,18,.72);
+  filter: brightness(.95);
+}
+.tf-btn:disabled { opacity: .42; filter: grayscale(.6); pointer-events: none; }
+
+.tf-btn--gold {
+  background: var(--s-gold);
+  color: #4a2c07;
+  text-shadow: 0 1px 0 rgba(255,247,214,.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.8),
+    inset 0 calc(-2 * var(--tf-u)) 0 rgba(140,88,16,.42),
+    0 calc(4 * var(--tf-u)) 0 #8a5a12,
+    0 calc(10 * var(--tf-u)) calc(20 * var(--tf-u)) calc(-6 * var(--tf-u)) rgba(0,0,0,.7),
+    0 0 calc(26 * var(--tf-u)) calc(-6 * var(--tf-u)) rgba(232,178,63,.55);
+}
+.tf-btn--gold:active:not(:disabled) {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.6),
+    0 calc(1 * var(--tf-u)) 0 #8a5a12;
+}
+.tf-btn--gem {
+  background: var(--s-gem);
+  color: #2b1057;
+  text-shadow: 0 1px 0 rgba(255,255,255,.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.7),
+    0 calc(4 * var(--tf-u)) 0 #4a24a0,
+    0 calc(10 * var(--tf-u)) calc(20 * var(--tf-u)) calc(-6 * var(--tf-u)) rgba(0,0,0,.7);
+}
+.tf-btn--ghost {
+  background: rgba(255,255,255,.045);
+  color: var(--c-ink-soft);
+  box-shadow: inset 0 0 0 1px rgba(150,190,230,.18), 0 calc(2 * var(--tf-u)) 0 rgba(4,10,18,.5);
+}
+.tf-btn--sm { min-height: calc(34 * var(--tf-u)); padding: 0 var(--sp-3); font-size: var(--t-small); border-radius: var(--r-2); }
+.tf-btn--block { display: flex; width: 100%; }
+
+/* icon-only control — still 44px of hit area */
+.tf-iconbtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--hit); height: var(--hit);
+  border: 0; border-radius: var(--r-pill);
+  color: var(--c-ink-soft);
+  background: rgba(255,255,255,.06);
+  box-shadow: inset 0 0 0 1px rgba(150,190,230,.16), inset 0 1px 0 rgba(255,255,255,.14);
+  font-size: calc(17 * var(--tf-u));
+  transition: transform var(--d-instant) var(--ease-out), background var(--d-fast), color var(--d-fast);
+}
+.tf-iconbtn:active { transform: scale(.9); background: rgba(255,255,255,.12); }
+
+/* ── chips / segmented ──────────────────────────────────────── */
+.tf-chiprow {
+  display: flex; gap: var(--sp-2);
+  overflow-x: auto; scrollbar-width: none;
+  padding: var(--sp-1) 0;
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+}
+.tf-chiprow::-webkit-scrollbar { display: none; }
+.tf-chip {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+  min-height: calc(34 * var(--tf-u));
+  padding: 0 var(--sp-3);
+  border: 0; border-radius: var(--r-pill);
+  font-size: var(--t-small); font-weight: var(--w-bold);
+  color: var(--c-ink-dim);
+  background: rgba(255,255,255,.055);
+  box-shadow: inset 0 0 0 1px rgba(150,190,230,.14);
+  transition: color var(--d-fast), background var(--d-fast), box-shadow var(--d-fast), transform var(--d-instant);
+}
+.tf-chip:active { transform: scale(.96); }
+.tf-chip[aria-selected="true"], .tf-chip.is-on {
+  color: #3c2506;
+  background: var(--s-gold);
+  text-shadow: 0 1px 0 rgba(255,255,255,.4);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 calc(2 * var(--tf-u)) 0 #8a5a12, var(--e-glow-gold);
+}
+
+/* ── progress ───────────────────────────────────────────────── */
+.tf-bar {
+  position: relative;
+  height: calc(9 * var(--tf-u));
+  border-radius: var(--r-pill);
+  background: var(--s-panel-sunk);
+  box-shadow: var(--e-sunk);
+  overflow: hidden;
+}
+.tf-bar__fill {
+  position: absolute; inset: 0 auto 0 0;
+  width: 0%;
+  border-radius: var(--r-pill);
+  background: var(--s-aqua);
+  box-shadow: 0 0 calc(10 * var(--tf-u)) rgba(47,215,196,.55), inset 0 1px 0 rgba(255,255,255,.55);
+  transition: width var(--d-slow) var(--ease-out);
+}
+.tf-bar__fill::after {           /* travelling sheen — reads as "live" */
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,.42) 48%, transparent 76%);
+  transform: translateX(-100%);
+  animation: tf-sheen 2.6s var(--ease-soft) infinite;
+}
+.tf-bar--gold .tf-bar__fill { background: var(--s-gold); box-shadow: 0 0 calc(10 * var(--tf-u)) rgba(232,178,63,.5), inset 0 1px 0 rgba(255,255,255,.6); }
+.tf-bar--slim { height: calc(6 * var(--tf-u)); }
+@keyframes tf-sheen { 0% { transform: translateX(-100%); } 55%, 100% { transform: translateX(220%); } }
+
+/* ── xp ring (SVG) ──────────────────────────────────────────── */
+.tf-ring { display: block; transform: rotate(-90deg); overflow: visible; }
+.tf-ring__track { fill: none; stroke: rgba(4,12,22,.72); }
+.tf-ring__glow  { fill: none; stroke-linecap: round; opacity: .45; filter: blur(2px); }
+.tf-ring__fill  { fill: none; stroke-linecap: round; transition: stroke-dashoffset var(--d-slow) var(--ease-out); }
+
+/* ══ HUD ══════════════════════════════════════════════════════ */
+
+.tf-hud {
+  position: absolute; top: 0; left: 0; right: 0;
+  z-index: var(--z-hud);
+  pointer-events: none;
+  padding: calc(var(--safe-t) + var(--sp-2)) var(--sp-3) var(--sp-4);
+  display: flex; flex-direction: column; gap: var(--sp-2);
+}
+/* Legibility over a bright painted world without a solid slab. */
+.tf-hud::before {
+  content: ""; position: absolute; inset: 0;
+  background: var(--s-scrim);
+  backdrop-filter: blur(calc(8 * var(--tf-u))) saturate(1.1);
+  -webkit-backdrop-filter: blur(calc(8 * var(--tf-u))) saturate(1.1);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 52%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 52%, transparent 100%);
+  pointer-events: none;
+}
+.tf-hud > * { position: relative; }
+
+.tf-hud__top { display: flex; align-items: center; gap: var(--sp-2); }
+.tf-hud__spacer { flex: 1 1 auto; }
+
+/* currency capsule — the coin overhangs the left edge like a token
+   dropped onto the bar. That overlap is what makes it feel physical. */
+.tf-purse {
+  display: inline-flex; align-items: center;
+  height: calc(34 * var(--tf-u));
+  padding: 0 var(--sp-3) 0 calc(30 * var(--tf-u));
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, rgba(23,46,74,.92), rgba(9,20,33,.92));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.18),
+    inset 0 0 0 1px rgba(120,180,235,.16),
+    0 calc(3 * var(--tf-u)) calc(10 * var(--tf-u)) rgba(0,0,0,.55);
+  position: relative;
+}
+.tf-purse__medal {
+  position: absolute; left: calc(-3 * var(--tf-u)); top: 50%;
+  transform: translateY(-50%);
+  filter: drop-shadow(0 calc(2 * var(--tf-u)) calc(3 * var(--tf-u)) rgba(0,0,0,.6));
+  transition: transform var(--d-base) var(--ease-spring);
+}
+.tf-purse__num {
+  font-size: var(--t-body);
+  font-weight: var(--w-black);
+  letter-spacing: .01em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: var(--ts-hard);
+  min-width: calc(46 * var(--tf-u));
+  text-align: right;
+}
+.tf-purse--coin .tf-purse__num { color: var(--c-gold-300); }
+.tf-purse--gem  .tf-purse__num { color: var(--c-gem-400); }
+
+.tf-purse.is-pop { animation: tf-purse-pop var(--d-slow) var(--ease-spring); }
+.tf-purse.is-pop .tf-purse__medal { animation: tf-medal-spin 520ms var(--ease-out); }
+@keyframes tf-purse-pop {
+  0% { transform: scale(1); } 34% { transform: scale(1.11); } 100% { transform: scale(1); }
+}
+@keyframes tf-medal-spin {
+  0% { transform: translateY(-50%) rotateY(0) scale(1); }
+  50% { transform: translateY(-50%) rotateY(180deg) scale(1.22); }
+  100% { transform: translateY(-50%) rotateY(360deg) scale(1); }
+}
+.tf-purse__delta {
+  position: absolute; right: var(--sp-2); top: calc(-4 * var(--tf-u));
+  font-size: var(--t-tiny); font-weight: var(--w-black);
+  color: var(--c-good); text-shadow: var(--ts-hard);
+  opacity: 0; pointer-events: none;
+}
+.tf-purse__delta.is-run { animation: tf-delta 1s var(--ease-out); }
+.tf-purse__delta.is-neg { color: var(--c-bad); }
+@keyframes tf-delta {
+  0% { opacity: 0; transform: translateY(6px) scale(.8); }
+  22% { opacity: 1; transform: translateY(-6px) scale(1); }
+  100% { opacity: 0; transform: translateY(-20px) scale(.94); }
+}
+
+/* activity readout — what the idle loop is doing right now */
+.tf-activity {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-4);
+  background: linear-gradient(180deg, rgba(26,51,82,.86), rgba(10,21,34,.88));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.16),
+    inset 0 0 0 1px rgba(120,180,235,.14),
+    0 calc(4 * var(--tf-u)) calc(14 * var(--tf-u)) rgba(0,0,0,.5);
+  pointer-events: auto;
+  border: 0; width: 100%; text-align: left;
+  transition: transform var(--d-instant) var(--ease-out);
+}
+.tf-activity:active { transform: scale(.985); }
+.tf-activity__ring { position: relative; flex: 0 0 auto; width: calc(38 * var(--tf-u)); height: calc(38 * var(--tf-u)); }
+.tf-activity__ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.tf-activity__icon {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  color: var(--c-aqua-400);
+  font-size: calc(17 * var(--tf-u));
+  filter: drop-shadow(0 0 calc(6 * var(--tf-u)) rgba(47,215,196,.5));
+}
+.tf-activity__body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: calc(4 * var(--tf-u)); }
+.tf-activity__line { display: flex; align-items: baseline; gap: var(--sp-2); }
+.tf-activity__name {
+  font-size: var(--t-small); font-weight: var(--w-black);
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--c-ink); text-shadow: var(--ts-hard);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tf-activity__lvl {
+  font-size: var(--t-micro); font-weight: var(--w-black);
+  color: var(--c-gold-300); letter-spacing: .08em;
+  padding: calc(2 * var(--tf-u)) calc(6 * var(--tf-u));
+  border-radius: var(--r-pill);
+  background: rgba(232,178,63,.14);
+  box-shadow: inset 0 0 0 1px rgba(232,178,63,.34);
+  white-space: nowrap;
+}
+.tf-activity__rate {
+  margin-left: auto;
+  font-size: var(--t-micro); font-weight: var(--w-bold);
+  color: var(--c-aqua-400); white-space: nowrap;
+}
+.tf-activity__xp { font-size: var(--t-micro); color: var(--c-ink-mute); font-weight: var(--w-med); }
+.tf-activity__idle .tf-activity__icon { color: var(--c-ink-mute); filter: none; }
+
+/* ══ bottom nav ═══════════════════════════════════════════════ */
+
+.tf-nav {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  z-index: var(--z-nav);
+  pointer-events: auto;
+  padding: calc(7 * var(--tf-u)) var(--sp-2) calc(var(--safe-b) + calc(7 * var(--tf-u)));
+  display: flex; align-items: stretch; gap: calc(2 * var(--tf-u));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,0) 40%),
+    linear-gradient(180deg, #1a3352 0%, #0f2236 46%, #081422 100%);
+  border-radius: var(--r-5) var(--r-5) 0 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.24),
+    inset 0 0 0 1px rgba(120,180,235,.10),
+    0 calc(-2 * var(--tf-u)) calc(26 * var(--tf-u)) rgba(0,0,0,.6);
+}
+/* hairline of gold along the top lip — a single expensive-looking line */
+.tf-nav::before {
+  content: ""; position: absolute; left: 8%; right: 8%; top: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(246,205,99,.55), transparent);
+}
+
+.tf-navbtn {
+  position: relative;
+  flex: 1 1 0; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  gap: calc(3 * var(--tf-u));
+  min-height: var(--hit);
+  padding: calc(6 * var(--tf-u)) 0 calc(4 * var(--tf-u));
+  border: 0; background: none;
+  color: var(--c-ink-mute);
+  transition: color var(--d-base) var(--ease-out);
+}
+.tf-navbtn__puck {
+  position: relative;
+  display: grid; place-items: center;
+  width: calc(40 * var(--tf-u)); height: calc(34 * var(--tf-u));
+  border-radius: var(--r-3);
+  font-size: calc(21 * var(--tf-u));
+  transition:
+    transform var(--d-base) var(--ease-spring),
+    background var(--d-base) var(--ease-out),
+    box-shadow var(--d-base) var(--ease-out),
+    color var(--d-base) var(--ease-out);
+}
+.tf-navbtn__label {
+  font-size: var(--t-micro); font-weight: var(--w-black);
+  letter-spacing: .07em; text-transform: uppercase;
+  transition: color var(--d-base) var(--ease-out), opacity var(--d-base);
+  text-shadow: 0 1px 0 rgba(0,0,0,.6);
+}
+.tf-navbtn:active .tf-navbtn__puck { transform: scale(.9); }
+
+.tf-navbtn[aria-selected="true"] { color: var(--c-gold-300); }
+.tf-navbtn[aria-selected="true"] .tf-navbtn__puck {
+  transform: translateY(calc(-9 * var(--tf-u))) scale(1.06);
+  color: #4a2c07;
+  background: var(--s-gold);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.85),
+    0 calc(3 * var(--tf-u)) 0 #8a5a12,
+    0 calc(8 * var(--tf-u)) calc(16 * var(--tf-u)) calc(-4 * var(--tf-u)) rgba(0,0,0,.7),
+    0 0 calc(24 * var(--tf-u)) calc(-2 * var(--tf-u)) rgba(232,178,63,.7);
+}
+.tf-navbtn[aria-selected="true"] .tf-navbtn__label { color: var(--c-gold-300); }
+/* lifted tab leaves a socket behind it */
+.tf-navbtn[aria-selected="true"]::after {
+  content: ""; position: absolute;
+  left: 50%; transform: translateX(-50%);
+  top: calc(6 * var(--tf-u));
+  width: calc(44 * var(--tf-u)); height: calc(34 * var(--tf-u));
+  border-radius: var(--r-3);
+  background: radial-gradient(ellipse at 50% 40%, rgba(232,178,63,.20), transparent 70%);
+  pointer-events: none;
+}
+.tf-navbtn__dot {
+  position: absolute; top: calc(2 * var(--tf-u)); right: 26%;
+  min-width: calc(16 * var(--tf-u)); height: calc(16 * var(--tf-u));
+  padding: 0 calc(4 * var(--tf-u));
+  display: grid; place-items: center;
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, #ff8b7f, #e03e2f);
+  color: #fff; font-size: calc(9 * var(--tf-u)); font-weight: var(--w-black);
+  box-shadow: 0 0 0 calc(2 * var(--tf-u)) rgba(8,20,34,.9), 0 calc(2 * var(--tf-u)) calc(5 * var(--tf-u)) rgba(0,0,0,.6);
+}
+
+/* ══ bottom sheet ═════════════════════════════════════════════ */
+
+.tf-backdrop {
+  position: absolute; inset: 0;
+  z-index: var(--z-backdrop);
+  background: radial-gradient(ellipse at 50% 30%, rgba(6,14,24,.45), rgba(3,8,14,.82));
+  opacity: 0; pointer-events: none;
+  backdrop-filter: blur(calc(2 * var(--tf-u)));
+  -webkit-backdrop-filter: blur(calc(2 * var(--tf-u)));
+  will-change: opacity;
+}
+.tf-backdrop.is-live { pointer-events: auto; }
+
+.tf-sheet {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  z-index: var(--z-sheet);
+  height: calc(100% - var(--safe-t) - calc(10 * var(--tf-u)));
+  display: flex; flex-direction: column;
+  border-radius: var(--r-6) var(--r-6) 0 0;
+  background: var(--s-panel);
+  box-shadow: var(--e-4);
+  transform: translate3d(0, 100%, 0);
+  will-change: transform;
+  pointer-events: auto;
+  overflow: hidden;
+  touch-action: none;
+}
+.tf-sheet[hidden] { display: none; }
+/* gold hairline across the sheet lip, matching the nav */
+.tf-sheet::before {
+  content: ""; position: absolute; left: 6%; right: 6%; top: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(246,205,99,.6), transparent);
+  z-index: 3;
+}
+
+.tf-sheet__grab {
+  flex: 0 0 auto;
+  display: grid; place-items: center;
+  padding: calc(9 * var(--tf-u)) 0 calc(3 * var(--tf-u));
+  cursor: grab;
+}
+.tf-sheet__grab span {
+  width: calc(46 * var(--tf-u)); height: calc(5 * var(--tf-u));
+  border-radius: var(--r-pill);
+  background: rgba(200,222,246,.34);
+  box-shadow: inset 0 1px 0 rgba(0,0,0,.4);
+}
+
+.tf-sheet__head {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: calc(2 * var(--tf-u)) var(--sp-4) var(--sp-3);
+}
+.tf-sheet__eyebrow {
+  font-size: var(--t-micro); font-weight: var(--w-black);
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--c-gold-500);
+}
+.tf-sheet__title {
+  font-size: var(--t-title); font-weight: var(--w-black);
+  letter-spacing: .015em; color: var(--c-ink);
+  text-shadow: var(--ts-hard);
+  line-height: 1.1;
+}
+.tf-sheet__titles { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: calc(2 * var(--tf-u)); }
+.tf-sheet__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding: 0 var(--sp-4) calc(var(--nav-h) + var(--safe-b) + var(--sp-6));
+  scrollbar-width: none;
+}
+.tf-sheet__body::-webkit-scrollbar { display: none; }
+/* top fade so content dissolves under the header rather than clipping */
+.tf-sheet__fade {
+  position: absolute; left: 0; right: 0;
+  height: calc(22 * var(--tf-u));
+  pointer-events: none; z-index: 2;
+}
+.tf-sheet__fade--top { background: linear-gradient(180deg, rgba(21,42,67,.95), transparent); }
+.tf-sheet__fade--bot {
+  bottom: 0;
+  height: calc(var(--nav-h) + var(--safe-b) + calc(20 * var(--tf-u)));
+  background: linear-gradient(0deg, rgba(11,24,38,.98) 34%, transparent);
+}
+
+/* ══ toasts ═══════════════════════════════════════════════════ */
+
+.tf-toasts {
+  position: absolute; left: var(--sp-4); right: var(--sp-4);
+  bottom: calc(var(--nav-h) + var(--safe-b) + var(--sp-4));
+  z-index: var(--z-toast);
+  display: flex; flex-direction: column-reverse; gap: var(--sp-2);
+  pointer-events: none;
+}
+.tf-toast {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r-4);
+  background: linear-gradient(180deg, rgba(30,59,92,.97), rgba(11,25,40,.97));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.2),
+    inset 0 0 0 1px rgba(120,180,235,.16),
+    0 calc(10 * var(--tf-u)) calc(24 * var(--tf-u)) calc(-6 * var(--tf-u)) rgba(0,0,0,.8);
+  animation: tf-toast-in var(--d-slow) var(--ease-spring) both;
+}
+.tf-toast.is-out { animation: tf-toast-out var(--d-base) var(--ease-in) both; }
+@keyframes tf-toast-in {
+  from { opacity: 0; transform: translateY(calc(22 * var(--tf-u))) scale(.94); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes tf-toast-out {
+  to { opacity: 0; transform: translateY(calc(-10 * var(--tf-u))) scale(.97); }
+}
+.tf-toast__ic {
+  flex: 0 0 auto; width: calc(34 * var(--tf-u)); height: calc(34 * var(--tf-u));
+  display: grid; place-items: center; border-radius: var(--r-2);
+  font-size: calc(17 * var(--tf-u));
+  background: rgba(255,255,255,.07);
+  box-shadow: inset 0 0 0 1px rgba(150,190,230,.18);
+}
+.tf-toast__txt { flex: 1 1 auto; min-width: 0; }
+.tf-toast__title { font-size: var(--t-small); font-weight: var(--w-black); color: var(--c-ink); }
+.tf-toast__sub { font-size: var(--t-tiny); color: var(--c-ink-dim); margin-top: calc(1 * var(--tf-u)); }
+.tf-toast--good .tf-toast__ic { color: var(--c-good); box-shadow: inset 0 0 0 1px rgba(89,211,138,.4); }
+.tf-toast--gold .tf-toast__ic { color: var(--c-gold-400); box-shadow: inset 0 0 0 1px rgba(246,205,99,.42); }
+.tf-toast--bad  .tf-toast__ic { color: var(--c-bad);  box-shadow: inset 0 0 0 1px rgba(255,107,94,.42); }
+
+/* ══ floating reward numbers ══════════════════════════════════ */
+
+.tf-floats { position: absolute; inset: 0; z-index: var(--z-float); pointer-events: none; overflow: hidden; }
+.tf-float {
+  position: absolute;
+  display: inline-flex; align-items: center; gap: calc(4 * var(--tf-u));
+  font-size: var(--t-lead); font-weight: var(--w-black);
+  color: var(--c-gold-300);
+  text-shadow: 0 calc(2 * var(--tf-u)) 0 rgba(0,0,0,.6), 0 0 calc(14 * var(--tf-u)) rgba(232,178,63,.6);
+  transform: translate(-50%, -50%);
+  will-change: transform, opacity;
+  white-space: nowrap;
+}
+.tf-float--xp { color: var(--c-aqua-400); text-shadow: 0 calc(2 * var(--tf-u)) 0 rgba(0,0,0,.6), 0 0 calc(14 * var(--tf-u)) rgba(47,215,196,.6); }
+.tf-float--bad { color: var(--c-bad); }
+
+/* ══ modal ════════════════════════════════════════════════════ */
+
+.tf-modal {
+  position: absolute; inset: 0; z-index: var(--z-modal);
+  display: grid; place-items: center;
+  padding: var(--sp-5);
+  pointer-events: auto;
+}
+.tf-modal__scrim {
+  position: absolute; inset: 0;
+  background: rgba(3,8,14,.72);
+  backdrop-filter: blur(calc(4 * var(--tf-u)));
+  -webkit-backdrop-filter: blur(calc(4 * var(--tf-u)));
+  animation: tf-fade-in var(--d-base) var(--ease-out) both;
+}
+.tf-modal__card {
+  position: relative;
+  width: 100%; max-width: calc(340 * var(--tf-u));
+  padding: var(--sp-5) var(--sp-4) var(--sp-4);
+  animation: tf-modal-in var(--d-slow) var(--ease-spring) both;
+}
+.tf-modal.is-out .tf-modal__card { animation: tf-modal-out var(--d-fast) var(--ease-in) both; }
+.tf-modal.is-out .tf-modal__scrim { animation: tf-fade-out var(--d-fast) var(--ease-in) both; }
+@keyframes tf-modal-in { from { opacity: 0; transform: translateY(calc(18 * var(--tf-u))) scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes tf-modal-out { to { opacity: 0; transform: scale(.94); } }
+@keyframes tf-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tf-fade-out { to { opacity: 0; } }
+.tf-modal__title {
+  font-size: var(--t-title); font-weight: var(--w-black);
+  text-align: center; text-shadow: var(--ts-hard); margin-bottom: var(--sp-2);
+}
+.tf-modal__body { font-size: var(--t-body); color: var(--c-ink-dim); text-align: center; line-height: 1.5; margin-bottom: var(--sp-4); }
+.tf-modal__acts { display: flex; gap: var(--sp-2); }
+.tf-modal__acts .tf-btn { flex: 1 1 0; }
+
+/* ══ level-up celebration ═════════════════════════════════════ */
+
+.tf-celebrate {
+  position: absolute; inset: 0; z-index: var(--z-celebrate);
+  display: grid; place-items: center;
+  pointer-events: auto;
+  overflow: hidden;
+}
+.tf-celebrate__wash {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 42%, rgba(232,178,63,.30), rgba(4,10,18,.86) 58%);
+  animation: tf-fade-in var(--d-slow) var(--ease-out) both;
+}
+.tf-celebrate__rays {
+  position: absolute; left: 50%; top: 42%;
+  width: calc(560 * var(--tf-u)); height: calc(560 * var(--tf-u));
+  transform: translate(-50%, -50%);
+  background: conic-gradient(from 0deg,
+    rgba(255,229,154,.28) 0 6deg, transparent 6deg 22deg,
+    rgba(255,229,154,.20) 22deg 27deg, transparent 27deg 46deg,
+    rgba(255,229,154,.28) 46deg 52deg, transparent 52deg 70deg,
+    rgba(255,229,154,.18) 70deg 74deg, transparent 74deg 92deg,
+    rgba(255,229,154,.28) 92deg 98deg, transparent 98deg 118deg,
+    rgba(255,229,154,.2) 118deg 122deg, transparent 122deg 144deg,
+    rgba(255,229,154,.28) 144deg 150deg, transparent 150deg 172deg,
+    rgba(255,229,154,.18) 172deg 176deg, transparent 176deg 200deg,
+    rgba(255,229,154,.28) 200deg 206deg, transparent 206deg 228deg,
+    rgba(255,229,154,.2) 228deg 232deg, transparent 232deg 256deg,
+    rgba(255,229,154,.28) 256deg 262deg, transparent 262deg 286deg,
+    rgba(255,229,154,.18) 286deg 290deg, transparent 290deg 314deg,
+    rgba(255,229,154,.28) 314deg 320deg, transparent 320deg 344deg,
+    rgba(255,229,154,.2) 344deg 348deg, transparent 348deg 360deg);
+  -webkit-mask-image: radial-gradient(circle, #000 12%, transparent 62%);
+  mask-image: radial-gradient(circle, #000 12%, transparent 62%);
+  animation: tf-spin 26s linear infinite;
+}
+@keyframes tf-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+.tf-celebrate__core { position: relative; text-align: center; padding: var(--sp-5); }
+.tf-celebrate__badge {
+  position: relative;
+  width: calc(122 * var(--tf-u)); height: calc(122 * var(--tf-u));
+  margin: 0 auto var(--sp-4);
+  display: grid; place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--s-gold);
+  color: #4a2c07;
+  box-shadow:
+    inset 0 calc(3 * var(--tf-u)) 0 rgba(255,255,255,.75),
+    inset 0 calc(-4 * var(--tf-u)) 0 rgba(140,88,16,.5),
+    0 calc(10 * var(--tf-u)) calc(30 * var(--tf-u)) rgba(0,0,0,.6),
+    0 0 calc(60 * var(--tf-u)) rgba(232,178,63,.6);
+  animation: tf-badge-in var(--d-lazy) var(--ease-spring) both;
+}
+@keyframes tf-badge-in { from { opacity: 0; transform: scale(.3) rotate(-24deg); } to { opacity: 1; transform: none; } }
+.tf-celebrate__lvl { font-size: var(--t-mega); font-weight: var(--w-black); line-height: 1; text-shadow: 0 2px 0 rgba(255,247,214,.5); }
+.tf-celebrate__cap { font-size: var(--t-micro); font-weight: var(--w-black); letter-spacing: .18em; text-transform: uppercase; opacity: .78; }
+.tf-celebrate__skill {
+  font-size: var(--t-hero); font-weight: var(--w-black);
+  letter-spacing: .04em; text-transform: uppercase;
+  color: var(--c-gold-300); text-shadow: var(--ts-gold);
+  animation: tf-rise var(--d-lazy) var(--ease-spring) both 120ms;
+}
+.tf-celebrate__sub { font-size: var(--t-body); color: var(--c-ink-soft); margin-top: var(--sp-2); animation: tf-rise var(--d-lazy) var(--ease-spring) both 200ms; }
+.tf-celebrate__unlock {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  margin-top: var(--sp-4); padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-pill);
+  background: rgba(255,255,255,.08);
+  box-shadow: inset 0 0 0 1px rgba(246,205,99,.35);
+  font-size: var(--t-small); font-weight: var(--w-bold); color: var(--c-gold-300);
+  animation: tf-rise var(--d-lazy) var(--ease-spring) both 300ms;
+}
+.tf-celebrate__act { margin-top: var(--sp-6); animation: tf-rise var(--d-lazy) var(--ease-spring) both 400ms; }
+@keyframes tf-rise { from { opacity: 0; transform: translateY(calc(16 * var(--tf-u))); } to { opacity: 1; transform: none; } }
+.tf-celebrate.is-out { animation: tf-fade-out var(--d-base) var(--ease-in) both; }
+
+.tf-confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.tf-confetti i {
+  position: absolute; top: -8%;
+  width: calc(8 * var(--tf-u)); height: calc(13 * var(--tf-u));
+  border-radius: calc(2 * var(--tf-u));
+  animation: tf-fall linear both;
+}
+@keyframes tf-fall {
+  0%   { opacity: 0; transform: translateY(0) rotate(0deg); }
+  8%   { opacity: 1; }
+  100% { opacity: 0; transform: translateY(115vh) rotate(720deg); }
+}
+
+/* ══ skeleton / shimmer ═══════════════════════════════════════ */
+
+.tf-skel {
+  position: relative; overflow: hidden;
+  background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.02));
+  border-radius: var(--r-3);
+  box-shadow: inset 0 0 0 1px rgba(120,180,235,.07);
+}
+.tf-skel::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 26%, rgba(180,215,250,.14) 50%, transparent 74%);
+  transform: translateX(-100%);
+  animation: tf-shimmer 1.5s var(--ease-soft) infinite;
+}
+@keyframes tf-shimmer { to { transform: translateX(100%); } }
+.tf-skel--text { height: calc(12 * var(--tf-u)); border-radius: var(--r-pill); }
+.tf-skel--tile { aspect-ratio: 1; border-radius: var(--r-3); }
+
+/* ══ screen transitions ═══════════════════════════════════════ */
+
+.tf-screen { animation: tf-screen-in var(--d-base) var(--ease-out) both; }
+@keyframes tf-screen-in {
+  from { opacity: 0; transform: translateY(calc(10 * var(--tf-u))) scale(.99); }
+  to   { opacity: 1; transform: none; }
+}
+.tf-wipe {
+  position: absolute; inset: 0; z-index: var(--z-modal);
+  background: radial-gradient(circle at 50% 50%, #10243a, #050c15 70%);
+  pointer-events: auto;
+}
+
+/* ══ shared bits panels reuse ═════════════════════════════════ */
+
+.tf-sec {
+  display: flex; align-items: center; gap: var(--sp-2);
+  margin: var(--sp-4) 0 var(--sp-3);
+}
+.tf-sec__t {
+  font-size: var(--t-tiny); font-weight: var(--w-black);
+  letter-spacing: .15em; text-transform: uppercase; color: var(--c-ink-dim);
+}
+.tf-sec__rule { flex: 1 1 auto; height: 1px; background: linear-gradient(90deg, rgba(150,190,230,.22), transparent); }
+
+.tf-empty {
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-7) var(--sp-4);
+  color: var(--c-ink-mute); text-align: center;
+}
+.tf-empty__ic { font-size: calc(38 * var(--tf-u)); opacity: .35; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tf-ui *, .tf-ui *::before, .tf-ui *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

@@ -1,0 +1,203 @@
+/* ═══════════════════════════════════════════════════════════════
+   TIDEFALL — ui/tokens.css
+   The single source of truth for every colour, shadow, radius,
+   space, type step and easing the UI uses. Components consume
+   tokens only — a raw hex in a component file is a bug.
+
+   WHY a --tf-scale multiplier instead of rem: the game lives in a
+   portrait frame whose width is decided by viewport.ts, and we may
+   not touch the document root. Every size token is
+   `calc(N * 1px * var(--tf-scale))`, so the whole UI breathes with
+   the frame without compounding like `em` does.
+   ═══════════════════════════════════════════════════════════════ */
+
+.tf-ui {
+  /* Set by theme.ts from ViewportMetrics.frameW. 1.0 === a 390pt phone. */
+  --tf-scale: 1;
+  --tf-u: calc(1px * var(--tf-scale));
+
+  /* ── palette: deep sea-night ground ─────────────────────────── */
+  --c-abyss:      #060e18;
+  --c-deep-900:   #0a1522;
+  --c-deep-800:   #0d1b2a;  /* the ground colour — matches the canvas */
+  --c-deep-700:   #102338;
+  --c-deep-600:   #163050;
+  --c-deep-500:   #1d3d63;
+  --c-deep-400:   #274e78;
+  --c-deep-300:   #37648f;
+
+  /* warm inks, so text reads warm against the cold ground */
+  --c-ink:        #f7f0de;
+  --c-ink-soft:   #d9e3ef;
+  --c-ink-dim:    #9db0c6;
+  --c-ink-mute:   #6d829a;
+
+  /* gold — reserved for currency, rewards and the primary CTA */
+  --c-gold-900:   #43290a;
+  --c-gold-800:   #6d4712;
+  --c-gold-700:   #a4761f;
+  --c-gold-600:   #d1942b;
+  --c-gold-500:   #e8b23f;
+  --c-gold-400:   #f6cd63;
+  --c-gold-300:   #ffe49a;
+  --c-gold-200:   #fff5d2;
+
+  /* aqua — progress, xp, "alive" state */
+  --c-aqua-700:   #0c7f74;
+  --c-aqua-600:   #12a897;
+  --c-aqua-500:   #2fd7c4;
+  --c-aqua-400:   #7cf0e2;
+
+  /* violet — premium currency */
+  --c-gem-700:    #5a2fb8;
+  --c-gem-600:    #7d4ae0;
+  --c-gem-500:    #a06bff;
+  --c-gem-400:    #cbb0ff;
+
+  /* semantic */
+  --c-good:       #59d38a;
+  --c-warn:       #ffb454;
+  --c-bad:        #ff6b5e;
+
+  /* rarity ramp — used by item tiles and shop price cards */
+  --c-rar-common:  #9fb3c8;
+  --c-rar-fine:    #5fd47a;
+  --c-rar-rare:    #4aa8ff;
+  --c-rar-epic:    #b878ff;
+  --c-rar-legend:  #ffab3d;
+  --c-rar-mythic:  #ff5d7e;
+
+  /* ── surfaces (composed gradients, not flat fills) ──────────── */
+  --s-panel:
+    linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,0) 46%),
+    linear-gradient(180deg, #1a3352 0%, #12273e 58%, #0d1c2d 100%);
+  --s-panel-sunk:
+    linear-gradient(180deg, #08131f 0%, #0c1a2a 100%);
+  --s-card:
+    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,0) 40%),
+    linear-gradient(180deg, #1e3b5c 0%, #14293f 100%);
+  --s-card-hot:
+    linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0) 40%),
+    linear-gradient(180deg, #27527d 0%, #17334e 100%);
+  --s-scrim:
+    linear-gradient(180deg, rgba(6,14,24,.86) 0%, rgba(6,14,24,.62) 62%, rgba(6,14,24,0) 100%);
+  --s-gold:
+    linear-gradient(180deg, #ffe9ad 0%, #f6cd63 34%, #e2a634 64%, #c07f22 100%);
+  --s-gold-dim:
+    linear-gradient(180deg, #c9a45a 0%, #9a7530 100%);
+  --s-aqua:
+    linear-gradient(180deg, #8bf3e6 0%, #2fd7c4 40%, #12a897 100%);
+  --s-gem:
+    linear-gradient(180deg, #e2ccff 0%, #a06bff 42%, #6a35d6 100%);
+
+  /* Fine grain over big surfaces. Kills the "flat CSS" tell. */
+  --tex-grain:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+
+  /* ── elevation ──────────────────────────────────────────────── */
+  --e-0: none;
+  --e-1:
+    inset 0 1px 0 rgba(255,255,255,.16),
+    inset 0 0 0 1px rgba(120,180,235,.09),
+    0 1px 2px rgba(0,0,0,.5);
+  --e-2:
+    inset 0 1px 0 rgba(255,255,255,.20),
+    inset 0 -1px 0 rgba(0,0,0,.42),
+    inset 0 0 0 1px rgba(120,180,235,.10),
+    0 2px 4px rgba(0,0,0,.42),
+    0 8px 18px -8px rgba(0,0,0,.7);
+  --e-3:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    inset 0 -1px 0 rgba(0,0,0,.5),
+    inset 0 0 0 1px rgba(120,180,235,.12),
+    0 2px 0 rgba(0,0,0,.5),
+    0 14px 30px -10px rgba(0,0,0,.78);
+  --e-4:
+    inset 0 1px 0 rgba(255,255,255,.24),
+    inset 0 0 0 1px rgba(120,180,235,.14),
+    0 3px 0 rgba(0,0,0,.55),
+    0 26px 54px -14px rgba(0,0,0,.86),
+    0 0 0 1px rgba(0,0,0,.55);
+  /* pressed-in wells: inventory slots, progress tracks */
+  --e-sunk:
+    inset 0 2px 4px rgba(0,0,0,.62),
+    inset 0 -1px 0 rgba(255,255,255,.07),
+    inset 0 0 0 1px rgba(0,0,0,.45);
+  --e-glow-gold: 0 0 0 1px rgba(246,205,99,.35), 0 0 18px -2px rgba(232,178,63,.45);
+  --e-glow-aqua: 0 0 0 1px rgba(47,215,196,.35), 0 0 18px -2px rgba(47,215,196,.42);
+
+  /* ── radii ──────────────────────────────────────────────────── */
+  --r-1:  calc(6  * var(--tf-u));
+  --r-2:  calc(10 * var(--tf-u));
+  --r-3:  calc(14 * var(--tf-u));
+  --r-4:  calc(18 * var(--tf-u));
+  --r-5:  calc(24 * var(--tf-u));
+  --r-6:  calc(30 * var(--tf-u));
+  --r-pill: 999px;
+
+  /* ── space ──────────────────────────────────────────────────── */
+  --sp-0: 0px;
+  --sp-1: calc(4  * var(--tf-u));
+  --sp-2: calc(8  * var(--tf-u));
+  --sp-3: calc(12 * var(--tf-u));
+  --sp-4: calc(16 * var(--tf-u));
+  --sp-5: calc(20 * var(--tf-u));
+  --sp-6: calc(26 * var(--tf-u));
+  --sp-7: calc(34 * var(--tf-u));
+  --sp-8: calc(44 * var(--tf-u));
+
+  /* ── type ───────────────────────────────────────────────────── */
+  --f-ui: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-num: ui-rounded, "SF Pro Rounded", system-ui, "Segoe UI", sans-serif;
+
+  --t-micro: calc(9.5 * var(--tf-u));
+  --t-tiny:  calc(11  * var(--tf-u));
+  --t-small: calc(12.5 * var(--tf-u));
+  --t-body:  calc(14  * var(--tf-u));
+  --t-lead:  calc(16  * var(--tf-u));
+  --t-title: calc(19  * var(--tf-u));
+  --t-hero:  calc(26  * var(--tf-u));
+  --t-mega:  calc(38  * var(--tf-u));
+
+  --w-reg: 500;
+  --w-med: 600;
+  --w-bold: 800;
+  --w-black: 900;
+
+  /* text-shadow recipes — stamped, not floaty */
+  --ts-stamp: 0 1px 0 rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4);
+  --ts-hard:  0 1px 0 rgba(0,0,0,.75), 0 0 10px rgba(0,0,0,.5);
+  --ts-gold:  0 1px 0 rgba(74,45,8,.85), 0 0 12px rgba(232,178,63,.35);
+
+  /* ── motion ─────────────────────────────────────────────────── */
+  --d-instant: 90ms;
+  --d-fast:    150ms;
+  --d-base:    230ms;
+  --d-slow:    360ms;
+  --d-lazy:    620ms;
+
+  --ease-out:    cubic-bezier(.22,.9,.28,1);
+  --ease-in:     cubic-bezier(.6,.03,.9,.4);
+  --ease-spring: cubic-bezier(.18,1.35,.42,1);   /* overshoots — the "pop" */
+  --ease-soft:   cubic-bezier(.4,0,.2,1);
+
+  /* ── layering inside #ui-root ───────────────────────────────── */
+  --z-hud: 10;
+  --z-nav: 30;
+  --z-backdrop: 20;
+  --z-sheet: 25;
+  --z-float: 40;
+  --z-toast: 50;
+  --z-modal: 60;
+  --z-celebrate: 70;
+
+  /* ── safe areas: JS writes these from ViewportMetrics; env() is
+        the fallback so the UI is correct before first measure. ── */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+
+  /* nav height is needed by sheets and toasts alike */
+  --nav-h: calc(62 * var(--tf-u));
+  --hud-h: calc(96 * var(--tf-u));
+  --hit: calc(44 * var(--tf-u));   /* minimum touch target */
+}
