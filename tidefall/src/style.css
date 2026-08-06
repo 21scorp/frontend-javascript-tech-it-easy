@@ -1,0 +1,123 @@
+/* ═══════════════════════════════════════════════════════════════
+   TIDEFALL — base shell styles.
+   Owns only the frame, the rotate guard and the boot splash.
+   Everything else is themed by the UI layer.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --ink: #f3ead6;
+  --ink-dim: #a9b6c4;
+  --deep: #0d1b2a;
+  --deep-2: #132840;
+  --gold: #e8b23f;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--deep);
+  color: var(--ink);
+  font-family: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+/* The portrait frame: centred, never stretched wide. */
+#stage-frame {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  background: var(--deep);
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.55);
+}
+
+#stage { display: block; width: 100%; height: 100%; }
+
+/* DOM UI overlay rides above the canvas in the same frame. */
+#ui-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+#ui-root > * { pointer-events: auto; }
+
+body.is-blocked #stage-frame { visibility: hidden; }
+
+/* ── rotate guard ── */
+#rotate-guard {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 40%, var(--deep-2), var(--deep) 70%);
+  text-align: center;
+  padding: 24px;
+}
+#rotate-guard[hidden] { display: none; }
+.rotate-icon {
+  width: 54px;
+  height: 88px;
+  margin: 0 auto 22px;
+  border: 3px solid var(--ink-dim);
+  border-radius: 10px;
+  animation: rotate-hint 2.4s ease-in-out infinite;
+}
+@keyframes rotate-hint {
+  0%, 40% { transform: rotate(90deg); }
+  60%, 100% { transform: rotate(0deg); }
+}
+.rotate-title { font-size: 1.15rem; font-weight: 800; letter-spacing: 0.02em; }
+.rotate-sub { font-size: 0.9rem; color: var(--ink-dim); margin-top: 6px; }
+
+/* ── boot splash ── */
+#boot-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  background: var(--deep);
+  transition: opacity 0.55s ease;
+}
+#boot-splash.gone { opacity: 0; pointer-events: none; }
+.boot-mark {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: 0.36em;
+  text-indent: 0.36em;
+  color: var(--ink);
+}
+.boot-bar {
+  width: min(240px, 56vw);
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+#boot-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--gold), #f3d54a);
+  transition: width 0.3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
