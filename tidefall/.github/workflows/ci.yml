@@ -1,0 +1,29 @@
+name: CI
+
+# Every push proves the game still compiles, passes its tests, and
+# builds. Deployment is handled by the connected host (Cloudflare
+# Pages / Netlify / Vercel), which builds from this same repo.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Type-check
+        run: npm run typecheck
+      - name: Tests
+        run: npm test
+      - name: Build
+        run: npx vite build
+      - name: Balance simulation self-checks
+        run: npm run sim
