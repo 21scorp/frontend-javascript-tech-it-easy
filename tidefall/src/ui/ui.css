@@ -452,6 +452,13 @@
   background: radial-gradient(ellipse at 50% 40%, rgba(232,178,63,.20), transparent 70%);
   pointer-events: none;
 }
+/* "Look here" nudge — quest steps, freshly unlocked content. */
+.tf-navbtn.is-ping .tf-navbtn__puck { animation: tf-ping 1.7s var(--ease-soft) infinite; }
+@keyframes tf-ping {
+  0%, 62%, 100% { transform: translateY(0) scale(1); }
+  70% { transform: translateY(calc(-4 * var(--tf-u))) scale(1.08); }
+  84% { transform: translateY(0) scale(1); }
+}
 .tf-navbtn__dot {
   position: absolute; top: calc(2 * var(--tf-u)); right: 26%;
   min-width: calc(16 * var(--tf-u)); height: calc(16 * var(--tf-u));
@@ -532,6 +539,7 @@
   line-height: 1.1;
 }
 .tf-sheet__titles { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: calc(2 * var(--tf-u)); }
+.tf-sheet__acts { display: flex; align-items: center; gap: var(--sp-2); flex: 0 0 auto; }
 .tf-sheet__body {
   flex: 1 1 auto;
   min-height: 0;
@@ -641,6 +649,15 @@
 @keyframes tf-modal-out { to { opacity: 0; transform: scale(.94); } }
 @keyframes tf-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes tf-fade-out { to { opacity: 0; } }
+.tf-modal__ic {
+  display: grid; place-items: center;
+  width: calc(58 * var(--tf-u)); height: calc(58 * var(--tf-u));
+  margin: 0 auto var(--sp-3);
+  border-radius: var(--r-pill);
+  color: var(--c-gold-300);
+  background: radial-gradient(circle at 50% 30%, rgba(246,205,99,.28), rgba(0,0,0,.3));
+  box-shadow: inset 0 0 0 1px rgba(246,205,99,.35), inset 0 1px 0 rgba(255,255,255,.25);
+}
 .tf-modal__title {
   font-size: var(--t-title); font-weight: var(--w-black);
   text-align: center; text-shadow: var(--ts-hard); margin-bottom: var(--sp-2);

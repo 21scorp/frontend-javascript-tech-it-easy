@@ -114,8 +114,11 @@ export class Feedback {
     if (this.floats >= MAX_FLOATS) return;
     const kind = spec.kind ?? "plain";
     const r = this.host.getBoundingClientRect();
-    const x = (spec.x ?? r.width / 2) + (Math.random() - 0.5) * (spec.spread ?? 26);
-    const y = spec.y ?? r.height * 0.62;
+    // Jitter both axes: a burst that shares one baseline stacks into an
+    // unreadable smear, which is the opposite of a reward.
+    const spread = spec.spread ?? 26;
+    const x = (spec.x ?? r.width / 2) + (Math.random() - 0.5) * spread;
+    const y = (spec.y ?? r.height * 0.62) + (Math.random() - 0.5) * spread * 0.45;
 
     const node = el(`div.tf-float${kind === "xp" ? ".tf-float--xp" : kind === "bad" ? ".tf-float--bad" : ""}`);
     if (kind === "coin") node.appendChild(coinMedal(16));

@@ -26,9 +26,10 @@ type Tick = (dtMs: number, nowMs: number) => boolean; // return false to stop
 const running = new Set<Tick>();
 let rafId = 0;
 let last = 0;
+let frames = 0;
 
 function pump(now: number) {
-  _frames++;
+  frames++;
   const dt = last ? Math.min(now - last, 64) : 16.7;
   last = now;
   for (const tick of [...running]) {
@@ -45,10 +46,10 @@ export function addTick(tick: Tick): Disposer {
   return () => running.delete(tick);
 }
 
-let _frames = 0;
-/** Live animation count — dev overlay / leak checks only. */
+/** Live animation count and pump frame total — dev/QA introspection.
+    Handy for proving a panel tore its animations down on destroy. */
 export function motionStats() {
-  return { active: running.size, scheduled: rafId !== 0, frames: _frames };
+  return { active: running.size, scheduled: rafId !== 0, frames };
 }
 
 /* ── spring ──────────────────────────────────────────────────────
