@@ -1,8 +1,10 @@
-name: Deploy WISP to GitHub Pages
+name: Deploy games to GitHub Pages
 
+# One site, every game. TIDEFALL is a Vite build; WISP and COVE are
+# static and ship as-is. Pushing any of them republishes the lot.
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, claude/one-tab-game-llvwmf]
   workflow_dispatch:
 
 permissions:
@@ -15,16 +17,44 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tidefall/package-lock.json
+
+      - name: Build TIDEFALL
+        working-directory: tidefall
+        run: |
+          npm ci
+          npm run build
+
+      - name: Assemble the site
+        run: |
+          mkdir -p _site/tidefall _site/cove _site/wisp
+          cp -r tidefall/dist/* _site/tidefall/
+          cp -r cove/* _site/cove/
+          # WISP lives at the repo root; copy only what it needs
+          for p in index.html css js assets sw.js manifest.webmanifest; do
+            [ -e "$p" ] && cp -r "$p" _site/wisp/ || true
+          done
+          cp .github/pages-index.html _site/index.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
   deploy:
+    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
       - id: deployment
         uses: actions/deploy-pages@v4

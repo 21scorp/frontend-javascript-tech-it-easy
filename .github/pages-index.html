@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d1b2a">
+<title>Games</title>
+<style>
+  :root { color-scheme: dark; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100svh;
+    display: grid;
+    place-items: center;
+    padding: 28px 20px calc(28px + env(safe-area-inset-bottom));
+    background: radial-gradient(circle at 50% 18%, #16324e, #0d1b2a 68%);
+    color: #f3ead6;
+    font-family: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  main { width: min(420px, 100%); }
+  h1 {
+    font-size: 0.72rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #8ea6bd;
+    text-align: center;
+    margin-bottom: 22px;
+  }
+  ul { list-style: none; display: grid; gap: 12px; }
+  a {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+    border: 1px solid rgba(255,255,255,0.09);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.14s ease, border-color 0.14s ease;
+  }
+  a:active { transform: scale(0.985); }
+  a:focus-visible { outline: 2px solid #e8b23f; outline-offset: 3px; }
+  @media (hover: hover) { a:hover { border-color: rgba(232,178,63,0.5); } }
+  .mark { font-size: 1.6rem; line-height: 1; }
+  .txt { flex: 1; min-width: 0; }
+  .name { font-weight: 800; font-size: 1.05rem; letter-spacing: 0.02em; }
+  .sub { font-size: 0.8rem; color: #9fb2c4; margin-top: 3px; }
+  .tag {
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(232,178,63,0.16);
+    color: #e8b23f;
+    white-space: nowrap;
+  }
+  footer { margin-top: 20px; text-align: center; font-size: 0.72rem; color: #6f8398; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Choose a game</h1>
+  <ul>
+    <li>
+      <a href="./tidefall/">
+        <span class="mark" aria-hidden="true">🌊</span>
+        <span class="txt">
+          <span class="name">TIDEFALL</span>
+          <span class="sub">Idle RPG — gather, craft, build your holding</span>
+        </span>
+        <span class="tag">In build</span>
+      </a>
+    </li>
+    <li>
+      <a href="./cove/">
+        <span class="mark" aria-hidden="true">🎣</span>
+        <span class="txt">
+          <span class="name">COVE</span>
+          <span class="sub">Your little harbor stall</span>
+        </span>
+      </a>
+    </li>
+    <li>
+      <a href="./wisp/">
+        <span class="mark" aria-hidden="true">💛</span>
+        <span class="txt">
+          <span class="name">WISP</span>
+          <span class="sub">Raise a light in the dark</span>
+        </span>
+      </a>
+    </li>
+  </ul>
+  <footer>Add to your home screen to play offline.</footer>
+</main>
+</body>
+</html>
