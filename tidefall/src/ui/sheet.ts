@@ -78,7 +78,6 @@ export class Sheet {
   private lastY = 0;
   private lastT = 0;
   private vel = 0;
-  private fromBody = false;
 
   constructor(options: SheetOptions = {}) {
     this.opts = { detents: options.detents ?? ["peek", "half", "full"], ...options };
@@ -268,7 +267,6 @@ export class Sheet {
     if (!this.open || this.pid !== null) return;
     this.measure();
     this.pid = e.pointerId;
-    this.fromBody = fromBody;
     this.claimed = !fromBody;
     this.undecided = fromBody;
     this.startY = e.clientY;
