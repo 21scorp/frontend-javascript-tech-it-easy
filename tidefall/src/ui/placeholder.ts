@@ -27,7 +27,7 @@ const A = (p: string) => `${import.meta.env.BASE_URL}${p}`;
 
 const SKILLS: SkillCard[] = [
   { id: "fishing",     name: "Fishing",     icon: "fish",      level: 42, xpInLevel: 3120, xpForLevel: 5400, unlockHint: "Tuna at 45",         active: true,  tint: "#4aa8ff" },
-  { id: "woodcutting", name: "Woodcutting", icon: "axe",       level: 38, xpInLevel: 1980, xpForLevel: 4200, unlockHint: "Maple logs at 40",                  tint: "#8bd46a" },
+  { id: "woodcutting", name: "Woodcutting", icon: "log",       level: 38, xpInLevel: 1980, xpForLevel: 4200, unlockHint: "Maple logs at 40",                  tint: "#8bd46a" },
   { id: "mining",      name: "Mining",      icon: "pickaxe",   level: 31, xpInLevel: 2440, xpForLevel: 3100, unlockHint: "Coal seams at 33",                  tint: "#c2b09a" },
   { id: "combat",      name: "Combat",      icon: "sword",     level: 27, xpInLevel: 640,  xpForLevel: 2600, unlockHint: "Tide Wraiths at 30",                tint: "#ff8b7f" },
   { id: "cooking",     name: "Cooking",     icon: "flame",     level: 24, xpInLevel: 1810, xpForLevel: 2200, unlockHint: "Salmon steaks at 25",               tint: "#ffb454" },
@@ -82,7 +82,7 @@ export const demoBag: BagProps = {
     { id: "all",   label: "All" },
     { id: "gear",  label: "Gear",      icon: "sword" },
     { id: "fish",  label: "Fish",      icon: "fish" },
-    { id: "logs",  label: "Logs",      icon: "axe" },
+    { id: "logs",  label: "Logs",      icon: "log" },
     { id: "ore",   label: "Ore",       icon: "pickaxe" },
     { id: "misc",  label: "Materials", icon: "gear" },
   ],
@@ -99,7 +99,7 @@ export const demoBase: BaseProps = {
   incomePerHour: 4260,
   plots: [
     { id: "dock",   state: "built", name: "Fishing Dock", icon: "fish",   level: 4, yield: "180 fish / hr", progress: 0.72, ready: true,  tint: "#4aa8ff" },
-    { id: "lodge",  state: "built", name: "Timber Lodge", icon: "axe",    level: 3, yield: "120 logs / hr", progress: 0.41,               tint: "#8bd46a" },
+    { id: "lodge",  state: "built", name: "Timber Lodge", icon: "log",    level: 3, yield: "120 logs / hr", progress: 0.41,               tint: "#8bd46a" },
     { id: "forge",  state: "building", name: "Forge",     icon: "anvil",  level: 1, progress: 0.63,                                       tint: "#ffb454" },
     { id: "kitchen",state: "built", name: "Smokehouse",   icon: "flame",  level: 2, yield: "60 meals / hr", progress: 0.18,               tint: "#ff8b7f" },
     { id: "p5",     state: "empty" },

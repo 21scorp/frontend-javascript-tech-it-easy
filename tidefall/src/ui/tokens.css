@@ -88,7 +88,7 @@
   --s-aqua:
     linear-gradient(180deg, #8bf3e6 0%, #2fd7c4 40%, #12a897 100%);
   --s-gem:
-    linear-gradient(180deg, #e2ccff 0%, #a06bff 42%, #6a35d6 100%);
+    linear-gradient(180deg, #d6c0f7 0%, #9260e6 44%, #5c2fbe 100%);
 
   /* Fine grain over big surfaces. Kills the "flat CSS" tell. */
   --tex-grain:

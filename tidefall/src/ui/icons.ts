@@ -14,7 +14,7 @@ import { svg } from "./dom";
 
 export type IconName =
   // skills
-  | "fish" | "axe" | "pickaxe" | "sword" | "flame" | "anvil"
+  | "fish" | "axe" | "log" | "pickaxe" | "sword" | "flame" | "anvil"
   | "sprout" | "mushroom" | "bow" | "gear" | "anchor" | "flask"
   // navigation
   | "skilltree" | "bag" | "house" | "tag" | "person"
@@ -33,11 +33,17 @@ const P: Record<IconName, string> = {
      <circle cx="16.8" cy="10.4" r="1.15" class="ic-lo"/>
      <ellipse cx="12" cy="9.4" rx="4" ry="1.1" class="ic-hi"/>`,
   axe:
-    `<g transform="rotate(-14 12 12)">
-       <rect x="15.1" y="1.8" width="2.4" height="20.4" rx="1.2"/>
-       <path d="M15.6 2.8h-4.3C6.6 2.8 3 5.6 3 9.1s3.6 6.3 8.3 6.3h4.3z"/>
-       <path d="M15.6 5h-4.2C8 5 5.4 6.8 5.4 9.1s2.6 4.1 6 4.1h4.2z" class="ic-hi"/>
+    `<g transform="rotate(40 12 12)">
+       <rect x="10.7" y="7" width="2.6" height="15" rx="1.3"/>
+       <path d="M6.2 2.6h11.6c1 0 1.7.9 1.4 1.9l-1.1 3.4c-.2.7-.9 1.2-1.7 1.2H7.6c-.8 0-1.5-.5-1.7-1.2L4.8 4.5c-.3-1 .4-1.9 1.4-1.9z"/>
+       <path d="M7.3 4.4h9.4l-.6 1.9H7.9z" class="ic-hi"/>
      </g>`,
+  log:
+    `<path d="M7.4 7.4h10.2a4.6 4.6 0 0 1 0 9.2H7.4z"/>
+     <ellipse cx="7.4" cy="12" rx="4.2" ry="4.6"/>
+     <ellipse cx="7.4" cy="12" rx="2.6" ry="2.9" class="ic-lo"/>
+     <ellipse cx="7.4" cy="12" rx="1.1" ry="1.2" class="ic-hi"/>
+     <path d="M10.4 7.4h7.2a4.6 4.6 0 0 1 3.4 1.5l-.6 1.1H10.4z" class="ic-hi"/>`,
   pickaxe:
     `<rect x="10.6" y="6.8" width="2.8" height="15.2" rx="1.4"/>
      <path d="M1.2 11.6 3 8.4C5.8 5.9 8.9 4.6 12 4.6s6.2 1.3 9 3.8l1.8 3.2-3.4-.9C17 9 14.5 8.1 12 8.1s-5 .9-7.4 2.6z"/>
