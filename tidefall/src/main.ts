@@ -4,8 +4,41 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import "./style.css";
-import { Application } from "pixi.js";
+import { Application, Assets } from "pixi.js";
 import { Viewport, DESIGN_W } from "./core/viewport";
+
+/* Single-file builds (the shareable artifact) ship their textures as
+   data URIs on window.__TF_ART, keyed by the paths the game asks for.
+   Systems load art two ways — through Pixi's Assets and through a bare
+   Image — so cover both: register aliases, and redirect image src at
+   the property level. Neither touches any system's loading code. */
+function registerInlineArt() {
+  const art = (window as unknown as { __TF_ART?: Record<string, string> }).__TF_ART;
+  if (!art) return 0;
+
+  const lookup = (raw: string): string | null => {
+    if (!raw || raw.startsWith("data:") || raw.startsWith("blob:")) return null;
+    const key = raw.replace(/^\.?\//, "").replace(/^.*?(assets\/)/, "$1").split("?")[0];
+    return art[key] ?? null;
+  };
+
+  for (const [p, src] of Object.entries(art)) {
+    Assets.add({ alias: [p, `/${p}`, `./${p}`], src });
+  }
+
+  const desc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "src");
+  if (desc?.set) {
+    Object.defineProperty(HTMLImageElement.prototype, "src", {
+      configurable: true,
+      enumerable: desc.enumerable,
+      get: desc.get,
+      set(this: HTMLImageElement, value: string) {
+        desc.set!.call(this, lookup(value) ?? value);
+      },
+    });
+  }
+  return Object.keys(art).length;
+}
 
 const frame = document.getElementById("stage-frame") as HTMLElement;
 const guard = document.getElementById("rotate-guard") as HTMLElement;
@@ -17,6 +50,7 @@ const progress = (pct: number) => { bootFill.style.width = `${pct}%`; };
 
 async function boot() {
   progress(10);
+  registerInlineArt();
   const viewport = new Viewport(frame, guard);
 
   const app = new Application();

@@ -1,6 +1,12 @@
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+import { viteSingleFile } from "vite-plugin-singlefile";
 import { fileURLToPath, URL } from "node:url";
+
+/* SINGLE=1 builds the shareable one-file artifact: every module and
+   stylesheet inlined, no service worker, textures injected afterwards
+   as data URIs (see scratchpad/build-tidefall-artifact.js). */
+const SINGLE = process.env.SINGLE === "1";
 
 export default defineConfig({
   base: "./",
@@ -13,7 +19,8 @@ export default defineConfig({
     chunkSizeWarningLimit: 1200,
   },
   plugins: [
-    VitePWA({
+    ...(SINGLE ? [viteSingleFile({ removeViteModuleLoader: true })] : []),
+    ...(SINGLE ? [] : [VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "icons/*.png"],
       manifest: {
@@ -37,6 +44,6 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,png,webp,json,woff2,mp3,ogg}"],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
       },
-    }),
+    })]),
   ],
 });
