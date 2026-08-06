@@ -131,8 +131,8 @@ export class SkillsPanel extends BasePanel<SkillsProps> {
 
     const node = el("button.tf-skill", { type: "button" },
       lvl,
-      el("span.tf-skill__ring", {}, ring.node, iconSlot),
-      name, xp, hint, tag, lock,
+      el("span.tf-skill__ring", {}, ring.node, iconSlot, lock),
+      name, xp, hint, tag,
     );
     on(node, "click", () => this.state.onSelect?.(s.id));
 
@@ -158,6 +158,8 @@ export class SkillsPanel extends BasePanel<SkillsProps> {
     setText(c.hint, s.unlockHint ?? "");
     c.tag.hidden = !s.active;
     c.lock.hidden = !s.locked;
+    // A "0" level chip on a locked skill is noise; the padlock says it.
+    c.lvl.hidden = !!s.locked;
     c.node.classList.toggle("is-active", !!s.active);
     c.node.classList.toggle("is-locked", !!s.locked);
     c.node.setAttribute(

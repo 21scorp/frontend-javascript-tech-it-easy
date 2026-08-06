@@ -73,6 +73,10 @@ async function mount(app: Application, viewport: Viewport): Promise<HarnessHandl
   for (let y = 0; y < 2400; y += 120) {
     bg.rect(0, y, DESIGN_W, 1).fill({ color: 0xffffff, alpha: 0.05 });
   }
+  // ground lines: every actor's feet must sit exactly on one
+  for (const gy of [760, 1180, 1560, 2240]) {
+    bg.rect(0, gy - 1, DESIGN_W, 2).fill({ color: 0x63d2d8, alpha: 0.55 });
+  }
   root.addChild(bg);
 
   const label = (text: string, x: number, y: number, size = 26, color = 0xdfe9f2) => {
@@ -137,10 +141,10 @@ async function mount(app: Application, viewport: Viewport): Promise<HarnessHandl
     a.workAt(i === 0 ? 150 : 930, faceY, "gather_chop");
     facers.push(a);
   }
-  label("FACING · each swings AT the stump", DESIGN_W / 2, 940, 30, 0x8fd6e0);
+  label("FACING · each swings AT the stump", DESIGN_W / 2, 900, 30, 0x8fd6e0);
 
   /* ── the player, walking ── */
-  label("PLAYER · walkTo + gather", DESIGN_W / 2, 1330, 30, 0x8fd6e0);
+  label("PLAYER · walkTo + gather", DESIGN_W / 2, 1238, 30, 0x8fd6e0);
   const marks = new Graphics();
   marks.circle(200, 1560, 14).fill({ color: 0xf3c54a, alpha: 0.5 });
   marks.circle(880, 1560, 14).fill({ color: 0xf3c54a, alpha: 0.5 });

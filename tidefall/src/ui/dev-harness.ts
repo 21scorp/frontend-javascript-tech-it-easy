@@ -9,6 +9,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import { UISystem } from "./index";
+import { motionStats } from "./motion";
 import type { NavDest } from "./nav";
 import type { Detent } from "./sheet";
 
@@ -45,6 +46,7 @@ interface Harness {
   reward(): void;
   loading(on: boolean): void;
   freeze(): void;
+  stats(): { active: number; scheduled: boolean; frames: number };
 }
 
 const harness: Harness = {
@@ -83,6 +85,7 @@ const harness: Harness = {
     ui.panels.character.setProps({ loading: on });
   },
   freeze: () => window.clearInterval(timer),
+  stats: () => motionStats(),
 };
 
 (window as unknown as Record<string, unknown>).TIDEFALL_UI = harness;

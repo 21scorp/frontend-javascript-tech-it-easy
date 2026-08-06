@@ -119,12 +119,13 @@ export class Actor {
     return this.anim.play(state, opts);
   }
 
-  /** Loop a gather/attack state until told otherwise, facing the work. */
-  workAt(targetX: number, targetY: number, state: AnimStateId): void {
+  /** Loop a gather/attack state until told otherwise, facing the work.
+      targetY is taken for symmetry with walkTo and for callers that
+      already have a world point; only x decides which way you turn. */
+  workAt(targetX: number, _targetY: number, state: AnimStateId): void {
     this.stop();
     this.restState = state;
     this.faceTowards(targetX, 1);
-    void targetY;
     this.anim.play(state, { force: true });
   }
 
@@ -227,11 +228,12 @@ export class Actor {
   render(alpha: number): void {
     const ix = this.px + (this.x - this.px) * alpha;
     const iy = this.py + (this.y - this.py) * alpha;
-    this.view.position.set(
-      ix + motionOffsetX(this.anim, this.facing),
-      iy + motionOffsetY(this.anim, this.clock),
-    );
+    this.view.position.set(ix, iy);
     this.view.zIndex = Math.round(iy);
+    this.paperdoll.setMotion(
+      motionOffsetX(this.anim, this.facing),
+      motionOffsetY(this.anim, this.clock),
+    );
     this.paperdoll.apply(this.anim, this.facing);
   }
 

@@ -28,6 +28,7 @@ let rafId = 0;
 let last = 0;
 
 function pump(now: number) {
+  _frames++;
   const dt = last ? Math.min(now - last, 64) : 16.7;
   last = now;
   for (const tick of [...running]) {
@@ -42,6 +43,12 @@ export function addTick(tick: Tick): Disposer {
   running.add(tick);
   if (!rafId) rafId = requestAnimationFrame(pump);
   return () => running.delete(tick);
+}
+
+let _frames = 0;
+/** Live animation count — dev overlay / leak checks only. */
+export function motionStats() {
+  return { active: running.size, scheduled: rafId !== 0, frames: _frames };
 }
 
 /* ── spring ──────────────────────────────────────────────────────
@@ -95,10 +102,19 @@ export class Spring {
     if (prefersReducedMotion()) { this.set(target); this.onRest?.(); return; }
     if (this.stop) return;                 // already integrating
     this.stop = addTick((dtMs) => {
-      const dt = Math.min(dtMs, 32) / 1000;
-      const a = -this.k * (this.x - this.target) - this.c * this.v;
-      this.v += a * dt;
-      this.x += this.v * dt;
+      // Sub-step at a fixed 60Hz. A single big dt is unstable at this
+      // stiffness, but clamping it instead makes the sheet crawl in
+      // wall-clock terms on a device that is dropping frames — which is
+      // exactly the device where a sluggish sheet is most noticeable.
+      let remaining = Math.min(dtMs, 120) / 1000;
+      const STEP = 1 / 60;
+      while (remaining > 0) {
+        const dt = Math.min(STEP, remaining);
+        remaining -= dt;
+        const a = -this.k * (this.x - this.target) - this.c * this.v;
+        this.v += a * dt;
+        this.x += this.v * dt;
+      }
       if (Math.abs(this.x - this.target) < this.eps && Math.abs(this.v) < this.eps * 8) {
         this.x = this.target; this.v = 0;
         this.onUpdate(this.x, this.v);

@@ -27,6 +27,7 @@ interface Handle {
   taps: unknown[];
   goTo(id: AnchorId): void;
   movePlayer(x: number, y: number): void;
+  step(seconds: number): void;
   setWeather(w: Weather): void;
   setTime(t: number): void;
   setZoom(z: number): void;
@@ -104,6 +105,17 @@ export async function mountWorldDev(opts: { quality?: QualityTier } = {}): Promi
       player.position.set(p.x, p.y);
       player.zIndex = p.y;
     },
+    step(seconds) {
+      // Drive the simulation directly. Wall-clock waits are useless for
+      // timing assertions under a software renderer running at 1 fps.
+      const n = Math.round(seconds / FIXED);
+      for (let i = 0; i < n; i++) { clock += FIXED; system.update(FIXED, clock); }
+      system.render(clock);
+      // Pixi only refreshes worldTransform during an actual render, and
+      // hit testing reads it. Without this, a stepped camera move leaves
+      // every node un-tappable until the next real frame.
+      app.render();
+    },
     setWeather: (w) => system.setWeather(w),
     setTime: (t) => { system.atmosphere.paused = true; system.setTimeOfDay(t); },
     setZoom: (z) => system.camera.setZoom(z),
@@ -111,5 +123,6 @@ export async function mountWorldDev(opts: { quality?: QualityTier } = {}): Promi
 
   (window as unknown as Record<string, unknown>).WORLD_DEV = handle;
   (window as unknown as Record<string, unknown>).WORLD_CFG = WORLD;
+  (window as unknown as Record<string, unknown>).WORLD_QUALITY = quality;
   return handle;
 }

@@ -65,21 +65,29 @@ function pack(r: number, g: number, b: number) {
   return (clamp255(r) << 16) | (clamp255(g) << 8) | clamp255(b);
 }
 
-/** Multiply factor that turns the art's painted skin into `target`. */
+/** Multiply factor that turns the art's painted skin into `target`.
+    Pulled back toward white and floored: a straight ratio crushes the
+    painted line work at the dark end and the face becomes a hole. */
 function skinTint(target: number): number {
   const [tr, tg, tb] = rgb(target);
   const [br, bg, bb] = rgb(ART_BASE_SKIN);
-  return pack(Math.min(255, (tr / br) * 255), Math.min(255, (tg / bg) * 255), Math.min(255, (tb / bb) * 255));
+  const f = (t: number, base: number) => Math.max(88, Math.min(255, (t / base) * 255));
+  return mixColor(0xffffff, pack(f(tr, br), f(tg, bg), f(tb, bb)), 0.90);
 }
 
-/** Multiply factor that reads as "this garment is now that colour":
-    the hue at full strength, darkened only as far as the colour is. */
-function clothTint(color: number): number {
+/** Multiply factor that reads as "this garment is now that colour".
+    Deliberately gentle: the tint carries the hue across the whole
+    painted garment while the drawn piece on top carries the shape. */
+function clothTint(color: number, strength: number): number {
   const [r, g, b] = rgb(color);
-  const max = Math.max(r, g, b, 1);
-  const luma = (0.3 * r + 0.6 * g + 0.1 * b) / 255;
-  const k = (0.42 + 0.58 * luma) * (255 / max);
-  return pack(r * k, g * k, b * k);
+  // Take the hue at full brightness first: multiplying by the raw
+  // colour would drag every garment toward mud, because multiply can
+  // only ever darken what the painter already lit.
+  const k = 255 / Math.max(r, g, b, 1);
+  const nr = r * k, ng = g * k, nb = b * k;
+  const luma = (0.3 * nr + 0.6 * ng + 0.1 * nb) / 255;
+  const value = 0.58 + 0.42 * luma;
+  return mixColor(0xffffff, pack(nr * value, ng * value, nb * value), strength);
 }
 
 function mixColor(a: number, b: number, t: number): number {
@@ -89,6 +97,7 @@ function mixColor(a: number, b: number, t: number): number {
 
 const shade = (c: number, t: number) => mixColor(c, 0x000000, t);
 const lift = (c: number, t: number) => mixColor(c, 0xffffff, t);
+const clampAbs = (v: number, m: number) => (v > m ? m : v < -m ? -m : v);
 
 /* ─────────────── the paperdoll ─────────────── */
 
@@ -181,17 +190,22 @@ export class Paperdoll {
     const main = getEquipped(a, "mainHand");
     const off = getEquipped(a, "offHand");
 
+    // The torso band also covers bare arms, so it stays a whisper;
+    // legs and boots are all garment, so they take the full colour.
     this.tintHead = skinTint(skin);
-    this.tintTorso = chest ? clothTint(chest.primary) : 0xffffff;
-    this.tintLegs = legs ? clothTint(legs.primary) : 0xffffff;
-    this.tintFeet = feet ? clothTint(feet.primary) : 0xffffff;
+    // A shirt draws no panel, so its tint has to carry the whole
+    // change; armour draws a panel, so its tint stays out of the way.
+    this.tintTorso = chest ? clothTint(chest.primary, chest.shape === "tunic" ? 0.80 : 0.45) : 0xffffff;
+    this.tintLegs = legs ? clothTint(legs.primary, 0.88) : 0xffffff;
+    this.tintFeet = feet ? clothTint(feet.primary, 0.88) : 0xffffff;
+    this.bands.head.visible = true;          // skin always recolours
     this.bands.torso.visible = !!chest;
     this.bands.legs.visible = !!legs;
     this.bands.feet.visible = !!feet;
     this.lastFlash = -1;
 
     drawHair(this.hairG, getHairStyle(a).shape, hair, skin, body.shoulder);
-    drawHeadgear(this.headG, head, hair);
+    drawHeadgear(this.headG, head);
     drawChest(this.chestG, chest, body.shoulder);
     drawLegs(this.legsG, legs);
     drawBack(this.backG, back);
@@ -203,6 +217,17 @@ export class Paperdoll {
   }
 
   /* ─────────────── per-frame pose ─────────────── */
+
+  /** Procedural bob/hop/recoil, applied to the BODY only — the ground
+      shadow stays on the ground and just tightens as the actor lifts. */
+  setMotion(dx: number, dy: number): void {
+    this.flip.position.set(dx, dy);
+    const g = this.shadow;
+    if (!g) return;
+    const lift = Math.min(0.45, Math.max(0, -dy) / this.heightUnits * 1.8);
+    g.scale.set(1 - lift, 1 - lift * 0.6);
+    g.alpha = 1 - lift * 0.8;
+  }
 
   /** Drive the doll from an animator. Allocation-free. */
   apply(anim: Animator, facing: number): void {
@@ -258,17 +283,18 @@ export class Paperdoll {
   }
 
   private placeOverlays(sheet: LoadedSheet, frame: number, s: number, sgn: number, alpha: number): void {
+    // Source pixels → local design units. Written out rather than
+    // wrapped in helpers: this runs for every actor, every frame.
     const a = sheet.heads[frame];
-    const lx = (px: number) => (px - sheet.anchorX) * s * sgn;
-    const ly = (py: number) => (py - sheet.feetY) * s;
+    const kx = s * sgn, ax = sheet.anchorX, fy = sheet.feetY;
 
     const hw = a.headW * s;
-    const hx = lx(a.headCx);
-    const hy = ly(a.headTop) + hw * HEAD_ASPECT * 0.5;
-    const neckY = ly(a.neckY);
-    const hipY = ly(a.hipY);
+    const hx = (a.headCx - ax) * kx;
+    const hy = (a.headTop - fy) * s + hw * HEAD_ASPECT * 0.5;
+    const neckY = (a.neckY - fy) * s;
+    const hipY = (a.hipY - fy) * s;
     const torsoH = Math.max(1, hipY - neckY);
-    const shoulderW = hw * 1.62 * this.bodyWidth;
+    const shoulderW = hw * 1.15 * this.bodyWidth;
 
     this.hairG.position.set(hx, hy);
     this.hairG.scale.set(hw);
@@ -277,28 +303,36 @@ export class Paperdoll {
     this.headG.scale.set(hw);
     this.headG.alpha = alpha;
 
-    const torsoX = hx * 0.5;
+    // The torso axis runs neck → hip. When a pose leans (chopping,
+    // casting) the head drifts off the ground anchor, and tilting by
+    // that drift keeps a tabard on the chest instead of in mid-air.
+    const lean = clampAbs(Math.atan2(-hx * 1.45, torsoH), 0.55);
+    const torsoX = hx * 0.55;
+    // Cloth pieces sit just under full opacity so the painted folds
+    // and pocket shadows still read through the flat colour.
     this.chestG.position.set(torsoX, neckY);
     this.chestG.scale.set(shoulderW, torsoH);
-    this.chestG.alpha = alpha;
+    this.chestG.rotation = lean;
+    this.chestG.alpha = alpha * 0.84;
     this.backG.position.set(torsoX, neckY);
     this.backG.scale.set(shoulderW, torsoH);
-    this.backG.alpha = alpha;
+    this.backG.rotation = lean;
+    this.backG.alpha = alpha * 0.95;
 
     const legH = Math.max(1, -hipY);
-    this.legsG.position.set(0, hipY);
-    this.legsG.scale.set(hw * 1.5 * this.bodyWidth, legH);
-    this.legsG.alpha = alpha;
+    this.legsG.position.set(torsoX * 0.4, hipY);
+    this.legsG.scale.set(hw * 1.02 * this.bodyWidth, legH);
+    this.legsG.alpha = alpha * 0.90;
 
     // Held gear only when the sheet has not already painted a tool in.
     const holdable = !sheet.def.toolBaked;
-    const handY = neckY + torsoH * 0.66;
+    const handY = neckY + torsoH * 0.70;
     this.mainG.visible = holdable && this.hasMain;
     this.offG.visible = holdable && this.hasOff;
-    this.mainG.position.set(torsoX + hw * 0.66, handY);
+    this.mainG.position.set(torsoX + hw * 0.54, handY);
     this.mainG.scale.set(hw);
     this.mainG.alpha = alpha;
-    this.offG.position.set(torsoX - hw * 0.52, handY);
+    this.offG.position.set(torsoX - hw * 0.50, handY);
     this.offG.scale.set(hw);
     this.offG.alpha = alpha;
   }
@@ -388,184 +422,224 @@ export class Paperdoll {
      hair / headgear / hands → 1 unit = head width, origin = head centre
      chest / back            → x: 1 unit = shoulder width, y: neck→hip
      legs                    → x: 1 unit = hip width,      y: hip→floor
+
+   Landmarks inside the head box, measured off the placeholder art:
+     crown -0.53 · hairline -0.20 · brow -0.14 · eyes -0.05 ·
+     chin +0.31 · shoulders +0.58
+   Nothing may reach below -0.02 across the middle of the face, or
+   the character ends up wearing a bucket.
    ═══════════════════════════════════════════════════════ */
+
+/** Skull cap sized to hide the painted hair without eating the face. */
+function hairCap(g: Graphics, color: number, puff: number): void {
+  g.ellipse(0, -0.33, 0.50 + puff, 0.24 + puff).fill(color);
+  // temples/sideburns, kept clear of the eye line at ±0.19
+  for (const sx of [-1, 1]) g.ellipse(sx * 0.40, -0.14, 0.12, 0.13).fill(color);
+  // a fringe that dips over the forehead only
+  g.moveTo(-0.44, -0.30);
+  g.quadraticCurveTo(-0.10, -0.12, 0.30, -0.19);
+  g.quadraticCurveTo(0.46, -0.24, 0.48, -0.34);
+  g.closePath().fill(color);
+}
 
 function drawHair(g: Graphics, shape: string, color: number, skin: number, shoulder: number): void {
   g.clear();
-  const dark = shade(color, 0.28);
-  const glow = lift(color, 0.22);
+  const dark = shade(color, 0.30);
+  const glow = lift(color, 0.24);
 
   if (shape === "shaved") {
-    // No hair to hide the painted hair behind — repaint the skull in skin.
-    g.ellipse(0, -0.26, 0.50, 0.36).fill(skin);
-    g.ellipse(-0.06, -0.34, 0.30, 0.18).fill(lift(skin, 0.10));
-    g.ellipse(0, -0.30, 0.50, 0.30).fill({ color, alpha: 0.20 });
+    // Nothing to hide behind — repaint the skull in skin instead.
+    g.ellipse(0, -0.31, 0.47, 0.23).fill(skin);
+    for (const sx of [-1, 1]) g.ellipse(sx * 0.39, -0.15, 0.10, 0.12).fill(skin);
+    g.ellipse(0, -0.33, 0.44, 0.19).fill({ color, alpha: 0.22 });
     return;
   }
 
-  // the cap every style shares: covers the painted hair, tufts included
-  const puff = shape === "curls" ? 0.07 : shape === "wave" || shape === "long" ? 0.04 : 0.01;
-  g.ellipse(0, -0.30 - puff * 0.5, 0.53 + puff, 0.38 + puff).fill(color);
-  g.moveTo(-0.53, -0.16);
-  g.quadraticCurveTo(-0.30, -0.02, 0.02, -0.06);
-  g.quadraticCurveTo(0.34, -0.10, 0.52, -0.24);
-  g.lineTo(0.52, -0.40); g.lineTo(-0.53, -0.40); g.closePath();
-  g.fill(color);
+  // long styles fall behind the shoulders, so they go down first
+  if (shape === "long") {
+    for (const sx of [-1, 1]) {
+      g.moveTo(sx * 0.44, -0.34);
+      g.quadraticCurveTo(sx * 0.50, 0.06, sx * 0.42, 0.36);
+      g.lineTo(sx * 0.26, 0.34);
+      g.quadraticCurveTo(sx * 0.34, 0.04, sx * 0.32, -0.28);
+      g.closePath().fill(dark);
+    }
+  }
+  if (shape === "ponytail") {
+    g.ellipse(-0.46, 0.06, 0.13, 0.28).fill(dark);
+    g.ellipse(-0.45, -0.16, 0.10, 0.10).fill(color);
+  }
+  if (shape === "braids") {
+    for (const sx of [-1, 1]) {
+      g.roundRect(sx * 0.42 - 0.055, -0.18, 0.11, 0.52, 0.055).fill(dark);
+      g.circle(sx * 0.42, 0.32, 0.065).fill(glow);
+    }
+  }
+
+  hairCap(g, color, shape === "curls" ? 0.05 : shape === "wave" ? 0.02 : 0);
 
   switch (shape) {
     case "crop":
-      g.ellipse(-0.10, -0.44, 0.26, 0.12).fill(glow);
+      g.ellipse(-0.12, -0.42, 0.20, 0.07).fill(glow);
       break;
     case "wave":
-      g.moveTo(0.10, -0.20);
-      g.quadraticCurveTo(0.44, -0.30, 0.56, -0.52);
-      g.quadraticCurveTo(0.30, -0.44, 0.12, -0.36);
+      g.moveTo(0.06, -0.24);
+      g.quadraticCurveTo(0.36, -0.32, 0.50, -0.48);
+      g.quadraticCurveTo(0.28, -0.42, 0.08, -0.36);
       g.closePath().fill(glow);
       break;
     case "curls":
-      for (let i = 0; i < 7; i++) {
-        const ang = Math.PI * (0.08 + (i / 6) * 0.84);
-        g.circle(-Math.cos(ang) * 0.48, -0.30 - Math.sin(ang) * 0.30, 0.13)
+      for (let i = 0; i < 6; i++) {
+        const ang = Math.PI * (0.12 + (i / 5) * 0.76);
+        g.circle(-Math.cos(ang) * 0.44, -0.33 - Math.sin(ang) * 0.18, 0.10)
           .fill(i % 2 ? color : glow);
       }
       break;
-    case "ponytail":
-      g.ellipse(-0.46, -0.02, 0.15, 0.30).fill(dark);
-      g.ellipse(-0.44, -0.26, 0.11, 0.10).fill(color);
-      break;
-    case "braids":
-      for (const sx of [-1, 1]) {
-        g.roundRect(sx * 0.40 - 0.07, -0.24, 0.14, 0.62, 0.07).fill(dark);
-        g.circle(sx * 0.40, 0.36, 0.08).fill(glow);
-      }
+    case "topknot":
+      g.roundRect(-0.07, -0.56, 0.14, 0.12, 0.05).fill(dark);
+      g.circle(0.0, -0.62, 0.14).fill(color);
+      g.circle(-0.03, -0.65, 0.07).fill(glow);
       break;
     case "long":
-      g.moveTo(-0.54, -0.32);
-      g.quadraticCurveTo(-0.66, 0.30, -0.46, 0.76);
-      g.lineTo(0.46, 0.76);
-      g.quadraticCurveTo(0.64, 0.26, 0.52, -0.32);
-      g.lineTo(0.52, -0.10);
-      g.quadraticCurveTo(0.10, 0.06, -0.54, -0.10);
-      g.closePath().fill(dark);
-      g.ellipse(-0.12, -0.44, 0.24, 0.10).fill(glow);
-      break;
-    case "topknot":
-      g.circle(0.02, -0.62, 0.17).fill(color);
-      g.circle(0.02, -0.62, 0.10).fill(glow);
+      g.ellipse(-0.14, -0.42, 0.20, 0.07).fill(glow);
       break;
   }
-  // a broad shoulder reads as a heavier hairline
-  if (shoulder > 0.7) g.ellipse(0, -0.14, 0.50, 0.09).fill(dark);
+  // a heavier build carries a heavier hairline
+  if (shoulder > 0.7) g.ellipse(0, -0.31, 0.46, 0.10).fill({ color: dark, alpha: 0.5 });
 }
 
-function drawHeadgear(g: Graphics, item: EquipItem | null, hairColor: number): void {
+function drawHeadgear(g: Graphics, item: EquipItem | null): void {
   g.clear();
   if (!item) return;
   const p = item.primary, s = item.secondary, a = item.accent;
   switch (item.shape) {
     case "straw":
-      g.ellipse(0, -0.26, 0.92, 0.22).fill(p);
-      g.ellipse(0, -0.30, 0.92, 0.18).fill(lift(p, 0.12));
-      g.ellipse(0.02, -0.46, 0.40, 0.24).fill(p);
-      g.ellipse(0.02, -0.34, 0.42, 0.10).fill(s);
+      g.ellipse(0, -0.25, 0.84, 0.16).fill(p);
+      g.ellipse(0, -0.29, 0.84, 0.13).fill(lift(p, 0.14));
+      g.ellipse(0.01, -0.43, 0.33, 0.18).fill(p);
+      g.ellipse(0.01, -0.33, 0.34, 0.07).fill(s);
       break;
     case "cap":
-      g.ellipse(0, -0.36, 0.52, 0.30).fill(p);
-      g.moveTo(0.10, -0.32); g.quadraticCurveTo(0.62, -0.36, 0.72, -0.24);
-      g.quadraticCurveTo(0.50, -0.20, 0.10, -0.22); g.closePath().fill(s);
-      g.ellipse(-0.12, -0.48, 0.24, 0.09).fill(lift(p, 0.18));
-      g.circle(0.34, -0.34, 0.05).fill(a);
+      g.ellipse(0, -0.36, 0.46, 0.21).fill(p);
+      g.moveTo(0.08, -0.32); g.quadraticCurveTo(0.52, -0.34, 0.62, -0.25);
+      g.quadraticCurveTo(0.42, -0.22, 0.08, -0.24); g.closePath().fill(s);
+      g.ellipse(-0.12, -0.45, 0.18, 0.06).fill(lift(p, 0.20));
+      g.circle(0.26, -0.36, 0.045).fill(a);
       break;
     case "hood":
-      g.moveTo(-0.60, 0.16);
-      g.quadraticCurveTo(-0.72, -0.62, 0.06, -0.66);
-      g.quadraticCurveTo(0.68, -0.62, 0.60, 0.10);
-      g.quadraticCurveTo(0.44, 0.22, 0.34, 0.06);
-      g.quadraticCurveTo(0.40, -0.34, 0.02, -0.38);
-      g.quadraticCurveTo(-0.34, -0.34, -0.30, 0.16);
+      g.moveTo(-0.52, 0.30);
+      g.quadraticCurveTo(-0.62, -0.44, 0.02, -0.56);
+      g.quadraticCurveTo(0.58, -0.46, 0.54, 0.10);
+      g.lineTo(0.36, 0.10);
+      g.quadraticCurveTo(0.40, -0.30, 0.00, -0.36);
+      g.quadraticCurveTo(-0.34, -0.30, -0.30, 0.30);
       g.closePath().fill(p);
-      g.moveTo(-0.30, 0.16); g.quadraticCurveTo(-0.34, -0.30, 0.02, -0.36);
-      g.quadraticCurveTo(-0.12, -0.10, -0.10, 0.20); g.closePath().fill(s);
-      g.ellipse(-0.34, -0.48, 0.20, 0.10).fill(lift(p, 0.14));
+      g.moveTo(-0.30, 0.30); g.quadraticCurveTo(-0.36, -0.22, 0.00, -0.34);
+      g.quadraticCurveTo(-0.14, -0.04, -0.12, 0.32); g.closePath().fill(s);
+      g.ellipse(-0.30, -0.40, 0.16, 0.07).fill(lift(p, 0.16));
       break;
     case "helm":
-      g.moveTo(-0.54, -0.10);
-      g.quadraticCurveTo(-0.56, -0.66, 0.02, -0.68);
-      g.quadraticCurveTo(0.58, -0.66, 0.56, -0.10);
-      g.lineTo(0.44, -0.10);
-      g.quadraticCurveTo(0.46, -0.44, 0.02, -0.48);
-      g.quadraticCurveTo(-0.44, -0.44, -0.42, -0.10);
+      g.moveTo(-0.48, -0.14);
+      g.quadraticCurveTo(-0.50, -0.58, 0.02, -0.60);
+      g.quadraticCurveTo(0.52, -0.58, 0.50, -0.14);
       g.closePath().fill(p);
-      g.roundRect(-0.56, -0.16, 1.12, 0.12, 0.06).fill(s);
-      g.roundRect(0.16, -0.30, 0.10, 0.34, 0.04).fill(p);
-      g.ellipse(-0.16, -0.54, 0.22, 0.08).fill(a);
+      g.roundRect(-0.50, -0.20, 1.00, 0.10, 0.05).fill(s);
+      g.roundRect(0.10, -0.20, 0.09, 0.22, 0.04).fill(lift(p, 0.06));
+      g.ellipse(-0.14, -0.46, 0.18, 0.07).fill(a);
       break;
     case "circlet":
-      g.roundRect(-0.50, -0.34, 1.00, 0.11, 0.05).fill(p);
-      g.roundRect(-0.50, -0.30, 1.00, 0.04, 0.02).fill(s);
-      g.circle(0.06, -0.30, 0.11).fill(a);
-      g.circle(0.06, -0.30, 0.05).fill(lift(a, 0.5));
+      g.roundRect(-0.44, -0.28, 0.88, 0.09, 0.04).fill(p);
+      g.roundRect(-0.44, -0.25, 0.88, 0.03, 0.015).fill(s);
+      g.circle(0.04, -0.25, 0.09).fill(a);
+      g.circle(0.04, -0.25, 0.04).fill(lift(a, 0.5));
       break;
     default:
-      g.ellipse(0, -0.34, 0.52, 0.28).fill(p);
-      g.ellipse(-0.10, -0.46, 0.22, 0.08).fill(lift(p, 0.2));
+      g.ellipse(0, -0.34, 0.46, 0.21).fill(p);
+      g.ellipse(-0.10, -0.44, 0.18, 0.06).fill(lift(p, 0.2));
       break;
   }
-  // a whisper of the hair colour so hats never look pasted on
-  g.ellipse(0, -0.08, 0.46, 0.10).fill({ color: shade(hairColor, 0.25), alpha: 0.35 });
+}
+
+/** Shoulder-to-hem body of a garment: rounded shoulders, a waisted
+    middle, a hem. Shared by every chest shape so they read as one set. */
+function garmentBody(g: Graphics, w: number, top: number, hem: number, flare: number): void {
+  g.moveTo(-w * 0.86, top);
+  g.quadraticCurveTo(-w, top + 0.06, -w * 0.94, top + 0.30);
+  g.quadraticCurveTo(-w * 0.86, hem * 0.62, -w * (0.92 + flare), hem);
+  g.lineTo(w * (0.92 + flare), hem);
+  g.quadraticCurveTo(w * 0.86, hem * 0.62, w * 0.94, top + 0.30);
+  g.quadraticCurveTo(w, top + 0.06, w * 0.86, top);
+  g.closePath();
 }
 
 function drawChest(g: Graphics, item: EquipItem | null, shoulder: number): void {
   g.clear();
   if (!item) return;
   const p = item.primary, s = item.secondary, a = item.accent;
-  const w = 0.34 + shoulder * 0.07;
+  // Narrow on purpose: the painted shirt and both arms stay visible
+  // down the sides, which is what stops this reading as a signboard.
+  const w = 0.29 + shoulder * 0.05;
+  const hi = lift(p, 0.18), lo = shade(p, 0.22);
+  const ink = { width: 0.035, color: shade(p, 0.55), alpha: 0.85 } as const;
 
   switch (item.shape) {
     case "vest":
-      g.moveTo(-w, 0.02); g.lineTo(-0.12, 0.02); g.lineTo(-0.18, 1.02); g.lineTo(-w - 0.02, 1.00);
-      g.closePath().fill(p);
-      g.moveTo(w, 0.02); g.lineTo(0.12, 0.02); g.lineTo(0.18, 1.02); g.lineTo(w + 0.02, 1.00);
-      g.closePath().fill(p);
-      g.roundRect(-w - 0.02, 0.62, w * 2 + 0.04, 0.14, 0.05).fill(s);
-      g.circle(0.0, 0.69, 0.05).fill(a);
+      for (const sx of [-1, 1]) {
+        g.moveTo(sx * w * 0.92, 0.06);
+        g.quadraticCurveTo(sx * w, 0.36, sx * w * 0.86, 0.74);
+        g.lineTo(sx * 0.10, 0.76);
+        g.quadraticCurveTo(sx * 0.16, 0.36, sx * 0.09, 0.14);
+        g.closePath().fill(sx < 0 ? p : hi);
+      }
+      g.roundRect(-w * 0.94, 0.50, w * 1.88, 0.10, 0.04).fill(s);
+      g.circle(w * 0.44, 0.55, 0.038).fill(a);
       break;
     case "robe":
-      g.moveTo(-w, 0.00);
-      g.quadraticCurveTo(-w - 0.16, 0.70, -w - 0.24, 1.55);
-      g.lineTo(w + 0.24, 1.55);
-      g.quadraticCurveTo(w + 0.16, 0.70, w, 0.00);
-      g.closePath().fill(p);
-      g.moveTo(-0.10, 0.00); g.lineTo(0.10, 0.00); g.lineTo(0.06, 1.52); g.lineTo(-0.06, 1.52);
-      g.closePath().fill(s);
-      g.roundRect(-w - 0.04, 0.60, w * 2 + 0.08, 0.10, 0.04).fill(a);
+      garmentBody(g, w, 0.04, 1.16, 0.22);
+      g.fill(p); g.stroke(ink);
+      g.moveTo(-0.08, 0.06); g.lineTo(0.08, 0.06); g.lineTo(0.05, 1.14); g.lineTo(-0.05, 1.14);
+      g.closePath().fill(hi);
+      g.roundRect(-w * 0.95, 0.54, w * 1.90, 0.08, 0.035).fill(a);
+      g.moveTo(-0.19, 0.02); g.lineTo(0.19, 0.02); g.lineTo(0, 0.26); g.closePath().fill(s);
       break;
     case "mail":
-      g.roundRect(-w, 0.00, w * 2, 1.08, 0.12).fill(p);
-      for (let i = 0; i < 5; i++) {
-        g.roundRect(-w + 0.02, 0.12 + i * 0.19, w * 2 - 0.04, 0.06, 0.03).fill({ color: s, alpha: 0.8 });
+      garmentBody(g, w, 0.04, 0.86, 0.02);
+      g.fill(p); g.stroke(ink);
+      for (let i = 0; i < 4; i++) {
+        g.roundRect(-w * 0.82, 0.16 + i * 0.16, w * 1.64, 0.04, 0.02).fill({ color: s, alpha: 0.7 });
       }
-      g.roundRect(-0.14, -0.04, 0.28, 0.16, 0.07).fill(s);
+      g.roundRect(-0.12, -0.02, 0.24, 0.11, 0.05).fill(s);
       break;
     case "plate":
-      g.roundRect(-w, -0.02, w * 2, 1.06, 0.14).fill(p);
-      g.ellipse(-w, 0.14, 0.20, 0.20).fill(lift(p, 0.10));
-      g.ellipse(w, 0.14, 0.20, 0.20).fill(lift(p, 0.10));
-      g.moveTo(-0.06, 0.06); g.lineTo(0.06, 0.06); g.lineTo(0.04, 1.00); g.lineTo(-0.04, 1.00);
-      g.closePath().fill(s);
-      g.circle(0.0, 0.34, 0.10).fill(a);
-      g.roundRect(-w, 0.86, w * 2, 0.16, 0.06).fill(s);
+      garmentBody(g, w, 0.02, 0.84, 0.04);
+      g.fill(p); g.stroke(ink);
+      g.moveTo(-w * 0.90, 0.04);
+      g.quadraticCurveTo(0, 0.34, w * 0.90, 0.04);
+      g.quadraticCurveTo(0, 0.16, -w * 0.90, 0.04);
+      g.closePath().fill(hi);
+      for (const sx of [-1, 1]) g.ellipse(sx * w * 0.92, 0.13, 0.13, 0.12).fill(hi);
+      g.moveTo(-0.045, 0.12); g.lineTo(0.045, 0.12); g.lineTo(0.03, 0.76); g.lineTo(-0.03, 0.76);
+      g.closePath().fill({ color: lo, alpha: 0.8 });
+      g.circle(0, 0.28, 0.075).fill(a);
+      g.roundRect(-w * 0.9, 0.68, w * 1.8, 0.12, 0.05).fill(s);
       break;
-    default: // tunic
-      g.moveTo(-w, 0.02);
-      g.quadraticCurveTo(-w - 0.05, 0.55, -w + 0.02, 1.06);
-      g.lineTo(w - 0.02, 1.06);
-      g.quadraticCurveTo(w + 0.05, 0.55, w, 0.02);
-      g.closePath().fill(p);
-      g.moveTo(-0.16, 0.00); g.lineTo(0.16, 0.00); g.lineTo(0.0, 0.30);
+    default:
+      // Shirts and aprons: the art already paints one, so the band
+      // tint carries the colour and we only add the trim that tells
+      // two shirts apart. Panels are for things worn OVER a shirt.
+      g.moveTo(-w * 0.92, 0.00);
+      g.quadraticCurveTo(-w * 0.34, 0.10, -0.15, 0.04);
+      g.lineTo(0, 0.28); g.lineTo(0.15, 0.04);
+      g.quadraticCurveTo(w * 0.34, 0.10, w * 0.92, 0.00);
+      g.quadraticCurveTo(w * 0.60, 0.24, w * 0.52, 0.30);
+      g.lineTo(-w * 0.52, 0.30);
+      g.quadraticCurveTo(-w * 0.60, 0.24, -w * 0.92, 0.00);
+      g.closePath().fill(p).stroke(ink);
+      g.moveTo(-0.14, 0.05); g.lineTo(0.14, 0.05); g.lineTo(0, 0.27);
       g.closePath().fill(s);
-      g.roundRect(-w, 0.70, w * 2, 0.11, 0.05).fill(s);
-      g.circle(w * 0.45, 0.755, 0.045).fill(a);
+      g.roundRect(-w * 0.95, 0.54, w * 1.90, 0.10, 0.04).fill(s).stroke(ink);
+      g.circle(w * 0.40, 0.59, 0.04).fill(a);
+      g.roundRect(-w * 0.30, 0.56, w * 0.60, 0.06, 0.02).fill({ color: lo, alpha: 0.6 });
       break;
   }
 }
@@ -576,21 +650,21 @@ function drawLegs(g: Graphics, item: EquipItem | null): void {
   // Only hip-hung pieces are safe over animated legs; trousers and
   // greaves recolour through the leg band tint instead.
   if (item.shape === "skirt") {
-    g.moveTo(-0.46, 0.00); g.lineTo(0.46, 0.00);
-    g.lineTo(0.62, 0.52); g.lineTo(-0.62, 0.52);
+    g.moveTo(-0.38, 0.00); g.lineTo(0.38, 0.00);
+    g.lineTo(0.50, 0.44); g.lineTo(-0.50, 0.44);
     g.closePath().fill(item.primary);
-    g.roundRect(-0.48, -0.03, 0.96, 0.09, 0.04).fill(item.secondary);
+    g.roundRect(-0.40, -0.03, 0.80, 0.08, 0.035).fill(item.secondary);
   } else if (item.shape === "platelegs" || item.shape === "greaves") {
     for (const sx of [-1, 1]) {
-      g.moveTo(sx * 0.06, 0.00); g.lineTo(sx * 0.46, 0.00);
-      g.lineTo(sx * 0.40, 0.30); g.lineTo(sx * 0.10, 0.30);
+      g.moveTo(sx * 0.07, -0.01); g.lineTo(sx * 0.32, -0.01);
+      g.lineTo(sx * 0.28, 0.15); g.lineTo(sx * 0.10, 0.15);
       g.closePath().fill(item.primary);
     }
-    g.roundRect(-0.44, -0.05, 0.88, 0.10, 0.04).fill(item.secondary);
-    g.circle(0, 0.00, 0.07).fill(item.accent);
+    g.roundRect(-0.34, -0.05, 0.68, 0.08, 0.035).fill(item.secondary);
+    g.circle(0, -0.01, 0.055).fill(item.accent);
   } else {
-    g.roundRect(-0.42, -0.04, 0.84, 0.09, 0.04).fill(item.secondary);
-    g.circle(0, 0.005, 0.06).fill(item.accent);
+    g.roundRect(-0.34, -0.04, 0.68, 0.075, 0.035).fill(item.secondary);
+    g.circle(0, 0.0, 0.05).fill(item.accent);
   }
 }
 
@@ -600,35 +674,35 @@ function drawBack(g: Graphics, item: EquipItem | null): void {
   const p = item.primary, s = item.secondary, a = item.accent;
   switch (item.shape) {
     case "pack":
-      g.roundRect(-0.34, 0.10, 0.62, 0.78, 0.14).fill(p);
-      g.roundRect(-0.30, 0.36, 0.54, 0.22, 0.07).fill(s);
-      g.roundRect(-0.30, 0.02, 0.10, 0.92, 0.04).fill(s);
-      g.circle(-0.02, 0.47, 0.06).fill(a);
+      g.roundRect(-0.30, 0.12, 0.52, 0.66, 0.11).fill(p);
+      g.roundRect(-0.26, 0.34, 0.44, 0.18, 0.06).fill(s);
+      g.roundRect(-0.28, 0.04, 0.09, 0.78, 0.04).fill(s);
+      g.circle(-0.04, 0.43, 0.05).fill(a);
       break;
     case "quiver":
-      g.roundRect(-0.44, 0.06, 0.26, 0.92, 0.10).fill(p);
-      for (let i = 0; i < 3; i++) g.roundRect(-0.40 + i * 0.07, -0.24, 0.04, 0.34, 0.02).fill(a);
-      g.roundRect(-0.46, 0.40, 0.30, 0.10, 0.04).fill(s);
+      g.roundRect(-0.40, 0.08, 0.22, 0.74, 0.09).fill(p);
+      for (let i = 0; i < 3; i++) g.roundRect(-0.36 + i * 0.06, -0.18, 0.035, 0.30, 0.017).fill(a);
+      g.roundRect(-0.42, 0.36, 0.26, 0.09, 0.04).fill(s);
       break;
     case "cloak":
-      g.moveTo(-0.52, 0.00);
-      g.quadraticCurveTo(-0.94, 0.90, -0.72, 1.92);
-      g.lineTo(0.72, 1.92);
-      g.quadraticCurveTo(0.94, 0.90, 0.52, 0.00);
+      g.moveTo(-0.46, 0.02);
+      g.quadraticCurveTo(-0.70, 0.80, -0.58, 1.56);
+      g.lineTo(0.58, 1.56);
+      g.quadraticCurveTo(0.70, 0.80, 0.46, 0.02);
       g.closePath().fill(p);
-      g.moveTo(-0.52, 0.00); g.quadraticCurveTo(0, 0.34, 0.52, 0.00);
-      g.quadraticCurveTo(0.30, -0.18, -0.52, 0.00);
+      g.moveTo(-0.46, 0.02); g.quadraticCurveTo(0, 0.30, 0.46, 0.02);
+      g.quadraticCurveTo(0.26, -0.14, -0.46, 0.02);
       g.closePath().fill(s);
-      g.circle(0, 0.05, 0.08).fill(a);
+      g.circle(0, 0.04, 0.06).fill(a);
       break;
     default: // cape
-      g.moveTo(-0.44, 0.02);
-      g.quadraticCurveTo(-0.74, 0.80, -0.58, 1.62);
-      g.lineTo(0.58, 1.62);
-      g.quadraticCurveTo(0.74, 0.80, 0.44, 0.02);
+      g.moveTo(-0.40, 0.04);
+      g.quadraticCurveTo(-0.58, 0.70, -0.48, 1.30);
+      g.lineTo(0.48, 1.30);
+      g.quadraticCurveTo(0.58, 0.70, 0.40, 0.04);
       g.closePath().fill(p);
-      g.roundRect(-0.46, -0.06, 0.92, 0.14, 0.06).fill(s);
-      g.circle(0, 0.01, 0.07).fill(a);
+      g.roundRect(-0.42, -0.05, 0.84, 0.12, 0.05).fill(s);
+      g.circle(0, 0.01, 0.055).fill(a);
       break;
   }
 }
@@ -638,62 +712,70 @@ function drawHand(g: Graphics, item: EquipItem | null, main: boolean): void {
   if (!item) return;
   const p = item.primary, s = item.secondary, a = item.accent;
   const dir = main ? 1 : -1;
+  // A dark keyline is what makes a 40-pixel-tall prop readable.
+  const ink = (c: number) => ({ width: 0.05, color: shade(c, 0.6), alpha: 0.9 }) as const;
+
   switch (item.shape) {
     case "axe":
-      g.roundRect(-0.05, -0.55, 0.10, 1.15, 0.05).fill(p);
-      g.moveTo(0.02, -0.62); g.lineTo(0.50, -0.46); g.lineTo(0.34, -0.14); g.lineTo(0.02, -0.24);
-      g.closePath().fill(a);
-      g.roundRect(-0.06, -0.66, 0.12, 0.14, 0.04).fill(s);
+      g.roundRect(-0.07, -0.62, 0.14, 1.22, 0.06).fill(p).stroke(ink(p));
+      g.moveTo(0.02, -0.74); g.quadraticCurveTo(0.46, -0.66, 0.52, -0.40);
+      g.quadraticCurveTo(0.42, -0.16, 0.02, -0.20);
+      g.closePath().fill(a).stroke(ink(a));
+      g.roundRect(-0.09, -0.76, 0.18, 0.14, 0.05).fill(s);
       break;
     case "pick":
-      g.roundRect(-0.05, -0.50, 0.10, 1.10, 0.05).fill(p);
-      g.moveTo(-0.44, -0.62); g.quadraticCurveTo(0, -0.44, 0.44, -0.62);
-      g.quadraticCurveTo(0, -0.30, -0.44, -0.62); g.closePath().fill(a);
+      g.roundRect(-0.07, -0.56, 0.14, 1.16, 0.06).fill(p).stroke(ink(p));
+      g.moveTo(-0.50, -0.74); g.quadraticCurveTo(0, -0.50, 0.50, -0.74);
+      g.quadraticCurveTo(0, -0.30, -0.50, -0.74);
+      g.closePath().fill(a).stroke(ink(a));
       break;
     case "rod":
-      g.moveTo(-0.06, 0.16); g.lineTo(0.06, 0.16);
-      g.quadraticCurveTo(0.70, -0.60, 1.50, -0.95);
-      g.quadraticCurveTo(0.70, -0.48, 0.02, 0.10); g.closePath().fill(p);
-      g.roundRect(-0.07, 0.02, 0.14, 0.22, 0.06).fill(s);
-      g.circle(0.10, 0.16, 0.07).fill(a);
+      // carried at rest: butt at the hand, tip up and forward
+      g.moveTo(-0.10, 0.26); g.lineTo(0.04, 0.30);
+      g.quadraticCurveTo(0.44, -0.60, 0.66, -1.34);
+      g.quadraticCurveTo(0.34, -0.62, -0.04, 0.22);
+      g.closePath().fill(p).stroke(ink(p));
+      g.roundRect(-0.11, 0.12, 0.20, 0.26, 0.07).fill(s);
+      g.circle(0.14, 0.26, 0.08).fill(a);
       break;
     case "sword":
-      g.moveTo(-0.05, -0.30); g.lineTo(0.05, -0.30); g.lineTo(0.03, -1.15);
-      g.lineTo(0, -1.28); g.lineTo(-0.03, -1.15); g.closePath().fill(p);
-      g.roundRect(-0.22, -0.34, 0.44, 0.09, 0.04).fill(s);
-      g.roundRect(-0.05, -0.26, 0.10, 0.30, 0.04).fill(shade(s, 0.3));
-      g.circle(0, 0.08, 0.07).fill(a);
+      g.moveTo(-0.09, -0.34); g.lineTo(0.09, -0.34); g.lineTo(0.06, -1.16);
+      g.lineTo(0, -1.34); g.lineTo(-0.06, -1.16);
+      g.closePath().fill(p).stroke(ink(p));
+      g.roundRect(-0.28, -0.40, 0.56, 0.11, 0.05).fill(s).stroke(ink(s));
+      g.roundRect(-0.07, -0.30, 0.14, 0.34, 0.05).fill(shade(s, 0.35));
+      g.circle(0, 0.10, 0.09).fill(a);
       break;
     case "hammer":
-      g.roundRect(-0.05, -0.45, 0.10, 1.05, 0.05).fill(p);
-      g.roundRect(-0.26, -0.72, 0.52, 0.30, 0.07).fill(s);
-      g.circle(0.16, -0.57, 0.07).fill(a);
+      g.roundRect(-0.07, -0.50, 0.14, 1.10, 0.06).fill(p).stroke(ink(p));
+      g.roundRect(-0.30, -0.84, 0.60, 0.34, 0.08).fill(s).stroke(ink(s));
+      g.circle(0.17, -0.67, 0.08).fill(a);
       break;
     case "shield":
-      g.moveTo(dir * -0.34, -0.46); g.lineTo(dir * 0.34, -0.46);
-      g.lineTo(dir * 0.30, 0.20); g.lineTo(0, 0.48); g.lineTo(dir * -0.30, 0.20);
-      g.closePath().fill(p);
-      g.moveTo(dir * -0.24, -0.36); g.lineTo(dir * 0.24, -0.36);
-      g.lineTo(dir * 0.21, 0.14); g.lineTo(0, 0.36); g.lineTo(dir * -0.21, 0.14);
+      g.moveTo(dir * -0.40, -0.54); g.lineTo(dir * 0.40, -0.54);
+      g.lineTo(dir * 0.35, 0.22); g.lineTo(0, 0.54); g.lineTo(dir * -0.35, 0.22);
+      g.closePath().fill(p).stroke(ink(p));
+      g.moveTo(dir * -0.27, -0.42); g.lineTo(dir * 0.27, -0.42);
+      g.lineTo(dir * 0.24, 0.16); g.lineTo(0, 0.40); g.lineTo(dir * -0.24, 0.16);
       g.closePath().fill(s);
-      g.circle(0, -0.06, 0.09).fill(a);
+      g.circle(0, -0.08, 0.10).fill(a);
       break;
     case "buckler":
-      g.circle(0, -0.06, 0.32).fill(p);
-      g.circle(0, -0.06, 0.22).fill(s);
-      g.circle(0, -0.06, 0.08).fill(a);
+      g.circle(0, -0.08, 0.36).fill(p).stroke(ink(p));
+      g.circle(0, -0.08, 0.24).fill(s);
+      g.circle(0, -0.08, 0.09).fill(a);
       break;
     case "lantern":
-      g.roundRect(-0.03, -0.62, 0.06, 0.30, 0.03).fill(p);
-      g.roundRect(-0.17, -0.36, 0.34, 0.38, 0.08).fill(p);
-      g.roundRect(-0.11, -0.30, 0.22, 0.26, 0.05).fill(s);
-      g.circle(0, -0.17, 0.30).fill({ color: a, alpha: 0.22 });
+      g.roundRect(-0.04, -0.70, 0.08, 0.32, 0.03).fill(p);
+      g.roundRect(-0.20, -0.42, 0.40, 0.44, 0.09).fill(p).stroke(ink(p));
+      g.roundRect(-0.13, -0.35, 0.26, 0.30, 0.05).fill(s);
+      g.circle(0, -0.20, 0.34).fill({ color: a, alpha: 0.24 });
       break;
     case "torch":
-      g.roundRect(-0.05, -0.30, 0.10, 0.72, 0.04).fill(p);
-      g.moveTo(-0.15, -0.30); g.quadraticCurveTo(0, -0.86, 0.15, -0.30);
+      g.roundRect(-0.07, -0.34, 0.14, 0.80, 0.05).fill(p).stroke(ink(p));
+      g.moveTo(-0.18, -0.34); g.quadraticCurveTo(0, -0.98, 0.18, -0.34);
       g.closePath().fill(s);
-      g.moveTo(-0.08, -0.32); g.quadraticCurveTo(0, -0.66, 0.08, -0.32);
+      g.moveTo(-0.09, -0.36); g.quadraticCurveTo(0, -0.74, 0.09, -0.36);
       g.closePath().fill(a);
       break;
     default:
@@ -719,14 +801,22 @@ export function drawPortrait(g: Graphics, a: CharacterAppearance, size: number):
   const S = size;
   const jaw = face.jaw, len = face.length;
 
-  // shoulders
+  // neck first, then the shoulders that sit in front of it
+  g.roundRect(-0.17 * S, 0.22 * S, 0.34 * S, 0.46 * S, 0.09 * S).fill(shade(skin, 0.14));
   const shirt = chest?.primary ?? 0xf0e2c4;
-  g.moveTo(-1.15 * S * body.widthScale, 1.55 * S);
-  g.quadraticCurveTo(-0.72 * S, 0.62 * S, -0.26 * S, 0.56 * S);
-  g.lineTo(0.26 * S, 0.56 * S);
-  g.quadraticCurveTo(0.72 * S, 0.62 * S, 1.15 * S * body.widthScale, 1.55 * S);
+  const trim = chest?.secondary ?? 0xd6c39c;
+  const bw = body.widthScale;
+  g.moveTo(-1.12 * S * bw, 1.55 * S);
+  g.quadraticCurveTo(-1.00 * S * bw, 0.80 * S, -0.40 * S, 0.66 * S);
+  g.lineTo(0, 0.98 * S);
+  g.lineTo(0.40 * S, 0.66 * S);
+  g.quadraticCurveTo(1.00 * S * bw, 0.80 * S, 1.12 * S * bw, 1.55 * S);
   g.closePath().fill(shirt);
-  g.roundRect(-0.18 * S, 0.30 * S, 0.36 * S, 0.34 * S, 0.10 * S).fill(shade(skin, 0.12));
+  g.moveTo(-0.42 * S, 0.64 * S); g.lineTo(0, 1.02 * S); g.lineTo(0.42 * S, 0.64 * S);
+  g.lineTo(0.30 * S, 0.60 * S); g.lineTo(0, 0.86 * S); g.lineTo(-0.30 * S, 0.60 * S);
+  g.closePath().fill(trim);
+  g.roundRect(-1.06 * S * bw, 1.34 * S, 2.12 * S * bw, 0.22 * S, 0.06 * S)
+    .fill({ color: shade(shirt, 0.22), alpha: 0.45 });
 
   // head
   const hh = 0.62 * S * len;
@@ -748,13 +838,17 @@ export function drawPortrait(g: Graphics, a: CharacterAppearance, size: number):
 
   // eyes
   for (const sx of [-1, 1]) {
-    g.ellipse(sx * 0.19 * S, -0.02 * S, 0.11 * S, 0.09 * S).fill(0xfdf6ea);
-    g.circle(sx * 0.19 * S + 0.012 * S, -0.02 * S, 0.062 * S).fill(eye);
-    g.circle(sx * 0.19 * S + 0.012 * S, -0.02 * S, 0.030 * S).fill(0x241c18);
-    g.circle(sx * 0.19 * S - 0.020 * S, -0.05 * S, 0.016 * S).fill(0xffffff);
-    g.moveTo(sx * 0.30 * S, -0.17 * S);
-    g.quadraticCurveTo(sx * 0.18 * S, -0.24 * S, sx * 0.08 * S, -0.17 * S);
-    g.stroke({ width: 0.035 * S, color: shade(hair, 0.25), cap: "round" });
+    g.ellipse(sx * 0.19 * S, -0.015 * S, 0.095 * S, 0.072 * S).fill(0xfdf6ea);
+    g.circle(sx * 0.19 * S + 0.010 * S, -0.010 * S, 0.066 * S).fill(eye);
+    g.circle(sx * 0.19 * S + 0.010 * S, -0.010 * S, 0.030 * S).fill(0x241c18);
+    g.circle(sx * 0.19 * S - 0.022 * S, -0.042 * S, 0.015 * S).fill(0xffffff);
+    // upper lid, then brow
+    g.moveTo(sx * 0.285 * S, -0.055 * S);
+    g.quadraticCurveTo(sx * 0.19 * S, -0.105 * S, sx * 0.095 * S, -0.055 * S);
+    g.stroke({ width: 0.026 * S, color: shade(skin, 0.55), cap: "round" });
+    g.moveTo(sx * 0.30 * S, -0.16 * S);
+    g.quadraticCurveTo(sx * 0.18 * S, -0.225 * S, sx * 0.08 * S, -0.16 * S);
+    g.stroke({ width: 0.033 * S, color: shade(hair, 0.25), cap: "round" });
   }
   // nose + mouth
   g.moveTo(0, 0.06 * S); g.quadraticCurveTo(0.05 * S, 0.16 * S, -0.01 * S, 0.18 * S);
@@ -763,14 +857,16 @@ export function drawPortrait(g: Graphics, a: CharacterAppearance, size: number):
   g.stroke({ width: 0.032 * S, color: shade(skin, 0.42), cap: "round" });
 
   // hair + hat reuse the body pieces, scaled to the portrait head
+  // Hair and hats reuse the body pieces: one set of shapes, so the
+  // bust can never disagree with the character in the world.
   const hairG = new Graphics();
   drawHair(hairG, getHairStyle(a).shape, hair, skin, body.shoulder);
-  hairG.scale.set(S * 1.06);
-  hairG.position.set(0, -0.06 * S);
+  hairG.scale.set(S * 0.95);
+  hairG.position.set(0, -0.10 * S);
   const headG = new Graphics();
-  drawHeadgear(headG, head, hair);
-  headG.scale.set(S * 1.06);
-  headG.position.set(0, -0.06 * S);
+  drawHeadgear(headG, head);
+  headG.scale.set(S * 0.95);
+  headG.position.set(0, -0.10 * S);
   g.addChild(hairG, headG);
 }
 

@@ -86,9 +86,12 @@ export class WorldSystem implements System {
     plate.eventMode = "static";
     plate.on("pointertap", (e: FederatedPointerEvent) => {
       if (this.camera.gestureWasPan) return;
-      // The plate sits at the world origin, so its local space IS
-      // world space — no manual un-projecting of the camera needed.
-      const p = e.getLocalPosition(plate);
+      // Resolve against the LAYER, not the plate. The plate is a 1×1
+      // white texture stretched by scale, so its own local space is
+      // 0..1 — asking it for a position hands back a fraction, not a
+      // world coordinate. The terrain layer sits at identity inside
+      // the camera's container, so its local space is world space.
+      const p = e.getLocalPosition(this.layers.terrain);
       ctx.bus.emit("world:tap", { x: p.x, y: p.y, zone: zoneAt(p.x, p.y) });
     });
     this.layers.terrain.addChild(plate);
@@ -98,7 +101,9 @@ export class WorldSystem implements System {
 
     this.nodes = new NodeField(ctx.bus, this.quality);
     this.nodes.tapGuard = () => this.camera.gestureWasPan;
-    await this.nodes.build(this.layers.actors);
+    // Ore rocks borrow the terrain palette so they are cut from the
+    // same stone as the shelf they sit on.
+    await this.nodes.build(this.layers.actors, this.terrain.palette.stone);
 
     this.atmosphere = new Atmosphere(ctx.bus, this.quality, this.camera);
     this.atmosphere.dayLength = this.opts.dayLength ?? 720;

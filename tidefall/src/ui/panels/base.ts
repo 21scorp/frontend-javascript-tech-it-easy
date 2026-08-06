@@ -11,7 +11,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 import { el, on, setText, fill } from "./../dom";
-import { icon, type IconName } from "./../icons";
+import { icon, coinMedal, type IconName } from "./../icons";
 import { makeBar, sectionHead } from "./../widgets";
 import { skelBlock, skelGrid, cascade } from "./../transitions";
 import { compact } from "./../theme";
@@ -65,8 +65,10 @@ export class BasePanel_ extends BasePanel<BaseProps> {
   private readonly storeBar = makeBar("aqua", true);
   private readonly storeNum = el("span.tf-cap__n");
   private readonly grid = el("div.tf-grid.tf-grid--2");
+  // The flat coin glyph goes muddy on a gold face, so the CTA carries
+  // the full medallion instead.
   private readonly collect = el("button.tf-btn.tf-btn--gold.tf-btn--block", { type: "button" },
-    icon("coin", { size: "1em" }), el("span", { text: "Collect all" }));
+    coinMedal(22), el("span", { text: "Collect all" }));
   private readonly skeleton: HTMLElement;
   private didCascade = false;
 

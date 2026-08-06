@@ -77,8 +77,8 @@
   filter: drop-shadow(0 calc(1 * var(--tf-u)) 0 rgba(0,0,0,.5));
 }
 .tf-skill__name {
-  font-size: var(--t-tiny); font-weight: var(--w-black);
-  letter-spacing: .05em; text-transform: uppercase;
+  font-size: calc(9.6 * var(--tf-u)); font-weight: var(--w-black);
+  letter-spacing: .02em; text-transform: uppercase;
   color: var(--c-ink); text-shadow: var(--ts-hard);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
 }
@@ -117,21 +117,24 @@
   background: var(--s-aqua);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
 }
-.tf-skill.is-locked { filter: saturate(.25) brightness(.7); }
+.tf-skill.is-locked { filter: saturate(.4) brightness(.9); opacity: .62; }
 .tf-skill.is-locked .tf-skill__hint { color: var(--c-ink-mute); }
+/* The padlock sits on the dial, not over the whole card — the name
+   and the unlock requirement still have to be readable. */
 .tf-skill__lock {
-  position: absolute; inset: 0;
+  position: absolute; inset: calc(6 * var(--tf-u));
   display: grid; place-items: center;
-  background: rgba(4,10,18,.42);
+  border-radius: var(--r-pill);
+  background: rgba(4,10,18,.66);
   color: var(--c-ink-dim);
-  font-size: calc(24 * var(--tf-u));
+  font-size: calc(21 * var(--tf-u));
   z-index: 3;
 }
 
 /* ══ BAG ══════════════════════════════════════════════════════ */
 
 .tf-cap { display: flex; align-items: center; gap: var(--sp-3); }
-.tf-cap__bar { flex: 1 1 auto; }
+.tf-cap .tf-bar { flex: 1 1 auto; min-width: 0; }
 .tf-cap__n {
   font-size: var(--t-small); font-weight: var(--w-black);
   color: var(--c-ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap;
@@ -149,10 +152,14 @@
   transition: transform var(--d-instant) var(--ease-out);
 }
 .tf-slot:active { transform: scale(.93); }
+.tf-slot--empty {
+  background: linear-gradient(180deg, rgba(9,20,33,.9), rgba(13,27,43,.9));
+  box-shadow: var(--e-sunk), inset 0 0 0 1px rgba(150,190,230,.06);
+}
 .tf-slot--empty::after {
-  content: ""; position: absolute; inset: 32%;
+  content: ""; position: absolute; inset: 34%;
   border-radius: var(--r-1);
-  background: rgba(150,190,230,.07);
+  background: rgba(150,190,230,.09);
 }
 
 .tf-slot--full {
@@ -196,12 +203,12 @@
   box-shadow: 0 0 calc(7 * var(--tf-u)) rgba(255,107,94,.9);
 }
 .tf-slot__eq {
-  position: absolute; left: calc(2 * var(--tf-u)); bottom: calc(2 * var(--tf-u));
-  font-size: calc(8 * var(--tf-u)); font-weight: var(--w-black);
-  letter-spacing: .08em;
-  padding: 0 calc(3 * var(--tf-u));
-  border-radius: var(--r-pill);
-  color: #06231f; background: var(--c-aqua-500);
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: calc(1.5 * var(--tf-u)) 0;
+  font-size: calc(7.5 * var(--tf-u)); font-weight: var(--w-black);
+  letter-spacing: .14em; text-align: center;
+  color: #06231f; background: var(--s-aqua);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
 }
 
 /* item detail popover — anchored inside the sheet body */
@@ -217,7 +224,11 @@
 .tf-pop.is-out { animation: tf-pop-out var(--d-fast) var(--ease-in) both; }
 @keyframes tf-pop-in { from { opacity: 0; transform: translateY(calc(10 * var(--tf-u))) scale(.92); } to { opacity: 1; transform: none; } }
 @keyframes tf-pop-out { to { opacity: 0; transform: scale(.94); } }
-.tf-pop__scrim { position: absolute; inset: 0; z-index: 5; background: rgba(4,10,18,.55); }
+.tf-pop__scrim {
+  position: absolute; inset: calc(-40 * var(--tf-u)) calc(-20 * var(--tf-u));
+  z-index: 5;
+  background: rgba(3,9,16,.78);
+}
 .tf-pop__head { display: flex; gap: var(--sp-3); align-items: center; }
 .tf-pop__art {
   width: calc(66 * var(--tf-u)); height: calc(66 * var(--tf-u));
@@ -335,7 +346,7 @@
   color: var(--c-ink-mute);
 }
 .tf-plot--empty .tf-plot__ic { color: var(--c-ink-mute); background: rgba(255,255,255,.04); }
-.tf-plot--locked { filter: saturate(.2) brightness(.66); }
+.tf-plot--locked { filter: saturate(.35) brightness(.82); opacity: .72; }
 .tf-plot__ready {
   position: absolute; top: var(--sp-2); right: var(--sp-2);
   font-size: calc(9 * var(--tf-u)); font-weight: var(--w-black);
@@ -372,13 +383,17 @@
   box-shadow: inset 0 0 0 1px rgba(246,205,99,.4), inset 0 1px 0 rgba(255,255,255,.24);
   filter: drop-shadow(0 calc(4 * var(--tf-u)) calc(8 * var(--tf-u)) rgba(0,0,0,.5));
 }
-.tf-feature__body { flex: 1 1 auto; min-width: 0; }
-.tf-feature__name { font-size: var(--t-lead); font-weight: var(--w-black); text-shadow: var(--ts-hard); }
-.tf-feature__sub { font-size: var(--t-tiny); color: var(--c-ink-dim); margin: calc(3 * var(--tf-u)) 0 var(--sp-3); line-height: 1.35; }
+.tf-feature__body { flex: 1 1 auto; min-width: 0; padding-right: calc(6 * var(--tf-u)); }
+.tf-feature__name { font-size: var(--t-lead); font-weight: var(--w-black); text-shadow: var(--ts-hard); padding-right: calc(52 * var(--tf-u)); }
+.tf-feature__sub {
+  font-size: var(--t-tiny); color: var(--c-ink-dim);
+  margin: calc(3 * var(--tf-u)) 0 var(--sp-3); line-height: 1.35;
+  padding-right: calc(16 * var(--tf-u));
+}
 .tf-ribbon {
-  position: absolute; top: calc(13 * var(--tf-u)); right: calc(-30 * var(--tf-u));
+  position: absolute; top: calc(11 * var(--tf-u)); right: calc(-34 * var(--tf-u));
   transform: rotate(38deg);
-  padding: calc(3 * var(--tf-u)) calc(34 * var(--tf-u));
+  padding: calc(3 * var(--tf-u)) calc(36 * var(--tf-u));
   font-size: calc(9 * var(--tf-u)); font-weight: var(--w-black);
   letter-spacing: .14em; text-transform: uppercase;
   color: #3c2506; background: var(--s-gold);
@@ -396,7 +411,7 @@
   text-align: center;
 }
 .tf-offer__art {
-  width: 100%; aspect-ratio: 1.35;
+  width: 100%; aspect-ratio: 1.5;
   display: grid; place-items: center;
   border-radius: var(--r-3);
   font-size: calc(34 * var(--tf-u));
@@ -443,7 +458,7 @@
 
 /* ══ CHARACTER ════════════════════════════════════════════════ */
 
-.tf-char { display: flex; gap: var(--sp-3); }
+.tf-char { display: flex; gap: var(--sp-3); align-items: flex-start; }
 .tf-char__rail {
   flex: 0 0 auto;
   display: flex; flex-direction: column; gap: var(--sp-2);
@@ -479,16 +494,26 @@
     radial-gradient(120% 70% at 50% 8%, rgba(120,190,240,.18), transparent 60%),
     linear-gradient(180deg, #17334f 0%, #0b1b2b 100%);
   box-shadow: var(--e-sunk), inset 0 0 0 1px rgba(150,190,230,.12);
-  aspect-ratio: 0.78;
+  aspect-ratio: 0.92;
   display: grid; place-items: center;
 }
 /* the floor disc grounds the paperdoll even before it exists */
-.tf-char__stage::after {
-  content: ""; position: absolute; left: 50%; bottom: 11%;
-  width: 62%; height: calc(26 * var(--tf-u));
+.tf-char__stage::before {              /* key light from above */
+  content: ""; position: absolute; left: 50%; top: -18%;
+  width: 128%; height: 74%;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at 50% 0%, rgba(160,215,255,.18), transparent 68%);
+  pointer-events: none;
+}
+.tf-char__stage::after {               /* podium the hero stands on */
+  content: ""; position: absolute; left: 50%; bottom: 9%;
+  width: 66%; height: calc(30 * var(--tf-u));
   transform: translateX(-50%);
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(0,0,0,.55), transparent 70%);
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(0,0,0,.6), rgba(0,0,0,0) 68%),
+    linear-gradient(180deg, rgba(246,205,99,.14), rgba(246,205,99,0));
+  box-shadow: inset 0 0 0 1px rgba(246,205,99,.22);
 }
 .tf-char__mount {
   position: absolute; inset: 0;

@@ -99,7 +99,10 @@ export class Sheet {
 
     this.node = el("section.tf-sheet",
       { role: "dialog", "aria-modal": "false", "aria-labelledby": "tf-sheet-title", hidden: true },
+      el("div.tf-sheet__crown", { "aria-hidden": "true" }),
       this.grab, this.head, this.topFade, this.body,
+      // Content must dissolve behind the nav bar, never get guillotined.
+      el("div.tf-sheet__fade.tf-sheet__fade--bot", { "aria-hidden": "true" }),
     );
 
     this.spring = new Spring(0, {

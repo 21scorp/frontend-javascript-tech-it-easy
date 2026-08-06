@@ -72,12 +72,12 @@ export const ISLAND = {
   srcH: ISLAND_SRC_H,
   v: ISLAND_V,
   /** World y of the first kept row. */
-  top: 2280,
+  top: 2140,
   /** Drawn size of the kept crop, in design units. */
   width: DESIGN_W,
   height: (ISLAND_V.cropBottom - ISLAND_V.grassTop) * ISLAND_FULL_H,
   /** Where the artist's sand starts, in world y. */
-  sandY: 2280 + (ISLAND_V.sandTop - ISLAND_V.grassTop) * ISLAND_FULL_H,
+  sandY: 2140 + (ISLAND_V.sandTop - ISLAND_V.grassTop) * ISLAND_FULL_H,
   /** Feather distances: the art dissolves into procedural ground. */
   fadeTop: 210,
   fadeBottom: 74,
@@ -90,27 +90,27 @@ const ZONES: readonly ZoneDef[] = [
   // Pockets first: `zoneAt` returns the first hit.
   {
     id: "wilds", label: "The Wilds", pocket: true, walkable: true, skill: "combat",
-    bounds: { x: 596, y: 1520, w: 484, h: 740 },
+    bounds: { x: 596, y: 1480, w: 484, h: 640 },
   },
   {
     id: "mountain", label: "Cairnfell", walkable: true, skill: "mining",
-    bounds: { x: 0, y: 0, w: DESIGN_W, h: 980 },
+    bounds: { x: 0, y: 0, w: DESIGN_W, h: 1000 },
   },
   {
     id: "forest", label: "Hollowpine", walkable: true, skill: "woodcutting",
-    bounds: { x: 0, y: 980, w: DESIGN_W, h: 1340 },
+    bounds: { x: 0, y: 1000, w: DESIGN_W, h: 1260 },
   },
   {
     id: "meadow", label: "Tidefall Holding", walkable: true,
-    bounds: { x: 0, y: 2320, w: DESIGN_W, h: 1080 },
+    bounds: { x: 0, y: 2260, w: DESIGN_W, h: 980 },
   },
   {
     id: "coast", label: "Saltmere Shore", walkable: true, skill: "fishing",
-    bounds: { x: 0, y: 3400, w: DESIGN_W, h: 500 },
+    bounds: { x: 0, y: 3240, w: DESIGN_W, h: 480 },
   },
   {
     id: "sea", label: "The Tidefall", walkable: false,
-    bounds: { x: 0, y: 3900, w: DESIGN_W, h: 300 },
+    bounds: { x: 0, y: 3720, w: DESIGN_W, h: 480 },
   },
 ];
 
@@ -119,63 +119,63 @@ const ZONES: readonly ZoneDef[] = [
 const SPAWNS: readonly NodeSpawn[] = [
   {
     kind: "ore", zone: "mountain", variant: "copper", tier: 1, reqLevel: 1,
-    respawn: 12, cycle: 2.4, count: 6,
-    region: { x: 90, y: 250, w: 900, h: 620 }, scale: [0.9, 1.15],
+    respawn: 12, cycle: 2.4, count: 5,
+    region: { x: 80, y: 700, w: 920, h: 380 }, scale: [0.94, 1.18],
   },
   {
     kind: "ore", zone: "mountain", variant: "iron", tier: 2, reqLevel: 15,
-    respawn: 20, cycle: 3.2, count: 5,
-    region: { x: 110, y: 170, w: 860, h: 560 }, scale: [0.95, 1.2],
+    respawn: 20, cycle: 3.2, count: 4,
+    region: { x: 80, y: 500, w: 920, h: 320 }, scale: [1.0, 1.24],
   },
   {
     kind: "ore", zone: "mountain", variant: "coal", tier: 3, reqLevel: 30,
-    respawn: 26, cycle: 3.6, count: 4,
-    region: { x: 140, y: 200, w: 800, h: 430 }, scale: [0.9, 1.1],
+    respawn: 26, cycle: 3.6, count: 3,
+    region: { x: 100, y: 400, w: 880, h: 260 }, scale: [0.96, 1.16],
   },
   {
     kind: "ore", zone: "mountain", variant: "mithril", tier: 4, reqLevel: 55,
     respawn: 46, cycle: 5.0, count: 2,
-    region: { x: 210, y: 210, w: 660, h: 300 }, scale: [1.0, 1.25],
+    region: { x: 140, y: 300, w: 800, h: 200 }, scale: [1.1, 1.34],
   },
   {
     kind: "tree", zone: "forest", variant: "oak", tier: 1, reqLevel: 1,
-    respawn: 14, cycle: 2.2, count: 7,
-    region: { x: 90, y: 1080, w: 900, h: 1120 }, scale: [0.92, 1.14],
+    respawn: 14, cycle: 2.2, count: 5,
+    region: { x: 70, y: 1240, w: 940, h: 880 }, scale: [0.92, 1.12],
   },
   {
     kind: "tree", zone: "forest", variant: "birch", tier: 2, reqLevel: 12,
-    respawn: 18, cycle: 2.8, count: 5,
-    region: { x: 80, y: 1120, w: 620, h: 1040 }, scale: [0.9, 1.06],
+    respawn: 18, cycle: 2.8, count: 3,
+    region: { x: 60, y: 1280, w: 700, h: 820 }, scale: [0.88, 1.02],
   },
   {
     kind: "tree", zone: "forest", variant: "maple", tier: 3, reqLevel: 28,
-    respawn: 24, cycle: 3.4, count: 4,
-    region: { x: 120, y: 1180, w: 860, h: 900 }, scale: [0.95, 1.12],
+    respawn: 24, cycle: 3.4, count: 3,
+    region: { x: 100, y: 1300, w: 900, h: 780 }, scale: [0.95, 1.1],
   },
   {
     kind: "tree", zone: "wilds", variant: "yew", tier: 4, reqLevel: 45,
-    respawn: 38, cycle: 4.4, count: 3,
-    region: { x: 630, y: 1580, w: 410, h: 640 }, scale: [1.0, 1.18],
+    respawn: 38, cycle: 4.4, count: 2,
+    region: { x: 630, y: 1540, w: 410, h: 500 }, scale: [1.0, 1.14],
   },
   {
     kind: "tree", zone: "wilds", variant: "elder", tier: 5, reqLevel: 70,
     respawn: 62, cycle: 6.0, count: 1,
-    region: { x: 700, y: 1720, w: 300, h: 340 }, scale: [1.15, 1.25],
+    region: { x: 700, y: 1640, w: 300, h: 300 }, scale: [1.16, 1.24],
   },
   {
     kind: "fish", zone: "meadow", variant: "pond", tier: 1, reqLevel: 1,
     respawn: 9, cycle: 2.0, count: 2,
-    region: { x: 150, y: 2740, w: 210, h: 130 },
+    region: { x: 160, y: 2610, w: 190, h: 110 },
   },
   {
     kind: "fish", zone: "coast", variant: "shallows", tier: 2, reqLevel: 8,
     respawn: 11, cycle: 2.6, count: 4,
-    region: { x: 110, y: 3720, w: 860, h: 110 },
+    region: { x: 110, y: 3700, w: 860, h: 80 },
   },
   {
     kind: "fish", zone: "coast", variant: "deep", tier: 3, reqLevel: 32,
     respawn: 17, cycle: 3.4, count: 3,
-    region: { x: 150, y: 3900, w: 790, h: 80 },
+    region: { x: 150, y: 3850, w: 790, h: 110 },
   },
 ];
 
@@ -191,47 +191,50 @@ export const WORLD = {
       between two entries is what kills the seam. */
   bands: {
     rockTop: 0,
-    rockToScree: 700,
-    screeToForest: 1010,
-    forestToMeadow: 2255,   // where the painted island fades in
-    meadowToSand: 3380,
-    sandToShallow: 3880,
-    shallowToDeep: 3995,
+    /** Bare stone gives way to scree and soil. */
+    rockToScree: 800,
+    screeToForest: 1130,
+    /** Where the painted island starts fading in over forest floor. */
+    forestToMeadow: 2140,
+    meadowToSand: 3230,
+    /** The waterline. */
+    sandToShallow: 3680,
+    shallowToDeep: 3810,
   },
 
   /** Impassable water and rock. Kept tiny and analytic — a bitmap
       mask would be overkill for a strip this readable. */
   obstacles: {
-    pond: { x: 254, y: 2805, rx: 214, ry: 148 } as Ellipse,
+    pond: { x: 254, y: 2665, rx: 214, ry: 148 } as Ellipse,
     /** Cliff face along the very top: you climb into the mine, not over it. */
-    cliffTop: 176,
+    cliffTop: 262,
     /** Waterline: nothing walks past this. */
-    shoreY: 3856,
+    shoreY: 3652,
   },
 
   /** Named places. Other systems should reference these, never raw
       numbers, so the map stays re-tunable. */
   anchors: {
-    spawn: { x: 640, y: 2960 },
-    "base.home": { x: 700, y: 2960 },
-    "base.stall": { x: 372, y: 3120 },
-    "base.pond": { x: 254, y: 2805 },
-    "mine.entrance": { x: 318, y: 792 },
-    "mine.deep": { x: 772, y: 380 },
-    "forest.grove": { x: 306, y: 1712 },
-    "forest.edge": { x: 560, y: 2210 },
-    "wilds.camp": { x: 858, y: 1908 },
-    "coast.jetty": { x: 726, y: 3540 },
-    "coast.shallows": { x: 380, y: 3620 },
+    spawn: { x: 648, y: 2820 },
+    "base.home": { x: 706, y: 2820 },
+    "base.stall": { x: 372, y: 2980 },
+    "base.pond": { x: 254, y: 2665 },
+    "mine.entrance": { x: 318, y: 700 },
+    "mine.deep": { x: 742, y: 430 },
+    "forest.grove": { x: 306, y: 1600 },
+    "forest.edge": { x: 560, y: 2080 },
+    "wilds.camp": { x: 858, y: 1790 },
+    "coast.jetty": { x: 726, y: 3400 },
+    "coast.shallows": { x: 380, y: 3510 },
   },
 
   /** The sandy path the artist painted, extended up the mountain and
       down to the water. Traced off bg_island.png. */
   path: [
-    { x: 330, y: 120 }, { x: 372, y: 470 }, { x: 470, y: 800 },
-    { x: 528, y: 1180 }, { x: 470, y: 1600 }, { x: 512, y: 2010 },
-    { x: 576, y: 2360 }, { x: 604, y: 2660 }, { x: 512, y: 2980 },
-    { x: 486, y: 3230 }, { x: 508, y: 3470 }, { x: 520, y: 3700 },
+    { x: 330, y: 200 }, { x: 372, y: 520 }, { x: 470, y: 850 },
+    { x: 528, y: 1200 }, { x: 470, y: 1600 }, { x: 512, y: 1980 },
+    { x: 576, y: 2260 }, { x: 604, y: 2520 }, { x: 512, y: 2840 },
+    { x: 486, y: 3090 }, { x: 508, y: 3330 }, { x: 520, y: 3600 },
   ],
 } as const;
 

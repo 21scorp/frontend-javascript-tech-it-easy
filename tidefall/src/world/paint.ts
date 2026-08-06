@@ -25,6 +25,14 @@ export function mix(a: Rgb, b: Rgb, t: number): Rgb {
   return { r: a.r + (b.r - a.r) * t, g: a.g + (b.g - a.g) * t, b: a.b + (b.b - a.b) * t };
 }
 
+/** Pull a colour toward its own luminance. Averaging a photographed
+    or painted surface always over-saturates the shadows into it;
+    desaturating recovers the material colour underneath. */
+export function desaturate(c: Rgb, amount: number): Rgb {
+  const l = c.r * 0.3 + c.g * 0.59 + c.b * 0.11;
+  return mix(c, rgb(l, l, l), amount);
+}
+
 /** Multiply-ish shade / tint. Keeps hue, moves value. */
 export function shade(c: Rgb, k: number): Rgb {
   return k <= 1
@@ -89,6 +97,31 @@ export function organicPath(
     const py = y + Math.sin(a) * ry * k;
     if (i === 0) ctx.moveTo(px, py);
     else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+}
+
+/** The same silhouette as a flat [x,y,…] list. Anything that has to
+    be filled AND clipped AND stroked must reuse one point list — a
+    second call to organicPath re-rolls the rng and the outline stops
+    matching the shape it is supposed to outline. */
+export function organicPoints(
+  x: number, y: number, rx: number, ry: number, rng: Rng, wobble = 0.26, points = 9,
+): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < points; i++) {
+    const a = (i / points) * Math.PI * 2;
+    const k = 1 + rng.jitter(wobble);
+    out.push(x + Math.cos(a) * rx * k, y + Math.sin(a) * ry * k);
+  }
+  return out;
+}
+
+export function tracePoints(ctx: Ctx2D, pts: number[]) {
+  ctx.beginPath();
+  for (let i = 0; i < pts.length; i += 2) {
+    if (i === 0) ctx.moveTo(pts[0], pts[1]);
+    else ctx.lineTo(pts[i], pts[i + 1]);
   }
   ctx.closePath();
 }

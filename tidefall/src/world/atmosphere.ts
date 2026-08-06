@@ -29,33 +29,33 @@ interface Budget { rain: number; splash: number; fog: number; clouds: number }
 /** Particle counts per tier. "low" drops hard on purpose: rain is the
     single most expensive thing we draw and the least load-bearing. */
 const BUDGET: Record<QualityTier, Budget> = {
-  low: { rain: 55, splash: 0, fog: 4, clouds: 0 },
+  low: { rain: 80, splash: 6, fog: 4, clouds: 0 },
   mid: { rain: 170, splash: 18, fog: 10, clouds: 5 },
   high: { rain: 340, splash: 32, fog: 16, clouds: 7 },
 };
 
 /** Lit places. Adding a lantern is adding a line here. */
 const LANTERNS: Array<{ at: AnchorId; radius: number; color: Rgb }> = [
-  { at: "base.home", radius: 260, color: rgb(255, 196, 108) },
-  { at: "base.stall", radius: 200, color: rgb(255, 178, 96) },
-  { at: "mine.entrance", radius: 190, color: rgb(255, 168, 92) },
-  { at: "coast.jetty", radius: 210, color: rgb(255, 208, 128) },
-  { at: "wilds.camp", radius: 170, color: rgb(150, 210, 255) },
+  { at: "base.home", radius: 320, color: rgb(255, 206, 142) },
+  { at: "base.stall", radius: 250, color: rgb(255, 194, 132) },
+  { at: "mine.entrance", radius: 240, color: rgb(255, 186, 126) },
+  { at: "coast.jetty", radius: 260, color: rgb(255, 214, 158) },
+  { at: "wilds.camp", radius: 210, color: rgb(158, 208, 244) },
 ];
 
 interface Key { t: number; tint: Rgb; alpha: number; warm: Rgb; warmA: number }
 
 /** One full day, keyed at 0 = midnight. Interpolated, wrapping. */
 const DAY: Key[] = [
-  { t: 0.00, tint: rgb(46, 62, 116), alpha: 0.66, warm: rgb(90, 120, 210), warmA: 0.05 },
-  { t: 0.20, tint: rgb(56, 70, 124), alpha: 0.60, warm: rgb(120, 140, 220), warmA: 0.05 },
+  { t: 0.00, tint: rgb(38, 54, 108), alpha: 0.74, warm: rgb(84, 116, 206), warmA: 0.05 },
+  { t: 0.20, tint: rgb(48, 64, 118), alpha: 0.68, warm: rgb(116, 138, 218), warmA: 0.05 },
   { t: 0.27, tint: rgb(158, 122, 132), alpha: 0.32, warm: rgb(255, 156, 92), warmA: 0.18 },
   { t: 0.34, tint: rgb(252, 238, 214), alpha: 0.10, warm: rgb(255, 214, 158), warmA: 0.08 },
   { t: 0.50, tint: rgb(255, 255, 255), alpha: 0.00, warm: rgb(255, 246, 226), warmA: 0.03 },
   { t: 0.68, tint: rgb(255, 236, 200), alpha: 0.07, warm: rgb(255, 206, 142), warmA: 0.07 },
   { t: 0.77, tint: rgb(196, 128, 104), alpha: 0.30, warm: rgb(255, 132, 66), warmA: 0.20 },
-  { t: 0.85, tint: rgb(82, 78, 138), alpha: 0.52, warm: rgb(140, 120, 200), warmA: 0.08 },
-  { t: 1.00, tint: rgb(46, 62, 116), alpha: 0.66, warm: rgb(90, 120, 210), warmA: 0.05 },
+  { t: 0.85, tint: rgb(72, 70, 132), alpha: 0.60, warm: rgb(140, 120, 200), warmA: 0.08 },
+  { t: 1.00, tint: rgb(38, 54, 108), alpha: 0.74, warm: rgb(84, 116, 206), warmA: 0.05 },
 ];
 
 interface Drop { s: Sprite; vx: number; vy: number; depth: number }
@@ -88,6 +88,7 @@ export class Atmosphere {
   private foggy = 0;     // eased 0..1 fog presence
   private phase: Phase = "day";
   private night = 0;
+  private rainSeeded = false;
   private offBus: Array<() => void> = [];
 
   constructor(private bus: EventBus, quality: QualityTier, private camera: Camera) {
@@ -159,8 +160,10 @@ export class Atmosphere {
       s.anchor.set(0.5);
       // Three depth bands: near drops are longer, faster and brighter.
       const depth = 0.45 + (i % 3) * 0.3;
-      s.width = 3.2 * depth;
-      s.height = r.range(34, 58) * depth;
+      // At 1080 design units across, a 3px streak is a scratch on the
+      // lens. Rain has to be fat and long to read on a phone.
+      s.width = 5.4 * depth;
+      s.height = r.range(52, 88) * depth;
       s.tint = 0xd8ecff;
       s.alpha = 0;
       s.rotation = 0.16;
@@ -213,8 +216,8 @@ export class Atmosphere {
 
     const k = sampleDay(this.timeOfDay);
     // Rain flattens and cools the light; fog lifts and greys it.
-    const rainDim = this.wet * 0.22;
-    this.tint.tint = toHexRgb(this.wet > 0.01 ? mix(k.tint, rgb(120, 140, 160), this.wet * 0.5) : k.tint);
+    const rainDim = this.wet * 0.30;
+    this.tint.tint = toHexRgb(this.wet > 0.01 ? mix(k.tint, rgb(104, 122, 142), this.wet * 0.66) : k.tint);
     this.tint.alpha = clamp(k.alpha + rainDim, 0, 0.9);
     this.warm.tint = toHexRgb(k.warm);
     this.warm.alpha = k.warmA * (1 - this.wet * 0.7) * (1 - this.foggy * 0.5);
@@ -245,10 +248,20 @@ export class Atmosphere {
     const view = this.camera.visibleRect(120);
     const vx = view.x, vy = view.y, vw = view.w, vh = view.h;
 
+    // Fit the full-screen washes to the camera rather than the world.
+    // A world-sized quad is roughly four screens of overdraw at
+    // cover-fit zoom, and there are three of them — the single
+    // cheapest fill-rate saving available on a phone.
+    for (const q of [this.tint, this.warm, this.haze]) {
+      q.position.set(vx, vy);
+      q.width = vw;
+      q.height = vh;
+    }
+
     for (const l of this.lanterns) {
       // Slow flicker — two out-of-phase sines never look periodic.
       const flick = 0.9 + 0.06 * Math.sin(t * 3.1 + l.phase) + 0.04 * Math.sin(t * 7.7 + l.phase * 2);
-      l.s.alpha = this.night * 0.85 * flick;
+      l.s.alpha = this.night * 0.52 * flick;
       l.s.visible = l.s.alpha > 0.01;
     }
 
@@ -265,18 +278,32 @@ export class Atmosphere {
     // Rain.
     const rainOn = this.wet > 0.01;
     this.rainLayer.visible = rainOn;
+    if (!rainOn) this.rainSeeded = false;
     if (rainOn) {
+      if (!this.rainSeeded) {
+        // Seed the whole field across the view the moment rain starts.
+        // Feeding drops in from the top edge alone leaves a second and
+        // a half of empty sky, and the pool starts life at the world
+        // origin — four screens from wherever the player is standing.
+        for (const d of this.drops) {
+          d.s.x = vx + Math.random() * vw;
+          d.s.y = vy + Math.random() * vh;
+        }
+        this.rainSeeded = true;
+      }
       for (const d of this.drops) {
         const s = d.s;
         s.x += d.vx * dt;
         s.y += d.vy * dt;
-        // Recycle above the view; keeps the field dense wherever the
-        // camera is without ever growing the pool.
-        if (s.y > vy + vh || s.x > vx + vw) {
-          s.x = vx + Math.random() * (vw + 400) - 200;
-          s.y = vy - Math.random() * 200;
+        // Recycle past the bottom or the sides, and after a big camera
+        // jump. The respawn band must sit INSIDE the "too far above"
+        // bound or drops teleport above the view every frame and never
+        // fall into it.
+        if (s.y > vy + vh || s.y < vy - 900 || s.x < vx - 500 || s.x > vx + vw + 500) {
+          s.x = vx + Math.random() * (vw + 500) - 250;
+          s.y = vy - Math.random() * 240;
         }
-        s.alpha = 0.5 * this.wet * d.depth;
+        s.alpha = 0.62 * this.wet * d.depth;
       }
       for (const sp of this.splashes) {
         sp.life -= dt * 2.6;
@@ -286,9 +313,9 @@ export class Atmosphere {
           sp.s.y = vy + Math.random() * vh;
         }
         const g = 1 - sp.life;
-        sp.s.width = 8 + g * 34;
-        sp.s.height = (8 + g * 34) * 0.5;
-        sp.s.alpha = sp.life * 0.5 * this.wet;
+        sp.s.width = 14 + g * 62;
+        sp.s.height = (14 + g * 62) * 0.45;
+        sp.s.alpha = sp.life * 0.6 * this.wet;
       }
     }
 
@@ -324,8 +351,9 @@ export class Atmosphere {
 
 /* ── helpers ─────────────────────────────────────────────────── */
 
-/** A world-sized white quad. Cover-fit zoom guarantees it always
-    covers the screen, so no screen-space bookkeeping is needed. */
+/** A white quad, resized to the camera rect every frame by render().
+    Starts world-sized so the very first frame is covered even if
+    render() has not run yet. */
 function worldQuad(): Sprite {
   const s = new Sprite(Texture.WHITE);
   s.width = WORLD.width;

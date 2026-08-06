@@ -18,7 +18,7 @@ import type { EventBus, QualityTier } from "../core/contracts";
 import { WORLD, isWalkable, pathAt } from "./worldmap";
 import type { NodeKind, NodeSpawn, ZoneId } from "./worldmap";
 import { Rng } from "./rng";
-import { makeCanvas, organicPath, blotch, stroke, css, mix, shade, rgb } from "./paint";
+import { makeCanvas, organicPoints, tracePoints, blotch, css, mix, shade, rgb } from "./paint";
 import type { Rgb } from "./paint";
 
 export interface NodeTapEvent { id: string; kind: NodeKind; tier: number }
@@ -51,12 +51,12 @@ const TREE_SRC: Record<string, [string, string]> = {
 
 /** Base draw height in design units, before per-node scale. A grown
     oak is roughly two and a half player-heights. */
-const TREE_H = 430;
+const TREE_H = 344;
 /** The trunk meets the ground here in the source art, not at 1.0 —
     anchoring at the true foot is what makes y-sorting look right. */
 const TREE_FOOT = 0.955;
 const STUMP_FOOT = 0.80;
-const STUMP_H = 150;
+const STUMP_H = 128;
 
 const ORE_COLOR: Record<string, { core: Rgb; lit: Rgb }> = {
   copper: { core: rgb(190, 106, 52), lit: rgb(238, 158, 92) },
@@ -90,13 +90,17 @@ export class NodeField {
   private parent!: Container;
   /** Set by WorldSystem each frame; a pan must never harvest. */
   tapGuard: () => boolean = () => false;
+  /** Ground stone colour, handed over by Terrain so ore rocks are cut
+      from the same rock as the shelf they sit on. */
+  private stone: Rgb = rgb(150, 142, 126);
 
   constructor(private bus: EventBus, private quality: QualityTier) {}
 
   get all(): readonly ResourceNode[] { return this.views.map((v) => v.node); }
 
-  async build(parent: Container): Promise<void> {
+  async build(parent: Container, stone?: Rgb): Promise<void> {
     this.parent = parent;
+    if (stone) this.stone = stone;
     const species = new Set<string>();
     for (const s of WORLD.spawns) if (s.kind === "tree") species.add(s.variant);
     const urls: string[] = [];
@@ -115,30 +119,41 @@ export class NodeField {
 
   /* ── placement ────────────────────────────────────────────── */
 
+  /** Mitchell best-candidate sampling. Plain rejection sampling piles
+      trees into whichever corner it happens to hit first; picking the
+      farthest of N candidates each time gives blue noise, which is
+      what a forest actually looks like from above. */
   private spawnGroup(spawn: NodeSpawn) {
     const region = spawn.region ?? findZoneBounds(spawn.zone);
     const rng = new Rng(WORLD.seed + hashStr(spawn.kind + spawn.variant));
-    const minGap = spawn.kind === "tree" ? 150 : spawn.kind === "ore" ? 110 : 90;
-    let placed = 0;
-    // Bounded rejection sampling: a hard cap keeps a badly-shaped
-    // region from spinning forever, and short-placing is harmless.
-    for (let attempt = 0; attempt < spawn.count * 60 && placed < spawn.count; attempt++) {
-      const x = rng.range(region.x, region.x + region.w);
-      const y = rng.range(region.y, region.y + region.h);
-      if (spawn.kind !== "fish") {
-        if (!isWalkable(x, y)) continue;
-        // Keep the painted path clear — it is the player's route.
-        if (Math.abs(x - pathAt(y).x) < 78) continue;
+    const pathClear = spawn.kind === "tree" ? 92 : spawn.kind === "ore" ? 70 : 0;
+    const CANDIDATES = 24;
+
+    for (let placed = 0; placed < spawn.count; placed++) {
+      let bestX = 0, bestY = 0, bestScore = -1;
+      for (let c = 0; c < CANDIDATES; c++) {
+        const x = rng.range(region.x, region.x + region.w);
+        const y = rng.range(region.y, region.y + region.h);
+        if (spawn.kind !== "fish") {
+          if (!isWalkable(x, y)) continue;
+          // Keep the painted path clear — it is the player's route.
+          if (Math.abs(x - pathAt(y).x) < pathClear) continue;
+        }
+        let nearest = Infinity;
+        for (const v of this.views) {
+          // Weight y slightly: overlap up the screen hides a little more
+          // art than overlap across it. Weighting it hard collapses the
+          // scatter into horizontal rows.
+          const dx = v.node.x - x, dy = (v.node.y - y) * 1.15;
+          const d = dx * dx + dy * dy;
+          if (d < nearest) nearest = d;
+        }
+        if (nearest > bestScore) { bestScore = nearest; bestX = x; bestY = y; }
       }
-      let clash = false;
-      for (const v of this.views) {
-        if (Math.hypot(v.node.x - x, v.node.y - y) < minGap) { clash = true; break; }
-      }
-      if (clash) continue;
+      if (bestScore < 0) continue;    // region had no legal spot at all
 
       const scale = spawn.scale ? rng.range(spawn.scale[0], spawn.scale[1]) : 1;
-      this.create(spawn, `${spawn.variant}_${placed}`, x, y, scale, rng);
-      placed++;
+      this.create(spawn, `${spawn.variant}_${placed}`, bestX, bestY, scale, rng);
     }
   }
 
@@ -195,7 +210,7 @@ export class NodeField {
       // otherwise neighbouring canopies steal each other's taps.
       hit = new Rectangle(-h * 0.26, -h * 0.72, h * 0.52, h * 0.74);
     } else if (spawn.kind === "ore") {
-      const size = 168 * scale;
+      const size = 186 * scale;
       const full = this.oreTexture(spawn.variant, rng.int(0, 2), false);
       const spent = this.oreTexture(spawn.variant, rng.int(0, 2), true);
       const a = new Sprite(full);
@@ -255,8 +270,10 @@ export class NodeField {
 
   private oreCache = new Map<string, Texture>();
 
-  /** Faceted rock in the painting's language: warm lit top, cool
-      shadowed base, hard outline, ore showing in cracked faces. */
+  /** Faceted rock in the painting's language: lit from the north,
+      shadow pooling at the base, hard outline, ore showing in broken
+      faces. One point list drives fill, clip AND outline so nothing
+      can drift outside the silhouette. */
   private oreTexture(variant: string, seed: number, spent: boolean): Texture {
     const key = `${variant}:${seed}:${spent ? 1 : 0}`;
     const cached = this.oreCache.get(key);
@@ -266,69 +283,115 @@ export class NodeField {
     const { cv, ctx } = makeCanvas(S, S);
     const r = new Rng(9001 + hashStr(key));
     const ore = ORE_COLOR[variant] ?? ORE_COLOR.iron;
-    const stone = mix(rgb(148, 138, 122), ore.core, 0.16);
-    const cx = S * 0.5, cy = S * 0.58;
-    const rx = S * (spent ? 0.32 : 0.4), ry = S * (spent ? 0.24 : 0.32);
+    // Tinted with a trace of the ore so a coal seam and a copper seam
+    // read differently even before you see the gems.
+    const stone = mix(this.stone, ore.core, 0.22);
+    const cx = S * 0.5, cy = S * 0.56;
+    const rx = S * (spent ? 0.33 : 0.4), ry = S * (spent ? 0.26 : 0.34);
 
-    blotch(ctx, cx, cy + ry * 0.7, rx * 1.35, ry * 0.5, rgb(18, 16, 14), 0.42);
+    blotch(ctx, cx, cy + ry * 0.82, rx * 1.6, ry * 0.62, rgb(14, 12, 10), 0.62);
+    // Rubble collar: an outcrop pushes through the ground, it does not
+    // sit on top of it. Half a dozen chips at the base sell that.
+    for (let i = 0; i < 7; i++) {
+      const a = Math.PI * (0.08 + r.next() * 0.84);
+      const px = cx + Math.cos(a) * rx * r.range(0.75, 1.2);
+      const py = cy + Math.sin(a) * ry * r.range(0.7, 1.05);
+      const cr = r.range(S * 0.018, S * 0.045);
+      const chip = organicPoints(px, py, cr, cr * 0.72, r, 0.3, 5);
+      tracePoints(ctx, chip);
+      ctx.fillStyle = css(shade(this.stone, r.range(0.62, 1.05)), 0.9);
+      ctx.fill();
+      ctx.strokeStyle = css(shade(this.stone, 0.4), 0.5);
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+    }
 
-    // Body.
-    organicPath(ctx, cx, cy, rx, ry, r, 0.2, 8);
+    // 9 points at high wobble gives a chunky broken silhouette; the
+    // 7-point version read as a regular heptagon.
+    const body = organicPoints(cx, cy, rx, ry, r, 0.3, 9);
+    tracePoints(ctx, body);
     const g = ctx.createLinearGradient(0, cy - ry, 0, cy + ry);
-    g.addColorStop(0, css(shade(stone, 1.3)));
-    g.addColorStop(0.5, css(stone));
-    g.addColorStop(1, css(shade(stone, 0.56)));
+    g.addColorStop(0, css(shade(stone, 1.34)));
+    g.addColorStop(0.45, css(stone));
+    g.addColorStop(1, css(shade(stone, 0.5)));
     ctx.fillStyle = g;
     ctx.fill();
+
     ctx.save();
     ctx.clip();
 
-    // Facets: three angular slabs catching different light.
-    for (let i = 0; i < 3; i++) {
-      const fx = cx + r.jitter(rx * 0.5);
-      const fy = cy + r.jitter(ry * 0.5);
-      organicPath(ctx, fx, fy, rx * r.range(0.3, 0.55), ry * r.range(0.3, 0.6), r, 0.34, 6);
-      ctx.fillStyle = css(shade(stone, r.bool(0.5) ? r.range(1.1, 1.28) : r.range(0.68, 0.85)), 0.55);
+    // Facets: straight-edged planes, not soft blobs. Angles are what
+    // make a lump of colour read as broken stone.
+    for (let i = 0; i < 4; i++) {
+      const f = organicPoints(
+        cx + r.jitter(rx * 0.45), cy + r.jitter(ry * 0.45),
+        rx * r.range(0.3, 0.6), ry * r.range(0.35, 0.7), r, 0.3, 4,
+      );
+      tracePoints(ctx, f);
+      ctx.fillStyle = css(shade(stone, r.bool(0.5) ? r.range(1.1, 1.3) : r.range(0.66, 0.84)), 0.38);
       ctx.fill();
     }
+
     if (spent) {
-      // A dark bite taken out of the top — unmistakably mined.
-      organicPath(ctx, cx + r.jitter(rx * 0.3), cy - ry * 0.3, rx * 0.45, ry * 0.4, r, 0.3, 7);
-      ctx.fillStyle = css(rgb(30, 26, 24), 0.72);
+      // A dark bite out of the top — unmistakably mined.
+      const hole = organicPoints(cx + r.jitter(rx * 0.28), cy - ry * 0.22, rx * 0.5, ry * 0.44, r, 0.26, 6);
+      tracePoints(ctx, hole);
+      ctx.fillStyle = css(rgb(26, 22, 20), 0.78);
       ctx.fill();
+      tracePoints(ctx, hole);
+      ctx.strokeStyle = css(shade(stone, 1.3), 0.35);
+      ctx.lineWidth = 2;
+      ctx.stroke();
     } else {
-      // Ore showing: a cluster of angular gems with a hot highlight.
-      const gems = variant === "mithril" ? 5 : 7;
+      // Ore showing. Each gem gets a dark rim so the cluster reads as
+      // mineral in rock rather than sweets on a pebble.
+      const gems = variant === "mithril" ? 6 : 9;
       for (let i = 0; i < gems; i++) {
-        const gx = cx + r.jitter(rx * 0.62);
-        const gy = cy + r.jitter(ry * 0.62);
-        const gr = r.range(S * 0.022, S * 0.05);
-        organicPath(ctx, gx, gy, gr, gr * 0.86, r, 0.4, 5);
-        ctx.fillStyle = css(ore.core, 0.95);
+        const gx = cx + r.jitter(rx * 0.6);
+        const gy = cy + r.jitter(ry * 0.6);
+        const gr = r.range(S * 0.018, S * 0.038);
+        const gem = organicPoints(gx, gy, gr, gr * 0.9, r, 0.3, 5);
+        tracePoints(ctx, gem);
+        ctx.fillStyle = css(ore.core, 0.96);
         ctx.fill();
-        ctx.fillStyle = css(ore.lit, 0.9);
+        ctx.strokeStyle = css(shade(ore.core, 0.45), 0.75);
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+        ctx.fillStyle = css(ore.lit, 0.85);
         ctx.beginPath();
-        ctx.ellipse(gx - gr * 0.22, gy - gr * 0.3, gr * 0.4, gr * 0.3, -0.5, 0, Math.PI * 2);
+        ctx.ellipse(gx - gr * 0.24, gy - gr * 0.3, gr * 0.34, gr * 0.24, -0.5, 0, Math.PI * 2);
         ctx.fill();
       }
     }
-    // Cracks.
+
+    // Cracks: straight segments with a light offset, like the shelf.
     for (let i = 0; i < 5; i++) {
-      stroke(ctx, cx + r.jitter(rx * 0.7), cy + r.jitter(ry * 0.7),
-        r.jitter(rx * 0.6), r.range(ry * 0.2, ry * 0.7), r.range(1.4, 3),
-        shade(stone, 0.44), r.range(0.25, 0.5));
+      let px = cx + r.jitter(rx * 0.6), py = cy + r.jitter(ry * 0.6);
+      let ang = r.range(0, Math.PI * 2);
+      for (let k = 0; k < 2; k++) {
+        const len = r.range(S * 0.07, S * 0.17);
+        const nx = px + Math.cos(ang) * len, ny = py + Math.sin(ang) * len;
+        ctx.strokeStyle = css(shade(stone, 0.42), r.range(0.3, 0.55));
+        ctx.lineWidth = r.range(1.6, 3);
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(nx, ny); ctx.stroke();
+        ctx.strokeStyle = css(shade(stone, 1.4), 0.22);
+        ctx.beginPath(); ctx.moveTo(px, py - 2); ctx.lineTo(nx, ny - 2); ctx.stroke();
+        px = nx; py = ny; ang += r.jitter(1.0);
+      }
     }
+
+    // Rim light INSIDE the clip, so it can never float off the rock —
+    // the bug that made the first pass look like drawn-on eyebrows.
+    ctx.strokeStyle = css(shade(stone, 1.55), 0.45);
+    ctx.lineWidth = 7;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx * 0.98, ry * 0.98, 0, Math.PI * 1.12, Math.PI * 1.92);
+    ctx.stroke();
     ctx.restore();
 
-    ctx.strokeStyle = css(shade(stone, 0.36), 0.7);
-    ctx.lineWidth = 3;
-    organicPath(ctx, cx, cy, rx, ry, new Rng(9001 + hashStr(key)), 0.2, 8);
-    ctx.stroke();
-    // Rim light along the top so it reads against dark rock ground.
-    ctx.strokeStyle = css(shade(stone, 1.5), 0.5);
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rx * 0.92, ry * 0.92, 0, Math.PI * 1.15, Math.PI * 1.9);
+    tracePoints(ctx, body);
+    ctx.strokeStyle = css(shade(stone, 0.26), 0.88);
+    ctx.lineWidth = 4.2;
     ctx.stroke();
 
     const tex = Texture.from(cv);

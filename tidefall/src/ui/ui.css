@@ -33,6 +33,11 @@
 .tf-ui *::before,
 .tf-ui *::after { box-sizing: border-box; }
 
+/* Components below set display on almost everything, which silently
+   beats the UA's [hidden] rule. Toggling `hidden` is how the panels
+   show/hide badges, locks and tags, so it has to win. */
+.tf-ui [hidden] { display: none !important; }
+
 .tf-ui button,
 .tf-ui [role="button"],
 .tf-ui [role="tab"] {
@@ -84,8 +89,7 @@
   border-radius: inherit;
   background-image: var(--tex-grain);
   background-size: calc(140 * var(--tf-u)) calc(140 * var(--tf-u));
-  opacity: .045;
-  mix-blend-mode: overlay;
+  opacity: .05;
   pointer-events: none;
   z-index: 2;
 }
@@ -256,10 +260,10 @@
 .tf-hud::before {
   content: ""; position: absolute; inset: 0;
   background: var(--s-scrim);
-  backdrop-filter: blur(calc(8 * var(--tf-u))) saturate(1.1);
-  -webkit-backdrop-filter: blur(calc(8 * var(--tf-u))) saturate(1.1);
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 52%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 0%, #000 52%, transparent 100%);
+  backdrop-filter: blur(calc(6 * var(--tf-u))) saturate(1.12);
+  -webkit-backdrop-filter: blur(calc(6 * var(--tf-u))) saturate(1.12);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 44%, rgba(0,0,0,.5) 74%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 44%, rgba(0,0,0,.5) 74%, transparent 100%);
   pointer-events: none;
 }
 .tf-hud > * { position: relative; }
@@ -464,10 +468,8 @@
 .tf-backdrop {
   position: absolute; inset: 0;
   z-index: var(--z-backdrop);
-  background: radial-gradient(ellipse at 50% 30%, rgba(6,14,24,.45), rgba(3,8,14,.82));
+  background: radial-gradient(ellipse at 50% 30%, rgba(6,14,24,.5), rgba(3,8,14,.86));
   opacity: 0; pointer-events: none;
-  backdrop-filter: blur(calc(2 * var(--tf-u)));
-  -webkit-backdrop-filter: blur(calc(2 * var(--tf-u)));
   will-change: opacity;
 }
 .tf-backdrop.is-live { pointer-events: auto; }
@@ -475,7 +477,7 @@
 .tf-sheet {
   position: absolute; left: 0; right: 0; bottom: 0;
   z-index: var(--z-sheet);
-  height: calc(100% - var(--safe-t) - calc(10 * var(--tf-u)));
+  height: calc(100% - var(--safe-t) - calc(46 * var(--tf-u)));
   display: flex; flex-direction: column;
   border-radius: var(--r-6) var(--r-6) 0 0;
   background: var(--s-panel);
@@ -485,6 +487,12 @@
   pointer-events: auto;
   overflow: hidden;
   touch-action: none;
+}
+.tf-sheet__crown {
+  position: absolute; left: 0; right: 0; top: 0;
+  height: calc(150 * var(--tf-u));
+  background: radial-gradient(120% 100% at 50% 0%, rgba(140,195,245,.13), transparent 70%);
+  pointer-events: none; z-index: 1;
 }
 .tf-sheet[hidden] { display: none; }
 /* gold hairline across the sheet lip, matching the nav */
@@ -651,7 +659,9 @@
 }
 .tf-celebrate__wash {
   position: absolute; inset: 0;
-  background: radial-gradient(circle at 50% 42%, rgba(232,178,63,.30), rgba(4,10,18,.86) 58%);
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255,205,110,.22), rgba(3,8,14,.82) 46%, rgba(2,5,10,.95) 76%),
+    rgba(3,8,14,.55);
   animation: tf-fade-in var(--d-slow) var(--ease-out) both;
 }
 .tf-celebrate__rays {
@@ -713,8 +723,9 @@
   font-size: var(--t-small); font-weight: var(--w-bold); color: var(--c-gold-300);
   animation: tf-rise var(--d-lazy) var(--ease-spring) both 300ms;
 }
-.tf-celebrate__act { margin-top: var(--sp-6); animation: tf-rise var(--d-lazy) var(--ease-spring) both 400ms; }
+.tf-celebrate__act { margin-top: var(--sp-6); display: flex; justify-content: center; animation: tf-rise var(--d-lazy) var(--ease-spring) both 400ms; }
 @keyframes tf-rise { from { opacity: 0; transform: translateY(calc(16 * var(--tf-u))); } to { opacity: 1; transform: none; } }
+.tf-celebrate__act .tf-btn { min-width: calc(168 * var(--tf-u)); font-size: var(--t-lead); }
 .tf-celebrate.is-out { animation: tf-fade-out var(--d-base) var(--ease-in) both; }
 
 .tf-confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
