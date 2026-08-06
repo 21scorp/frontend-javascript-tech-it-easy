@@ -46,14 +46,15 @@ async function boot() {
   progress(70);
 
   const { startGame } = await import("./game/game");
-  await startGame({ app, viewport });
+  const game = await startGame({ app, viewport });
   progress(100);
 
   splash.classList.add("gone");
   setTimeout(() => splash.remove(), 600);
 
-  // Handy for automated visual QA.
-  (window as unknown as Record<string, unknown>).TIDEFALL = { app, viewport, DESIGN_W };
+  // The handle automated visual QA drives the game through.
+  (window as unknown as Record<string, unknown>).TIDEFALL =
+    { app, viewport, DESIGN_W, game, bus: game.ctx.bus };
 }
 
 boot().catch((err) => {
